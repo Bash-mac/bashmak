@@ -1,20 +1,26 @@
 import type { HeroDefinition } from './definitions';
 
-export const STARTER_HERO: HeroDefinition = {
-  id: 'hero_starter',
-  name: 'Scout',
-  description: 'Balanced starting survivor with standard mobility.',
-  textureKey: 'tex_hero',
+export const WORM_HERO: HeroDefinition = {
+  id: 'hero_worm',
+  name: 'Червяк',
+  description: 'Мобильный survival-боец. Плюется липкой слизью и усиливается при непрерывном движении.',
+  textureKey: 'pose_idle',
   stats: {
     maxHp: 100,
     speed: 220,
-    damage: 20,
+    damage: 11,
     armor: 0,
-    attackSpeed: 1.0,
+    attackSpeed: 1.3,
   },
-  startingWeaponId: 'weapon_blaster',
+  attackIntervalMs: 770, // 1 / 1.3 ≈ 0.77s
+  attackRange: 180,
+  projectileSpeed: 420,
+  projectileSize: 7,
+  startingWeaponId: 'weapon_slime_spit',
 };
 
 export const HEROES_REGISTRY: Record<string, HeroDefinition> = {
-  [STARTER_HERO.id]: STARTER_HERO,
+  [WORM_HERO.id]: WORM_HERO,
 };
+
+export const STARTER_HERO = WORM_HERO;

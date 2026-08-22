@@ -1,10 +1,14 @@
 import Phaser from 'phaser';
 import { EventBus } from '../../core/EventBus';
 import type { GameState } from '../../core/GameState';
+import { WORM_UPGRADES } from '../../data/upgrades';
 
 export class HUD {
   private scene: Phaser.Scene;
   private container: Phaser.GameObjects.Container;
+  private avatarImage: Phaser.GameObjects.Image;
+  private avatarFrame: Phaser.GameObjects.Graphics;
+
   private hpBarBackground: Phaser.GameObjects.Graphics;
   private hpBarFill: Phaser.GameObjects.Graphics;
   private hpText: Phaser.GameObjects.Text;
@@ -16,16 +20,29 @@ export class HUD {
   private timerText: Phaser.GameObjects.Text;
   private killsText: Phaser.GameObjects.Text;
 
+  // 4 Slot Mutation Tracker
+  private slotsGraphics: Phaser.GameObjects.Graphics;
+  private slotsTextContainer: Phaser.GameObjects.Container;
+
   private unbinds: Array<() => void> = [];
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
     this.container = scene.add.container(0, 0).setScrollFactor(0).setDepth(9000);
 
+    // Avatar Expression Portrait
+    this.avatarFrame = scene.add.graphics();
+    this.avatarFrame.fillStyle(0x0f172a, 0.9);
+    this.avatarFrame.lineStyle(2, 0x4ade80, 1);
+    this.avatarFrame.fillRoundedRect(12, 18, 54, 46, 6);
+    this.avatarFrame.strokeRoundedRect(12, 18, 54, 46, 6);
+
+    this.avatarImage = scene.add.image(39, 41, 'face_smug').setDisplaySize(48, 38);
+
     // HP Bar
     this.hpBarBackground = scene.add.graphics();
     this.hpBarFill = scene.add.graphics();
-    this.hpText = scene.add.text(16, 38, 'HP: 100/100', {
+    this.hpText = scene.add.text(74, 38, 'HP: 100/100', {
       fontSize: '12px',
       color: '#ffffff',
       fontFamily: 'monospace',
@@ -34,8 +51,8 @@ export class HUD {
     // XP Bar (across the top)
     this.xpBarBackground = scene.add.graphics();
     this.xpBarFill = scene.add.graphics();
-    this.levelText = scene.add.text(16, 56, 'LVL 1', {
-      fontSize: '14px',
+    this.levelText = scene.add.text(74, 52, 'LVL 1', {
+      fontSize: '13px',
       fontStyle: 'bold',
       color: '#4ade80',
       fontFamily: 'monospace',
@@ -54,7 +71,13 @@ export class HUD {
       fontFamily: 'monospace',
     }).setOrigin(1, 0);
 
+    // Slots Tracker
+    this.slotsGraphics = scene.add.graphics();
+    this.slotsTextContainer = scene.add.container(0, 0);
+
     this.container.add([
+      this.avatarFrame,
+      this.avatarImage,
       this.hpBarBackground,
       this.hpBarFill,
       this.hpText,
@@ -63,6 +86,8 @@ export class HUD {
       this.levelText,
       this.timerText,
       this.killsText,
+      this.slotsGraphics,
+      this.slotsTextContainer,
     ]);
 
     this.setupEventListeners();
@@ -86,6 +111,7 @@ export class HUD {
       }),
       bus.on('player:levelUp', (data) => {
         this.levelText.setText(`LVL ${data.newLevel}`);
+        this.avatarImage.setTexture('face_victorious');
       })
     );
   }
@@ -93,8 +119,8 @@ export class HUD {
   updateHp(current: number, max: number): void {
     const width = 160;
     const height = 14;
-    const x = 16;
-    const y = 18;
+    const x = 74;
+    const y = 20;
 
     this.hpBarBackground.clear();
     this.hpBarBackground.fillStyle(0x1f2937, 0.8);
@@ -108,6 +134,15 @@ export class HUD {
     this.hpBarFill.fillRoundedRect(x, y, width * ratio, height, 4);
 
     this.hpText.setText(`HP: ${Math.ceil(current)}/${max}`);
+
+    // Update Bashmak Expression Avatar based on Health
+    if (ratio > 0.65) {
+      this.avatarImage.setTexture('face_smug');
+    } else if (ratio >= 0.30) {
+      this.avatarImage.setTexture('face_bored');
+    } else {
+      this.avatarImage.setTexture('face_injured');
+    }
   }
 
   updateXp(current: number, nextLevelXp: number): void {
@@ -133,6 +168,64 @@ export class HUD {
 
     this.timerText.setText(`TIME: ${timeFormatted}`);
     this.killsText.setText(`KILLS: ${state.kills}`);
+
+    this.updateBuildSlots(state);
+  }
+
+  private updateBuildSlots(state: GameState): void {
+    this.slotsGraphics.clear();
+    this.slotsTextContainer.removeAll(true);
+
+    const startX = 16;
+    const startY = 78;
+    const slotW = 75;
+    const slotH = 26;
+    const spacing = 8;
+
+    const activeEntries = Array.from(state.activeUpgrades.entries());
+
+    for (let i = 0; i < 4; i++) {
+      const x = startX + i * (slotW + spacing);
+      const y = startY;
+
+      if (i < activeEntries.length) {
+        const [upgId, lvl] = activeEntries[i];
+        const upgDef = WORM_UPGRADES.find((u) => u.id === upgId);
+        const isMax = lvl >= 5;
+
+        const borderCol = isMax ? 0xfacc15 : 0x4ade80;
+        const bgCol = isMax ? 0x422006 : 0x14532d;
+
+        this.slotsGraphics.fillStyle(bgCol, 0.85);
+        this.slotsGraphics.lineStyle(1.5, borderCol, 0.9);
+        this.slotsGraphics.fillRoundedRect(x, y, slotW, slotH, 4);
+        this.slotsGraphics.strokeRoundedRect(x, y, slotW, slotH, 4);
+
+        const shortName = upgDef ? upgDef.name.split(' ')[0] : 'Mut';
+        const txt = this.scene.add.text(x + slotW / 2, y + slotH / 2, `${shortName} ${isMax ? 'MAX' : `L${lvl}`}`, {
+          fontSize: '10px',
+          fontStyle: 'bold',
+          color: isMax ? '#fef08a' : '#86efac',
+          fontFamily: 'monospace',
+        }).setOrigin(0.5);
+
+        this.slotsTextContainer.add(txt);
+      } else {
+        // Empty slot
+        this.slotsGraphics.fillStyle(0x0f172a, 0.5);
+        this.slotsGraphics.lineStyle(1, 0x334155, 0.6);
+        this.slotsGraphics.fillRoundedRect(x, y, slotW, slotH, 4);
+        this.slotsGraphics.strokeRoundedRect(x, y, slotW, slotH, 4);
+
+        const txt = this.scene.add.text(x + slotW / 2, y + slotH / 2, `[ Slot ${i + 1} ]`, {
+          fontSize: '10px',
+          color: '#64748b',
+          fontFamily: 'monospace',
+        }).setOrigin(0.5);
+
+        this.slotsTextContainer.add(txt);
+      }
+    }
   }
 
   destroy(): void {
