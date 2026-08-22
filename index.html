@@ -7,12 +7,24 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
-    <title>2D Roguelite</title>
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="theme-color" content="#0b0e14" />
+    <title>Bashmak</title>
     <!-- Telegram Mini App SDK (безопасно подключается в head, если не в Telegram — не мешает) -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
   </head>
   <body>
     <div id="game-container"></div>
+    <div id="rotate-device-overlay">
+      <div class="rotate-content">
+        <div class="rotate-icon">📱 ➔ 📲</div>
+        <h2>ПОВЕРНИТЕ ЭКРАН</h2>
+        <p>Для игры в BASHMAK переверните телефон горизонтально</p>
+      </div>
+    </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

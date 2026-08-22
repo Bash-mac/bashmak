@@ -34,16 +34,17 @@ export class HUD {
     this.avatarFrame = scene.add.graphics();
     this.avatarFrame.fillStyle(0x0f172a, 0.9);
     this.avatarFrame.lineStyle(2, 0x4ade80, 1);
-    this.avatarFrame.fillRoundedRect(12, 18, 54, 46, 6);
-    this.avatarFrame.strokeRoundedRect(12, 18, 54, 46, 6);
+    this.avatarFrame.fillRoundedRect(12, 16, 62, 54, 8);
+    this.avatarFrame.strokeRoundedRect(12, 16, 62, 54, 8);
 
-    this.avatarImage = scene.add.image(39, 41, 'face_smug').setDisplaySize(48, 38);
+    this.avatarImage = scene.add.image(43, 43, 'face_smug').setDisplaySize(56, 46);
 
     // HP Bar
     this.hpBarBackground = scene.add.graphics();
     this.hpBarFill = scene.add.graphics();
-    this.hpText = scene.add.text(74, 38, 'HP: 100/100', {
-      fontSize: '12px',
+    this.hpText = scene.add.text(84, 40, 'HP: 100/100', {
+      fontSize: '14px',
+      fontStyle: 'bold',
       color: '#ffffff',
       fontFamily: 'monospace',
     });
@@ -51,22 +52,25 @@ export class HUD {
     // XP Bar (across the top)
     this.xpBarBackground = scene.add.graphics();
     this.xpBarFill = scene.add.graphics();
-    this.levelText = scene.add.text(74, 52, 'LVL 1', {
-      fontSize: '13px',
+    this.levelText = scene.add.text(84, 56, 'LVL 1', {
+      fontSize: '15px',
       fontStyle: 'bold',
       color: '#4ade80',
       fontFamily: 'monospace',
     });
 
     // Stats (Right side)
-    this.timerText = scene.add.text(scene.cameras.main.width - 16, 16, 'TIME: 00:00', {
-      fontSize: '14px',
+    const rightEdge = scene.cameras.main.width - 16;
+    this.timerText = scene.add.text(rightEdge, 16, 'TIME: 00:00', {
+      fontSize: '16px',
+      fontStyle: 'bold',
       color: '#ffffff',
       fontFamily: 'monospace',
     }).setOrigin(1, 0);
 
-    this.killsText = scene.add.text(scene.cameras.main.width - 16, 36, 'KILLS: 0', {
-      fontSize: '14px',
+    this.killsText = scene.add.text(rightEdge, 38, 'KILLS: 0', {
+      fontSize: '16px',
+      fontStyle: 'bold',
       color: '#f87171',
       fontFamily: 'monospace',
     }).setOrigin(1, 0);
@@ -117,21 +121,21 @@ export class HUD {
   }
 
   updateHp(current: number, max: number): void {
-    const width = 160;
-    const height = 14;
-    const x = 74;
-    const y = 20;
+    const width = 200;
+    const height = 18;
+    const x = 84;
+    const y = 18;
 
     this.hpBarBackground.clear();
-    this.hpBarBackground.fillStyle(0x1f2937, 0.8);
-    this.hpBarBackground.lineStyle(1, 0x4b5563);
-    this.hpBarBackground.fillRoundedRect(x, y, width, height, 4);
-    this.hpBarBackground.strokeRoundedRect(x, y, width, height, 4);
+    this.hpBarBackground.fillStyle(0x1f2937, 0.85);
+    this.hpBarBackground.lineStyle(1.5, 0x4b5563);
+    this.hpBarBackground.fillRoundedRect(x, y, width, height, 5);
+    this.hpBarBackground.strokeRoundedRect(x, y, width, height, 5);
 
     const ratio = Math.max(0, Math.min(1, current / max));
     this.hpBarFill.clear();
-    this.hpBarFill.fillStyle(0xef4444, 0.9);
-    this.hpBarFill.fillRoundedRect(x, y, width * ratio, height, 4);
+    this.hpBarFill.fillStyle(0xef4444, 0.95);
+    this.hpBarFill.fillRoundedRect(x, y, width * ratio, height, 5);
 
     this.hpText.setText(`HP: ${Math.ceil(current)}/${max}`);
 
@@ -147,7 +151,7 @@ export class HUD {
 
   updateXp(current: number, nextLevelXp: number): void {
     const width = this.scene.cameras.main.width - 32;
-    const height = 6;
+    const height = 7;
     const x = 16;
     const y = 6;
 
@@ -162,6 +166,10 @@ export class HUD {
   }
 
   update(state: GameState): void {
+    const rightEdge = this.scene.cameras.main.width - 16;
+    this.timerText.setX(rightEdge);
+    this.killsText.setX(rightEdge);
+
     const minutes = Math.floor(state.runTime / 60);
     const seconds = Math.floor(state.runTime % 60);
     const timeFormatted = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
@@ -176,10 +184,10 @@ export class HUD {
     this.slotsGraphics.clear();
     this.slotsTextContainer.removeAll(true);
 
-    const startX = 16;
-    const startY = 78;
-    const slotW = 75;
-    const slotH = 26;
+    const startX = 14;
+    const startY = 82;
+    const slotW = 86;
+    const slotH = 28;
     const spacing = 8;
 
     const activeEntries = Array.from(state.activeUpgrades.entries());
@@ -196,14 +204,14 @@ export class HUD {
         const borderCol = isMax ? 0xfacc15 : 0x4ade80;
         const bgCol = isMax ? 0x422006 : 0x14532d;
 
-        this.slotsGraphics.fillStyle(bgCol, 0.85);
-        this.slotsGraphics.lineStyle(1.5, borderCol, 0.9);
-        this.slotsGraphics.fillRoundedRect(x, y, slotW, slotH, 4);
-        this.slotsGraphics.strokeRoundedRect(x, y, slotW, slotH, 4);
+        this.slotsGraphics.fillStyle(bgCol, 0.9);
+        this.slotsGraphics.lineStyle(1.5, borderCol, 0.95);
+        this.slotsGraphics.fillRoundedRect(x, y, slotW, slotH, 5);
+        this.slotsGraphics.strokeRoundedRect(x, y, slotW, slotH, 5);
 
         const shortName = upgDef ? upgDef.name.split(' ')[0] : 'Mut';
         const txt = this.scene.add.text(x + slotW / 2, y + slotH / 2, `${shortName} ${isMax ? 'MAX' : `L${lvl}`}`, {
-          fontSize: '10px',
+          fontSize: '11px',
           fontStyle: 'bold',
           color: isMax ? '#fef08a' : '#86efac',
           fontFamily: 'monospace',
@@ -212,13 +220,13 @@ export class HUD {
         this.slotsTextContainer.add(txt);
       } else {
         // Empty slot
-        this.slotsGraphics.fillStyle(0x0f172a, 0.5);
-        this.slotsGraphics.lineStyle(1, 0x334155, 0.6);
-        this.slotsGraphics.fillRoundedRect(x, y, slotW, slotH, 4);
-        this.slotsGraphics.strokeRoundedRect(x, y, slotW, slotH, 4);
+        this.slotsGraphics.fillStyle(0x0f172a, 0.55);
+        this.slotsGraphics.lineStyle(1, 0x334155, 0.7);
+        this.slotsGraphics.fillRoundedRect(x, y, slotW, slotH, 5);
+        this.slotsGraphics.strokeRoundedRect(x, y, slotW, slotH, 5);
 
         const txt = this.scene.add.text(x + slotW / 2, y + slotH / 2, `[ Slot ${i + 1} ]`, {
-          fontSize: '10px',
+          fontSize: '11px',
           color: '#64748b',
           fontFamily: 'monospace',
         }).setOrigin(0.5);

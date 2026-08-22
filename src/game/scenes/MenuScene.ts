@@ -9,18 +9,24 @@ export class MenuScene extends Phaser.Scene {
   }
 
   create(): void {
-    const { width, height } = this.cameras.main;
+    const width = this.scale.width;
+    const height = this.scale.height;
     const user = this.platform.getUser();
 
-    // 1. Background Sewer Art (1280 x 720)
+    // 1. Cover Background (Fills 100% of any screen aspect ratio with zero black bars)
+    const bgScale = Math.max(width / 1280, height / 720);
     const bg = this.add.image(width / 2, height / 2, 'menu_bg');
-    bg.setDisplaySize(width, height);
+    bg.setScale(bgScale);
 
-    // 2. Logo (Top Left)
-    const logo = this.add.image(260, 105, 'menu_logo');
+    // 2. Universal Scalable UI Container (Centered & fit to visible area)
+    const uiScale = Math.min(width / 1280, height / 720);
+    const uiContainer = this.add.container(width / 2, height / 2).setScale(uiScale);
+
+    // Inside uiContainer, (0, 0) is the center of the 1280x720 canvas
+    // Logo (Top Left)
+    const logo = this.add.image(-380, -255, 'menu_logo');
     logo.setScale(0.62);
 
-    // Logo idle animation (Breathing & subtle tilt)
     this.tweens.add({
       targets: logo,
       scaleX: 0.64,
@@ -33,22 +39,19 @@ export class MenuScene extends Phaser.Scene {
     });
 
     // 3. Central Characters
-    // Pink Worm Lounging
-    const worm = this.add.image(800, 420, 'char_worm').setInteractive({ useHandCursor: true });
+    const worm = this.add.image(160, 60, 'char_worm').setInteractive({ useHandCursor: true });
     worm.setScale(1.15);
 
-    // Worm idle breathing animation
     this.tweens.add({
       targets: worm,
       scaleY: 1.12,
-      y: 426,
+      y: 66,
       duration: 2200,
       yoyo: true,
       repeat: -1,
       ease: 'Sine.easeInOut',
     });
 
-    // Tap/Click reaction on Worm (Squash & Stretch comic reaction)
     worm.on('pointerdown', () => {
       this.platform.vibrate(30);
       this.tweens.add({
@@ -61,16 +64,14 @@ export class MenuScene extends Phaser.Scene {
       });
     });
 
-    // Punk Rat near slime puddle on the floor
-    const ratX = 485;
-    const ratY = 535;
+    // Punk Rat
+    const ratX = -155;
+    const ratY = 175;
 
-    // Grounding shadow under rat
     const ratShadow = this.add.ellipse(ratX, ratY + 70, 75, 18, 0x000000, 0.4);
-
     const rat = this.add.image(ratX, ratY, 'char_rat').setInteractive({ useHandCursor: true });
     rat.setScale(0.85);
-    rat.setFlipX(true); // Mirrored to look into the scene
+    rat.setFlipX(true);
 
     this.tweens.add({
       targets: rat,
@@ -104,16 +105,17 @@ export class MenuScene extends Phaser.Scene {
 
     // 4. Vertical Button Stack (Left side)
     const buttonConfigs = [
-      { key: 'btn_play', y: 235, scale: 0.62, action: () => this.startGame() },
-      { key: 'btn_heroes', y: 295, scale: 0.62, action: () => this.onButtonClick('Heroes') },
-      { key: 'btn_upgrades', y: 352, scale: 0.62, action: () => this.onButtonClick('Upgrades') },
-      { key: 'btn_bestiary', y: 410, scale: 0.62, action: () => this.onButtonClick('Bestiary') },
-      { key: 'btn_settings', y: 468, scale: 0.62, action: () => this.onButtonClick('Settings') },
-      { key: 'btn_quit', y: 528, scale: 0.62, action: () => this.onButtonClick('Quit') },
+      { key: 'btn_play', y: -125, scale: 0.62, action: () => this.startGame() },
+      { key: 'btn_heroes', y: -65, scale: 0.62, action: () => this.onButtonClick('Heroes') },
+      { key: 'btn_upgrades', y: -8, scale: 0.62, action: () => this.onButtonClick('Upgrades') },
+      { key: 'btn_bestiary', y: 50, scale: 0.62, action: () => this.onButtonClick('Bestiary') },
+      { key: 'btn_settings', y: 108, scale: 0.62, action: () => this.onButtonClick('Settings') },
+      { key: 'btn_quit', y: 168, scale: 0.62, action: () => this.onButtonClick('Quit') },
     ];
 
+    const buttons: Phaser.GameObjects.Image[] = [];
     buttonConfigs.forEach((cfg, idx) => {
-      const btn = this.add.image(260, cfg.y, cfg.key).setInteractive({ useHandCursor: true });
+      const btn = this.add.image(-380, cfg.y, cfg.key).setInteractive({ useHandCursor: true });
       btn.setScale(cfg.scale);
 
       const baseScale = cfg.scale;
@@ -153,11 +155,12 @@ export class MenuScene extends Phaser.Scene {
           },
         });
       });
+
+      buttons.push(btn);
     });
 
     // 5. Bottom UI
-    // Daily Goo
-    const dailyGoo = this.add.image(80, 648, 'daily_goo').setInteractive({ useHandCursor: true });
+    const dailyGoo = this.add.image(-560, 288, 'daily_goo').setInteractive({ useHandCursor: true });
     dailyGoo.setScale(0.62);
     this.tweens.add({
       targets: dailyGoo,
@@ -169,22 +172,21 @@ export class MenuScene extends Phaser.Scene {
       ease: 'Sine.easeInOut',
     });
 
-    // Mission Plank
-    const mission = this.add.image(620, 658, 'mission_plank');
+    const mission = this.add.image(-20, 298, 'mission_plank');
     mission.setScale(0.62);
 
-    // Social Buttons
-    const social = this.add.image(1165, 650, 'social_buttons').setInteractive({ useHandCursor: true });
+    const social = this.add.image(525, 290, 'social_buttons').setInteractive({ useHandCursor: true });
     social.setScale(0.62);
 
-    // Top Right Action Buttons (Trophy / Leaderboard and Help / Tutorial) — duplicate Settings Gear removed
+    // Top Right Action Buttons
+    const topIcons: Phaser.GameObjects.Image[] = [];
     const topButtonConfigs = [
-      { key: 'icon_trophy', x: 1160, action: () => this.onButtonClick('Leaderboard') },
-      { key: 'icon_help', x: 1220, action: () => this.onButtonClick('Help') },
+      { key: 'icon_trophy', x: 520, action: () => this.onButtonClick('Leaderboard') },
+      { key: 'icon_help', x: 580, action: () => this.onButtonClick('Help') },
     ];
 
     topButtonConfigs.forEach((cfg) => {
-      const icon = this.add.image(cfg.x, 50, cfg.key).setInteractive({ useHandCursor: true });
+      const icon = this.add.image(cfg.x, -310, cfg.key).setInteractive({ useHandCursor: true });
       icon.setScale(0.62);
 
       icon.on('pointerover', () => {
@@ -217,7 +219,21 @@ export class MenuScene extends Phaser.Scene {
           onComplete: cfg.action,
         });
       });
+
+      topIcons.push(icon);
     });
+
+    uiContainer.add([
+      logo,
+      worm,
+      ratShadow,
+      rat,
+      ...buttons,
+      dailyGoo,
+      mission,
+      social,
+      ...topIcons,
+    ]);
 
     // 6. Platform / User Info Watermark
     const platformText = this.platform.isTelegram
@@ -229,9 +245,15 @@ export class MenuScene extends Phaser.Scene {
       color: '#64748b',
       fontFamily: 'monospace',
     }).setOrigin(1, 1);
+
+    // Request Fullscreen on user tap to hide mobile browser address bar
+    this.input.once('pointerdown', () => {
+      this.platform.requestFullscreen?.();
+    });
   }
 
   private startGame(): void {
+    this.platform.requestFullscreen?.();
     this.cameras.main.fade(300, 11, 14, 20, false, (_cam: any, progress: number) => {
       if (progress === 1) {
         this.scene.start('GameScene');

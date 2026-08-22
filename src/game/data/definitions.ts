@@ -95,12 +95,31 @@ export interface PlayerModifiers {
   cheatDeathUsed: boolean;
   cheatDeathUnlocked: boolean;
 
-  // Trackers
+  // Trackers & Megabonk Weapons/Tomes
   fatSpitScale: number;
   extraRange: number;
   wriggleDash: boolean;
   acidTrail: boolean;
+
+  // Active Weapons
+  homingDaggersLevel: number;
+  homingDaggersCount: number;
+  bouncingBonesLevel: number;
+  bouncingBonesCount: number;
+  lightningZapLevel: number;
+  staticZapCharge: number;
+  staticZapMax: number;
+  acidTrailLevel: number;
+  acidTrailDps: number;
+
+  // Global Tomes
+  tomeQuantity: number;
+  tomeSpeed: number;
+  tomeMagnet: number;
+  tomeCritSize: number;
 }
+
+export type UpgradeCategory = 'weapon' | 'tome' | 'consumable';
 
 export interface UpgradeLevelConfig {
   level: number;
@@ -111,6 +130,7 @@ export interface UpgradeLevelConfig {
 export interface UpgradeDefinition {
   id: string;
   name: string;
+  category?: UpgradeCategory;
   isConsumable?: boolean;
   iconKey?: string;
   maxLevel: number;

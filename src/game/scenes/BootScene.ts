@@ -233,5 +233,29 @@ export class BootScene extends Phaser.Scene {
     shrineGfx.strokeTriangle(0, 16, 32, 16, 16, 32);
     shrineGfx.generateTexture('tex_prop_shrine', 32, 32);
     shrineGfx.destroy();
+
+    // 16. Wireless Homing Dagger (Cyan glowing sharp projectile)
+    const daggerGfx = this.make.graphics({ x: 0, y: 0 });
+    daggerGfx.fillStyle(0x38bdf8, 1);
+    daggerGfx.fillTriangle(20, 7, 0, 0, 0, 14);
+    daggerGfx.lineStyle(1.5, 0xffffff, 1);
+    daggerGfx.strokeTriangle(20, 7, 0, 0, 0, 14);
+    daggerGfx.fillStyle(0xffffff, 1);
+    daggerGfx.fillCircle(6, 7, 3);
+    daggerGfx.generateTexture('tex_homing_dagger', 22, 16);
+    daggerGfx.destroy();
+
+    // 17. Bouncing Bone (Ivory cartoon bone)
+    const boneGfx = this.make.graphics({ x: 0, y: 0 });
+    boneGfx.fillStyle(0xfef08a, 1);
+    boneGfx.fillRect(6, 7, 16, 6);
+    boneGfx.fillCircle(5, 5, 4);
+    boneGfx.fillCircle(5, 15, 4);
+    boneGfx.fillCircle(23, 5, 4);
+    boneGfx.fillCircle(23, 15, 4);
+    boneGfx.lineStyle(1.5, 0x713f12, 1);
+    boneGfx.strokeRect(6, 7, 16, 6);
+    boneGfx.generateTexture('tex_bouncing_bone', 28, 20);
+    boneGfx.destroy();
   }
 }

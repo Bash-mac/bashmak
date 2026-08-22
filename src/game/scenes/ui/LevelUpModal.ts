@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import type { UpgradeDefinition } from '../../data/definitions';
-import { WORM_UPGRADES } from '../../data/upgrades';
+import { ALL_UPGRADES } from '../../data/upgrades';
 import { GameState } from '../../core/GameState';
 import { createPlatformAdapter } from '../../../platform';
 
@@ -58,7 +58,7 @@ export class LevelUpModal {
 
     // 3. Get eligible options from GameState (respects 4-slot limit)
     const gameState = GameState.getInstance();
-    const options = gameState.getEligibleUpgrades(WORM_UPGRADES, 3);
+    const options = gameState.getEligibleUpgrades(ALL_UPGRADES, 3);
 
     const cardWidth = 330;
     const cardHeight = 380;
@@ -96,11 +96,12 @@ export class LevelUpModal {
       .setInteractive({ useHandCursor: true });
 
     // Level Header / Badge (Depth: 10003)
-    let badgeText = 'НОВАЯ МУТАЦИЯ';
+    let badgeText = upgrade.category === 'weapon' ? '⚔️ ОРУЖИЕ' : upgrade.category === 'tome' ? '📜 ФОЛИАНТ' : 'НОВАЯ МУТАЦИЯ';
     if (isConsumable) {
-      badgeText = 'РАСХОДНИК';
+      badgeText = '🧪 РАСХОДНИК';
     } else if (levelToApply > 1) {
-      badgeText = `УРОВЕНЬ ${levelToApply - 1} → ${levelToApply}`;
+      const catPrefix = upgrade.category === 'weapon' ? '⚔️ ОРУЖИЕ' : upgrade.category === 'tome' ? '📜 ФОЛИАНТ' : '';
+      badgeText = `${catPrefix} LVL ${levelToApply - 1} → ${levelToApply}`;
     }
 
     const badgeLabel = this.scene.add

@@ -74,6 +74,23 @@ export class GameState {
       extraRange: 0,
       wriggleDash: false,
       acidTrail: false,
+
+      // Active Weapons
+      homingDaggersLevel: 1, // Starts with Wireless Needles Lv.1
+      homingDaggersCount: 1,
+      bouncingBonesLevel: 0,
+      bouncingBonesCount: 0,
+      lightningZapLevel: 0,
+      staticZapCharge: 0,
+      staticZapMax: 100,
+      acidTrailLevel: 0,
+      acidTrailDps: 0,
+
+      // Global Tomes
+      tomeQuantity: 0,
+      tomeSpeed: 0,
+      tomeMagnet: 0,
+      tomeCritSize: 0,
     };
   }
 
@@ -99,15 +116,8 @@ export class GameState {
    */
   public calculateXpForLevel(lvl: number): number {
     const n = Math.max(1, lvl);
-    if (n <= 20) {
-      return 5 + (n - 1) * 10;
-    }
-    if (n <= 40) {
-      const xp20 = 5 + 19 * 10; // 195
-      return xp20 + (n - 20) * 13;
-    }
-    const xp40 = 195 + 20 * 13; // 455
-    return Math.floor(xp40 + (n - 40) * 16 + Math.pow(n - 40, 1.1));
+    // Smooth power curve: Lvl 1: 15, Lvl 3: 40, Lvl 6: 120, Lvl 10: 380, Lvl 15: 850, Lvl 20: 1550
+    return Math.round(12 + Math.pow(n, 1.75) * 8.5);
   }
 
   updateTime(deltaSeconds: number): void {

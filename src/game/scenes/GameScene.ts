@@ -54,9 +54,13 @@ export class GameScene extends Phaser.Scene {
   private wriggleAura?: Phaser.GameObjects.Graphics;
   private wriggleDashTimer = 0;
 
-  // Attacks & Counters
+  // Attacks & Counters (Megabonk Arsenal)
   private attackTimer = 0;
+  private boneAttackTimer = 0;
   private totalPlayerAttacks = 0;
+  private staticZapCurrent = 0;
+  private acidTrailTimer = 0;
+  private zapGraphics?: Phaser.GameObjects.Graphics;
 
   // Boss state
   private bossDashTimer = 0;
@@ -86,6 +90,9 @@ export class GameScene extends Phaser.Scene {
     this.isGamePaused = false;
     this.playerIframeTimerMs = 0;
     this.isDying = false;
+    this.staticZapCurrent = 0;
+    this.boneAttackTimer = 0;
+    this.acidTrailTimer = 0;
 
     // 1. World & Floor
     const worldSize = 4000;
@@ -109,6 +116,7 @@ export class GameScene extends Phaser.Scene {
     // 4. Visual effects
     this.wriggleAura = this.add.graphics().setDepth(5);
     this.bossTelegraphGfx = this.add.graphics().setDepth(6);
+    this.zapGraphics = this.add.graphics().setDepth(15);
 
     // 5. Systems
     this.combatSystem = new CombatSystem();
@@ -262,8 +270,22 @@ export class GameScene extends Phaser.Scene {
 
           // Splash Damage
           const mods = this.gameState.playerModifiers;
-          if (mods.splashRadius > 0) {
-            this.applyAreaDamageToEnemies(enemy.x, enemy.y, mods.splashRadius, dmg * mods.splashPercent, enemy.id);
+          if (mods.splashPercent > 0) {
+            this.applyAreaDamageToEnemies(enemy.x, enemy.y, 45, dmg * mods.splashPercent, enemy.id);
+          }
+
+          // Bouncing Bone Ricochet
+          const bounces = (projectile.getData('bounces') as number) || 0;
+          if (bounces > 0) {
+            projectile.setData('bounces', bounces - 1);
+            const otherTarget = this.findClosestEnemyExcluding(enemy.x, enemy.y, enemy.id);
+            if (otherTarget) {
+              const bAngle = Phaser.Math.Angle.Between(enemy.x, enemy.y, otherTarget.x, otherTarget.y);
+              projectile.setVelocity(Math.cos(bAngle) * 480, Math.sin(bAngle) * 480);
+            } else {
+              projectile.setVelocity(-projectile.body.velocity.x, -projectile.body.velocity.y);
+            }
+            return;
           }
 
           // Piercing
@@ -668,36 +690,110 @@ export class GameScene extends Phaser.Scene {
 
     this.hud.update(this.gameState);
 
-    // 1. Player Movement & Passive
+    // 1. Player Movement & Megabonk Passives (Static Zap & Acid Trail)
     this.handlePlayerMovement(delta);
 
-    // 2. XP Magnet attraction
+    // 2. XP Magnet attraction (Scales with level: +2% per level + Tome of Magnetism)
     this.handleXpMagnet(deltaSeconds);
 
     // 3. Acid Pools
     this.handleAcidPools(delta);
 
-    // 4. Pure Melee Swarm AI with Wrap-Around
+    // 4. Melee Swarm AI with Wrap-Around
     this.handleEnemiesAI(delta);
 
     // 5. Spawning (Target population)
     this.spawnManager.setEnemyCount(this.enemiesMap.size);
     this.spawnManager.update(delta, this.gameState.runTime);
 
-    // 6. Predictive Auto-attack
+    // 6. Megabonk Active Weapons Auto-attack
     this.handleAutoAttack(delta);
+
+    // 7. Projectile Homing & Physics Guidance
+    this.handleProjectileHoming(deltaSeconds);
+  }
+
+  private handleProjectileHoming(_deltaSec: number): void {
+    const projs = this.playerProjectilesGroup.getChildren() as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody[];
+    for (const p of projs) {
+      if (!p.active || !p.body) continue;
+
+      if (p.getData('isHoming')) {
+        const target = this.findClosestEnemy(p.x, p.y);
+        if (target && target.sprite && target.isAlive) {
+          const targetAngle = Phaser.Math.Angle.Between(p.x, p.y, target.x, target.y);
+          const curAngle = Math.atan2(p.body.velocity.y, p.body.velocity.x);
+          const newAngle = Phaser.Math.Angle.RotateTo(curAngle, targetAngle, 0.22);
+          const spd = (p.getData('speed') as number) || 580;
+          p.setVelocity(Math.cos(newAngle) * spd, Math.sin(newAngle) * spd);
+          p.rotation = newAngle;
+        }
+      } else if (p.getData('isBone')) {
+        p.rotation += 0.35; // Continuous bone spin
+      }
+    }
+  }
+
+  private findClosestEnemy(x: number, y: number): Entity | null {
+    let closest: Entity | null = null;
+    let minD = Infinity;
+
+    this.enemiesMap.forEach((enemy) => {
+      if (!enemy.isAlive || enemy.isExploding) return;
+      const d = Phaser.Math.Distance.Between(x, y, enemy.x, enemy.y);
+      if (d < minD && d < 650) {
+        minD = d;
+        closest = enemy;
+      }
+    });
+
+    return closest;
+  }
+
+  private findClosestEnemyExcluding(x: number, y: number, excludeId: string): Entity | null {
+    let closest: Entity | null = null;
+    let minD = Infinity;
+
+    this.enemiesMap.forEach((enemy) => {
+      if (enemy.id === excludeId || !enemy.isAlive || enemy.isExploding) return;
+      const d = Phaser.Math.Distance.Between(x, y, enemy.x, enemy.y);
+      if (d < minD && d < 650) {
+        minD = d;
+        closest = enemy;
+      }
+    });
+
+    return closest;
   }
 
   private handlePlayerMovement(delta: number): void {
     const moveVector = this.inputManager.getMovementVector();
     const isMoving = moveVector.x !== 0 || moveVector.y !== 0;
     const playerSprite = this.playerEntity.sprite!;
+    const mods = this.gameState.playerModifiers;
 
     let currentSpeed = this.playerEntity.effectiveSpeed;
 
+    // Crowd resistance (body-blocking): diving into a horde slows down the worm
+    let touchingEnemies = 0;
+    const px = this.playerEntity.x;
+    const py = this.playerEntity.y;
+    this.enemiesMap.forEach((e) => {
+      if (e.isAlive && !e.isExploding) {
+        if (Phaser.Math.Distance.Between(px, py, e.x, e.y) < 36) {
+          touchingEnemies++;
+        }
+      }
+    });
+
+    if (touchingEnemies > 0) {
+      const crowdResistance = Math.max(0.50, 1 - touchingEnemies * 0.12);
+      currentSpeed *= crowdResistance;
+    }
+
     if (this.wriggleDashTimer > 0) {
       this.wriggleDashTimer -= delta;
-      currentSpeed *= 1.18;
+      currentSpeed *= 1.25;
     }
 
     playerSprite.setVelocity(moveVector.x * currentSpeed, moveVector.y * currentSpeed);
@@ -707,12 +803,30 @@ export class GameScene extends Phaser.Scene {
         playerSprite.setTexture('pose_run');
       }
       playerSprite.setFlipX(moveVector.x < 0);
-      playerSprite.rotation = moveVector.y * 0.15; // Subtle lean instead of full 360 spin
+      playerSprite.rotation = moveVector.y * 0.15;
       this.movingTimerMs += delta;
+
+      // 1. Static Zap charging on continuous run
+      if (mods.lightningZapLevel > 0) {
+        this.staticZapCurrent += delta * (0.05 + (mods.lightningZapLevel - 1) * 0.02);
+        if (this.staticZapCurrent >= (mods.staticZapMax || 100)) {
+          this.staticZapCurrent = 0;
+          this.triggerStaticZap();
+        }
+      }
+
+      // 2. Acid Trail dropping
+      if (mods.acidTrail) {
+        this.acidTrailTimer += delta;
+        if (this.acidTrailTimer >= 160) {
+          this.acidTrailTimer = 0;
+          this.spawnAcidPool(this.playerEntity.x, this.playerEntity.y, 28, mods.acidTrailDps || 15, 3500, true);
+        }
+      }
 
       if (this.movingTimerMs >= 1200 && !this.isWriggleCharged) {
         this.isWriggleCharged = true;
-        if (this.gameState.playerModifiers.wriggleDash) {
+        if (mods.wriggleDash) {
           this.wriggleDashTimer = 1000;
         }
       }
@@ -734,12 +848,54 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  private triggerStaticZap(): void {
+    const mods = this.gameState.playerModifiers;
+    const targetCount = 3 + mods.lightningZapLevel;
+    const zapRange = 320 + mods.extraRange;
+    const targets = this.findNearbyEnemies(zapRange).slice(0, targetCount);
+    if (targets.length === 0) return;
+
+    if (this.zapGraphics) {
+      this.zapGraphics.clear();
+      this.zapGraphics.lineStyle(3, 0x38bdf8, 1);
+
+      let prevX = this.playerEntity.x;
+      let prevY = this.playerEntity.y;
+
+      for (const t of targets) {
+        // Draw jagged electric bolt line
+        const midX = (prevX + t.x) / 2 + (Math.random() - 0.5) * 20;
+        const midY = (prevY + t.y) / 2 + (Math.random() - 0.5) * 20;
+        this.zapGraphics.lineBetween(prevX, prevY, midX, midY);
+        this.zapGraphics.lineBetween(midX, midY, t.x, t.y);
+
+        const zapDmg = Math.round(28 * (1 + mods.damagePercentBonus) * (1 + mods.lightningZapLevel * 0.25));
+        this.combatSystem.applyDamage(this.playerEntity, t, zapDmg);
+        if (t.sprite) {
+          this.flashSprite(t.sprite, 0x38bdf8);
+        }
+
+        prevX = t.x;
+        prevY = t.y;
+      }
+
+      this.time.delayedCall(120, () => {
+        this.zapGraphics?.clear();
+      });
+    }
+
+    this.platform.vibrate(30);
+  }
+
   /**
-   * Vampire Survivors XP Magnet:
-   * Smoothly pulls nearby gems into the player.
+   * Megabonk Progressive XP Magnet (+2% radius per player level + Tome of Magnetism)
    */
   private handleXpMagnet(deltaSeconds: number): void {
-    const magnetRadius = 90 + this.gameState.playerModifiers.extraRange * 0.5;
+    const mods = this.gameState.playerModifiers;
+    const levelBonus = 1 + (this.gameState.level - 1) * 0.02;
+    const tomeBonus = mods.tomeMagnet > 0 ? (1 + mods.tomeMagnet * 0.4) : 1.0;
+    const magnetRadius = (95 + mods.extraRange) * levelBonus * tomeBonus;
+
     const playerX = this.playerEntity.x;
     const playerY = this.playerEntity.y;
 
@@ -750,7 +906,7 @@ export class GameScene extends Phaser.Scene {
       const dist = Phaser.Math.Distance.Between(playerX, playerY, gem.x, gem.y);
       if (dist <= magnetRadius) {
         let speed = (gem.getData('speed') as number) || 0;
-        speed += (WORM_HERO.stats.speed + 380) * deltaSeconds;
+        speed += (WORM_HERO.stats.speed + 420) * deltaSeconds;
         gem.setData('speed', speed);
 
         const angle = Phaser.Math.Angle.Between(gem.x, gem.y, playerX, playerY);
@@ -912,94 +1068,91 @@ export class GameScene extends Phaser.Scene {
     const baseInterval = WORM_HERO.attackIntervalMs / baseSpeed;
 
     this.attackTimer += delta;
-    if (this.attackTimer < baseInterval) return;
 
-    const maxRange = 240 + mods.extraRange;
-    const targets = this.findNearbyEnemies(maxRange);
-    if (targets.length === 0) return;
+    // 1. Primary Weapon: Wireless Homing Daggers (Needles)
+    if (this.attackTimer >= baseInterval) {
+      const maxRange = 280 + mods.extraRange;
+      const targets = this.findNearbyEnemies(maxRange);
 
-    this.attackTimer = 0;
-    this.totalPlayerAttacks += 1;
+      if (targets.length > 0) {
+        this.attackTimer = 0;
+        this.totalPlayerAttacks += 1;
 
-    const primaryTarget = targets[0];
-    let primaryDamage = this.playerEntity.stats.damage * (1 + mods.damagePercentBonus);
-    const isWriggle = this.isWriggleCharged;
+        const primaryTarget = targets[0];
+        let primaryDamage = this.playerEntity.stats.damage * (1 + mods.damagePercentBonus);
 
-    // Low HP rage damage bonus (Hot Blood)
-    if (this.playerEntity.health.percent < mods.lowHpDmgThreshold) {
-      primaryDamage *= (1 + mods.lowHpDmgBonus);
-    }
-
-    if (isWriggle) {
-      primaryDamage *= 1.25;
-    }
-
-    // Critical Hits (Fang Spit Lv.3+)
-    let isCrit = false;
-    if (mods.critChance > 0 && Math.random() < mods.critChance) {
-      isCrit = true;
-      primaryDamage *= mods.critMultiplier;
-    }
-
-    const pierceValue = mods.pierceCount;
-
-    // Trigger visual spit attack animation
-    const playerSprite = this.playerEntity.sprite;
-    if (playerSprite && playerSprite.active) {
-      playerSprite.setTexture('pose_ranged_spit');
-      playerSprite.setData('isAttacking', true);
-      this.time.delayedCall(160, () => {
-        if (playerSprite.active) {
-          playerSprite.setData('isAttacking', false);
+        // Low HP rage bonus
+        if (this.playerEntity.health.percent < mods.lowHpDmgThreshold) {
+          primaryDamage *= (1 + mods.lowHpDmgBonus);
         }
-      });
+
+        // Critical Hits
+        let isCrit = false;
+        if (mods.critChance > 0 && Math.random() < mods.critChance) {
+          isCrit = true;
+          primaryDamage *= mods.critMultiplier;
+        }
+
+        // Trigger visual spit attack animation
+        const playerSprite = this.playerEntity.sprite;
+        if (playerSprite && playerSprite.active) {
+          playerSprite.setTexture('pose_ranged_spit');
+          playerSprite.setData('isAttacking', true);
+          this.time.delayedCall(160, () => {
+            if (playerSprite.active) {
+              playerSprite.setData('isAttacking', false);
+            }
+          });
+        }
+
+        const totalDaggers = Math.max(1, mods.homingDaggersCount);
+        const bursts = Math.max(1, mods.burstFireCount);
+
+        for (let b = 0; b < bursts; b++) {
+          this.time.delayedCall(b * 75, () => {
+            const spreadAngle = 0.32;
+            const startAngle = -((totalDaggers - 1) * spreadAngle) / 2;
+
+            for (let i = 0; i < totalDaggers; i++) {
+              const target = targets[i % targets.length] || primaryTarget;
+              this.fireHomingDagger(
+                this.playerEntity.x,
+                this.playerEntity.y,
+                target,
+                primaryDamage,
+                isCrit,
+                mods.pierceCount,
+                startAngle + i * spreadAngle
+              );
+            }
+          });
+        }
+      }
     }
 
-    // Fire function to handle single/burst/multishot
-    const executeFire = (targetEnt: Entity, dmg: number, angleOffset = 0) => {
-      this.fireSlimeSpit(
-        this.playerEntity.x,
-        this.playerEntity.y,
-        targetEnt,
-        dmg,
-        isWriggle || isCrit,
-        pierceValue,
-        angleOffset
-      );
-    };
+    // 2. Secondary Weapon: Bouncing Bones
+    if (mods.bouncingBonesLevel > 0) {
+      this.boneAttackTimer += delta;
+      const boneInterval = 1800 / (1 + mods.attackSpeedBonus * 0.7);
 
-    const bursts = Math.max(1, mods.burstFireCount);
-    for (let b = 0; b < bursts; b++) {
-      this.time.delayedCall(b * 80, () => {
-        if (!primaryTarget.isAlive) return;
+      if (this.boneAttackTimer >= boneInterval) {
+        this.boneAttackTimer = 0;
+        const targets = this.findNearbyEnemies(350 + mods.extraRange);
+        if (targets.length > 0) {
+          const boneCount = Math.max(1, mods.bouncingBonesCount);
+          const boneDamage = Math.round(primaryTargetDamage() * 1.4);
 
-        // Multishot Fan Spread (Double Spit Lv.3+)
-        if (mods.multishotCount > 1) {
-          const count = mods.multishotCount;
-          const spreadAngle = 0.28; // ~16 degrees
-          const startAngle = -((count - 1) * spreadAngle) / 2;
-
-          for (let i = 0; i < count; i++) {
-            executeFire(primaryTarget, primaryDamage, startAngle + i * spreadAngle);
-          }
-        } else {
-          executeFire(primaryTarget, primaryDamage, 0);
-
-          // 2nd Spit chance if not multishot
-          const hasDoubleSpit = Math.random() < mods.doubleSpitChance;
-          if (hasDoubleSpit && targets.length > 1) {
-            executeFire(targets[1], primaryDamage * 0.7, 0.15);
+          for (let i = 0; i < boneCount; i++) {
+            const angle = (Math.PI * 2 * i) / boneCount + Math.random() * 0.4;
+            this.fireBouncingBone(this.playerEntity.x, this.playerEntity.y, angle, boneDamage, mods.bounceCount || 3);
           }
         }
-      });
+      }
     }
 
-    if (isWriggle && mods.acidTrail) {
-      this.spawnAcidPool(primaryTarget.x, primaryTarget.y, 40, 8, 2000, true);
+    function primaryTargetDamage(): number {
+      return 24 * (1 + mods.damagePercentBonus);
     }
-
-    this.isWriggleCharged = false;
-    this.movingTimerMs = 0;
   }
 
   private findNearbyEnemies(range: number): Entity[] {
@@ -1017,42 +1170,63 @@ export class GameScene extends Phaser.Scene {
     return valid.map((v) => v.entity);
   }
 
-  private fireSlimeSpit(
+  private fireHomingDagger(
     startX: number,
     startY: number,
     target: Entity,
     damage: number,
-    isEmpowered: boolean,
+    isCrit: boolean,
     pierce: number,
     angleOffset = 0
   ): void {
-    const proj = this.playerProjectilesGroup.create(startX, startY, 'tex_slime_spit') as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
-    const scale = (this.gameState.playerModifiers.fatSpitScale || 1.0) * (isEmpowered ? 1.3 : 1.0);
+    const proj = this.playerProjectilesGroup.create(startX, startY, 'tex_homing_dagger') as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
+    const scale = (this.gameState.playerModifiers.fatSpitScale || 1.0) * (isCrit ? 1.4 : 1.1);
 
     proj.setScale(scale);
-    proj.setCircle(9 * scale);
+    proj.setCircle(7 * scale);
     proj.setData('damage', Math.round(damage));
     proj.setData('pierce', pierce);
+    proj.setData('isHoming', true);
+    proj.setData('speed', 580);
     proj.setDepth(9);
 
-    if (isEmpowered) {
+    if (isCrit) {
       proj.setTint(0xfacc15);
     }
 
-    const vx = target.sprite?.body ? target.sprite.body.velocity.x : 0;
-    const vy = target.sprite?.body ? target.sprite.body.velocity.y : 0;
-    const dist = Phaser.Math.Distance.Between(startX, startY, target.x, target.y);
-    const speed = 520;
-    const timeToHit = dist / speed;
+    const angle = Phaser.Math.Angle.Between(startX, startY, target.x, target.y) + angleOffset;
+    proj.setVelocity(Math.cos(angle) * 580, Math.sin(angle) * 580);
+    proj.rotation = angle;
 
-    const aimX = target.x + vx * timeToHit * 0.75;
-    const aimY = target.y + vy * timeToHit * 0.75;
-
-    let angle = Phaser.Math.Angle.Between(startX, startY, aimX, aimY) + angleOffset;
-    proj.setVelocity(Math.cos(angle) * speed, Math.sin(angle) * speed);
-
-    this.time.delayedCall(850, () => {
+    this.time.delayedCall(1200, () => {
       if (proj && proj.active) proj.destroy();
+    });
+  }
+
+  private fireBouncingBone(
+    startX: number,
+    startY: number,
+    angle: number,
+    damage: number,
+    bounces: number
+  ): void {
+    const bone = this.playerProjectilesGroup.create(startX, startY, 'tex_bouncing_bone') as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
+    const scale = (this.gameState.playerModifiers.fatSpitScale || 1.0) * 1.2;
+
+    bone.setScale(scale);
+    bone.setCircle(10 * scale);
+    bone.setData('damage', damage);
+    bone.setData('bounces', bounces);
+    bone.setData('isBone', true);
+    bone.setBounce(1, 1);
+    bone.setCollideWorldBounds(true);
+    bone.setDepth(9);
+
+    const speed = 440;
+    bone.setVelocity(Math.cos(angle) * speed, Math.sin(angle) * speed);
+
+    this.time.delayedCall(3000, () => {
+      if (bone && bone.active) bone.destroy();
     });
   }
 

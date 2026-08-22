@@ -26,4 +26,16 @@ export class BrowserPlatformAdapter implements IPlatformAdapter {
       }
     }
   }
+
+  requestFullscreen(): void {
+    try {
+      if (!document.fullscreenElement) {
+        const el = document.documentElement as any;
+        const rfs = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+        rfs?.call(el);
+      }
+    } catch {
+      // Fullscreen not permitted without direct user gesture
+    }
+  }
 }

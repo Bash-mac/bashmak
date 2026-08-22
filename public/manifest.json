@@ -1,0 +1,17 @@
+﻿{
+  "name": "Bashmak: Cartoon Roguelite",
+  "short_name": "Bashmak",
+  "description": "Gross-out action survivor game featuring Bashmak the worm",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#0b0e14",
+  "theme_color": "#0b0e14",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}

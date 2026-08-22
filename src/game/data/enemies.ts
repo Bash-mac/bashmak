@@ -14,7 +14,7 @@ export const FODDER_BAT: EnemyDefinition = {
     damage: 5,
     armor: 0,
   },
-  xpReward: 2,
+  xpReward: 1,
 };
 
 // 2. Ползун (Swarmer) — базовая плотная масса
@@ -31,7 +31,7 @@ export const CRAWLER_SWARM: EnemyDefinition = {
     damage: 7,
     armor: 0,
   },
-  xpReward: 4,
+  xpReward: 2,
 };
 
 // 3. Спринтер (Fast Flanker) — быстрый жук, нападает с флангов
@@ -48,7 +48,7 @@ export const SPRINTER_BUG: EnemyDefinition = {
     damage: 6,
     armor: 0,
   },
-  xpReward: 5,
+  xpReward: 3,
 };
 
 // 4. Броневик / Таран (Armored Tank) — медленный, жирный, пробивает путь
@@ -65,7 +65,7 @@ export const ARMORED_SLUG: EnemyDefinition = {
     damage: 15,
     armor: 1,
   },
-  xpReward: 12,
+  xpReward: 6,
 };
 
 // 5. Разрывник (Exploder) — при сближении шипит 1с (телеграф), затем бахает
@@ -84,7 +84,7 @@ export const EXPLODER_SPORE: EnemyDefinition = {
   },
   explosionRadius: 80,
   explosionDamage: 22,
-  xpReward: 6,
+  xpReward: 4,
 };
 
 // 6. Элитный Мутант (Mini-Boss) — появляется на 5-й минуте
@@ -101,7 +101,7 @@ export const MINI_BOSS_ELITE: EnemyDefinition = {
     damage: 18,
     armor: 1,
   },
-  xpReward: 45,
+  xpReward: 30,
 };
 
 // 7. Финальный Босс — «Курган» (на 10-й минуте)
@@ -118,7 +118,7 @@ export const BOSS_KURGAN: EnemyDefinition = {
     damage: 22,
     armor: 2,
   },
-  xpReward: 150,
+  xpReward: 100,
 };
 
 export const ENEMIES_REGISTRY: Record<string, EnemyDefinition> = {

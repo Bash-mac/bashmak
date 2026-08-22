@@ -14,4 +14,5 @@ export interface IPlatformAdapter {
   initialize(): Promise<void>;
   getUser(): UserInfo | null;
   vibrate(durationMs?: number): void;
+  requestFullscreen?(): void;
 }
