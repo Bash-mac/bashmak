@@ -5,6 +5,26 @@ export class BootScene extends Phaser.Scene {
     super({ key: 'BootScene' });
   }
 
+  preload(): void {
+    // Menu Assets
+    this.load.image('menu_bg', '/assets/menu/bg_sewer.webp');
+    this.load.image('menu_logo', '/assets/menu/logo.webp');
+    this.load.image('btn_play', '/assets/menu/btn_play.webp');
+    this.load.image('btn_heroes', '/assets/menu/btn_heroes.webp');
+    this.load.image('btn_upgrades', '/assets/menu/btn_upgrades.webp');
+    this.load.image('btn_bestiary', '/assets/menu/btn_bestiary.webp');
+    this.load.image('btn_settings', '/assets/menu/btn_settings.webp');
+    this.load.image('btn_quit', '/assets/menu/btn_quit.webp');
+    this.load.image('daily_goo', '/assets/menu/daily_goo.webp');
+    this.load.image('mission_plank', '/assets/menu/mission_plank.webp');
+    this.load.image('icon_trophy', '/assets/menu/icon_trophy.webp');
+    this.load.image('icon_help', '/assets/menu/icon_help.webp');
+    this.load.image('icon_gear', '/assets/menu/icon_gear.webp');
+    this.load.image('social_buttons', '/assets/menu/social_buttons.webp');
+    this.load.image('char_worm', '/assets/menu/char_worm.webp');
+    this.load.image('char_rat', '/assets/menu/char_rat.webp');
+  }
+
   create(): void {
     this.createPlaceholderTextures();
     this.scene.start('MenuScene');

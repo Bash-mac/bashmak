@@ -7,12 +7,12 @@ import { ResultScene } from '../game/scenes/ResultScene';
 export const GameConfig: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
   parent: 'game-container',
-  backgroundColor: '#121824',
+  backgroundColor: '#0b0e14',
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
-    width: 800,
-    height: 600,
+    width: 1280,
+    height: 720,
   },
   physics: {
     default: 'arcade',

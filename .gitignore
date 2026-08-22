@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local project design and agent rules
+DESIGN.md
+AGENTS.md
+
