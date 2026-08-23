@@ -8,13 +8,14 @@ import { LevelUpModal } from './ui/LevelUpModal';
 import { CombatSystem } from '../combat/CombatSystem';
 import { SpawnManager, type EnemyScaling } from '../spawning/SpawnManager';
 import { Entity } from '../entities/Entity';
-import { WORM_HERO } from '../data/heroes';
-import type { EnemyDefinition } from '../data/definitions';
+import { getHeroById } from '../data/heroes';
+import type { EnemyDefinition, HeroDefinition } from '../data/definitions';
 import { createPlatformAdapter } from '../../platform';
 import { MapGenerator, type MapObjects } from '../map/MapGenerator';
 import { WeaponManager } from '../combat/WeaponManager';
 import { EnemyAISystem } from '../ai/EnemyAISystem';
 import { LootSystem } from '../loot/LootSystem';
+import { AudioManager } from '../audio/AudioManager';
 
 interface AcidPool {
   sprite: Phaser.GameObjects.Sprite;
@@ -37,6 +38,7 @@ export class GameScene extends Phaser.Scene {
   private saveManager = SaveManager.getInstance();
   private eventBus = EventBus.getInstance();
   private platform = createPlatformAdapter();
+  private audio = AudioManager.getInstance();
 
   // Subsystems
   private weaponManager!: WeaponManager;
@@ -53,6 +55,8 @@ export class GameScene extends Phaser.Scene {
 
   // Visual Effects & Pools
   private acidPools: AcidPool[] = [];
+  private slimeTrailSegments: Array<{ sprite: Phaser.GameObjects.Sprite; x: number; y: number; timeLeftMs: number }> = [];
+  private slimeDropTimerMs = 0;
 
   // Scene state
   private isGamePaused = false;
@@ -126,25 +130,50 @@ export class GameScene extends Phaser.Scene {
     this.setupEvents();
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.shutdown, this);
 
+    this.audio.init();
+    this.audio.startBgm();
+
     this.eventBus.emit('run:started');
   }
 
+  private currentHero!: HeroDefinition;
+
   private createPlayer(x: number, y: number): void {
-    const sprite = this.physics.add.sprite(x, y, 'tony_idle_1');
+    const heroId = this.saveManager.getSelectedHeroId();
+    this.currentHero = getHeroById(heroId);
+    this.registry.set('selectedHeroId', heroId);
+
+    const textureKey = this.currentHero.textureKey || 'vypolzok_idle_1';
+    const sprite = this.physics.add.sprite(x, y, textureKey);
     sprite.setScale(0.72);
     sprite.setCollideWorldBounds(true);
     sprite.setCircle(24, 40, 56);
     sprite.setDepth(10);
-    sprite.play('tony_anim_idle');
+
+    const isWormTexture = textureKey.startsWith('vypolzok') || textureKey.startsWith('tony');
+    if (isWormTexture && this.anims.exists('vypolzok_anim_idle')) {
+      sprite.play('vypolzok_anim_idle');
+    }
 
     this.playerEntity = new Entity({
       id: 'player',
       type: 'hero',
-      stats: { ...WORM_HERO.stats },
+      stats: { ...this.currentHero.stats },
       sprite,
     });
 
-    // Apply Meta-Progression Permanent PowerUps
+    // 1. Apply Hero Starting Weapon
+    this.gameState.applyStartingWeapon(this.currentHero.startingWeaponId);
+
+    // 2. Apply Hero Unique Trait
+    if (this.currentHero.trait?.apply) {
+      this.currentHero.trait.apply(
+        this.gameState.playerModifiers,
+        this.playerEntity.stats
+      );
+    }
+
+    // 3. Apply Meta-Progression Permanent PowerUps
     this.saveManager.applyToPlayerStats(
       this.playerEntity.stats,
       this.playerEntity.health,
@@ -191,10 +220,14 @@ export class GameScene extends Phaser.Scene {
       old?.sprite.destroy();
     }
 
-    const sprite = this.add.sprite(x, y, 'tex_acid_pool');
+    const sprite = this.add.sprite(x, y, 'vfx_acid_pool_1');
     sprite.setDisplaySize(radius * 2, radius * 2);
-    sprite.setAlpha(0.6);
+    sprite.setAlpha(0.85);
     sprite.setDepth(3);
+
+    if (this.anims.exists('vfx_anim_acid_pool')) {
+      sprite.play('vfx_anim_acid_pool');
+    }
 
     this.acidPools.push({
       sprite,
@@ -223,19 +256,27 @@ export class GameScene extends Phaser.Scene {
           const rawDamage = (proj.getData('damage') as number) || 10;
           this.combatSystem.applyDamage(this.playerEntity, enemy, rawDamage);
 
-          const isBone = proj.getData('isBone') as boolean;
-          if (isBone) {
-            let bounces = (proj.getData('bounces') as number) || 1;
-            bounces -= 1;
-            proj.setData('bounces', bounces);
-            if (bounces <= 0) proj.destroy();
-          } else {
-            let pierce = (proj.getData('pierce') as number) || 0;
-            if (pierce > 0) {
-              proj.setData('pierce', pierce - 1);
-            } else {
-              proj.destroy();
+          // Spawn Gross-out Impact Splat VFX
+          if (this.anims.exists('vfx_anim_impact_splat')) {
+            const splat = this.add.sprite(proj.x, proj.y, 'vfx_impact_splat_1').setDepth(12);
+            splat.setScale(0.75);
+            splat.play('vfx_anim_impact_splat');
+            splat.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => splat.destroy());
+          }
+
+          const isSlimeSpit = proj.getData('isSlimeSpit') as boolean;
+          if (isSlimeSpit) {
+            enemy.applySlow(0.35, 1800);
+            if (Math.random() < 0.60) {
+              this.spawnAcidPool(proj.x, proj.y, 32, 5, 2200, true);
             }
+          }
+
+          let pierce = (proj.getData('pierce') as number) || 0;
+          if (pierce > 0) {
+            proj.setData('pierce', pierce - 1);
+          } else {
+            proj.destroy();
           }
 
           this.flashSprite(enemySprite, 0xffffff);
@@ -338,6 +379,7 @@ export class GameScene extends Phaser.Scene {
         const xp = (gem.getData('xpValue') as number) || 3;
         gem.destroy();
         this.gameState.addXp(xp);
+        this.audio.playXpPickup();
       },
       undefined,
       this
@@ -355,6 +397,7 @@ export class GameScene extends Phaser.Scene {
         drop.destroy();
         this.gameState.addGoo(val);
         this.lootSystem.showFloatText(gx, gy, `+${val} GOO`);
+        this.audio.playGooPickup();
       },
       undefined,
       this
@@ -381,6 +424,17 @@ export class GameScene extends Phaser.Scene {
 
             enemy.destroy();
             this.enemiesMap.delete(data.id);
+
+            // Markovka: Kill-Streak Snowball trait
+            if (this.currentHero?.id === 'hero_markovka') {
+              const mods = this.gameState.playerModifiers;
+              mods.killStreakStacks = Math.min(10, (mods.killStreakStacks || 0) + 1);
+              mods.killStreakTimerMs = 4500;
+              this.playerEntity.applySpeedBoost(1.0 + mods.killStreakStacks * 0.03, 4500);
+              if (mods.killStreakStacks === 10) {
+                this.lootSystem.showFloatText(this.playerEntity.x, this.playerEntity.y - 25, '🥕 MEGA CARROT READY!', '#f97316');
+              }
+            }
           }
         }
       }),
@@ -391,6 +445,7 @@ export class GameScene extends Phaser.Scene {
         this.playerEntity.sprite?.setVelocity(0, 0);
         (this.enemiesGroup.getChildren() as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody[]).forEach((s) => s.body?.setVelocity(0, 0));
         (this.playerProjectilesGroup.getChildren() as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody[]).forEach((s) => s.body?.setVelocity(0, 0));
+        this.audio.playLevelUp();
         this.levelUpModal.show();
       })
     );
@@ -401,6 +456,7 @@ export class GameScene extends Phaser.Scene {
 
     this.playerIframeTimerMs = 500;
     this.playerEntity.health.takeDamage(dmg);
+    this.audio.playPlayerHurt();
 
     const sprite = this.playerEntity.sprite;
     if (sprite && sprite.active && this.playerEntity.isAlive) {
@@ -451,6 +507,7 @@ export class GameScene extends Phaser.Scene {
   private triggerPlayerDeath(): void {
     if (this.isDying) return;
     this.isDying = true;
+    this.audio.stopBgm();
     this.gameState.endRun(false);
 
     this.saveManager.recordRunResult({
@@ -464,7 +521,13 @@ export class GameScene extends Phaser.Scene {
     const sprite = this.playerEntity.sprite;
     if (sprite && sprite.active) {
       sprite.setVelocity(0, 0);
-      sprite.play('tony_anim_dead');
+      const isWorm = (this.currentHero?.textureKey?.startsWith('vypolzok') || this.currentHero?.textureKey?.startsWith('tony')) ?? true;
+      if (isWorm && this.anims.exists('vypolzok_anim_dead')) {
+        sprite.play('vypolzok_anim_dead');
+      } else {
+        sprite.setAngle(90);
+        sprite.setAlpha(0.6);
+      }
     }
     this.physics.pause();
 
@@ -522,6 +585,7 @@ export class GameScene extends Phaser.Scene {
 
     enemy.destroy();
     this.enemiesMap.delete(enemy.id);
+    this.audio.playExplosion();
 
     const shockwave = this.add.circle(x, y, radius, 0xdc2626, 0.7).setDepth(11);
     this.tweens.add({
@@ -543,6 +607,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private triggerScreenWipeBlast(x: number, y: number): void {
+    this.audio.playExplosion();
     const blastGfx = this.add.graphics().setDepth(12);
     blastGfx.lineStyle(6, 0xfacc15, 1);
     blastGfx.fillStyle(0xa855f7, 0.4);
@@ -586,6 +651,7 @@ export class GameScene extends Phaser.Scene {
     // 1. Player Movement & Status
     this.playerEntity.updateStatusEffects(delta);
     const moveVector = this.inputManager.getMovementVector();
+    const isMoving = moveVector.x !== 0 || moveVector.y !== 0;
     const speed = this.playerEntity.effectiveSpeed;
 
     if (this.playerEntity.sprite?.body) {
@@ -598,12 +664,16 @@ export class GameScene extends Phaser.Scene {
       if (moveVector.x < 0) this.playerEntity.sprite.setFlipX(true);
       else if (moveVector.x > 0) this.playerEntity.sprite.setFlipX(false);
 
-      const isMoving = moveVector.x !== 0 || moveVector.y !== 0;
       const sprite = this.playerEntity.sprite;
       if (!sprite.getData('isHurt') && !sprite.getData('isAttacking')) {
-        sprite.play(isMoving ? 'tony_anim_run' : 'tony_anim_idle', true);
+        const isWorm = (this.currentHero?.textureKey?.startsWith('vypolzok') || this.currentHero?.textureKey?.startsWith('tony')) ?? true;
+        if (isWorm && this.anims.exists('vypolzok_anim_run')) {
+          sprite.play(isMoving ? 'vypolzok_anim_run' : 'vypolzok_anim_idle', true);
+        }
       }
     }
+
+    this.handleHeroTraits(delta, isMoving);
 
     // 2. AI & Enemies
     this.enemyAISystem.update(delta, {
@@ -637,9 +707,116 @@ export class GameScene extends Phaser.Scene {
       this.gameState.level
     );
 
-    // 5. Spawning & Pools
+    // 5. Spawning, Pools & Slime Trail
     this.spawnManager.update(delta, this.gameState.runTime);
     this.handleAcidPools(delta);
+    this.handleSlimeTrail(delta, isMoving);
+  }
+
+  private handleSlimeTrail(delta: number, isMoving: boolean): void {
+    const mods = this.gameState.playerModifiers;
+    if (!mods.hasSlimeTrail) return;
+
+    if (isMoving) {
+      this.slimeDropTimerMs += delta;
+      if (this.slimeDropTimerMs >= 130) {
+        this.slimeDropTimerMs = 0;
+        const trailKey = `vfx_slime_trail_${Phaser.Math.Between(1, 5)}`;
+        const sprite = this.add.sprite(this.playerEntity.x, this.playerEntity.y + 12, trailKey);
+        sprite.setScale(0.85);
+        sprite.setAlpha(0.8);
+        sprite.setDepth(2);
+
+        this.slimeTrailSegments.push({
+          sprite,
+          x: this.playerEntity.x,
+          y: this.playerEntity.y + 12,
+          timeLeftMs: 3800,
+        });
+
+        if (this.slimeTrailSegments.length > 35) {
+          const oldest = this.slimeTrailSegments.shift();
+          oldest?.sprite.destroy();
+        }
+      }
+    }
+
+    let onTrail = false;
+    const px = this.playerEntity.x;
+    const py = this.playerEntity.y;
+
+    for (let i = this.slimeTrailSegments.length - 1; i >= 0; i--) {
+      const seg = this.slimeTrailSegments[i];
+      seg.timeLeftMs -= delta;
+
+      if (seg.timeLeftMs <= 0) {
+        seg.sprite.destroy();
+        this.slimeTrailSegments.splice(i, 1);
+        continue;
+      }
+
+      if (seg.timeLeftMs < 800) {
+        seg.sprite.setAlpha((seg.timeLeftMs / 800) * 0.8);
+      }
+
+      if (!onTrail && Phaser.Math.Distance.Between(px, py, seg.x, seg.y) < 45) {
+        onTrail = true;
+      }
+    }
+
+    if (onTrail) {
+      this.playerEntity.applySpeedBoost(1.2, 180);
+    }
+  }
+
+  private handleHeroTraits(delta: number, isMoving: boolean): void {
+    const heroId = this.currentHero?.id || 'hero_worm';
+    const mods = this.gameState.playerModifiers;
+
+    // 1. Bashmak: Heavy Step (Stand Your Ground)
+    if (heroId === 'hero_bashmak') {
+      if (!isMoving) {
+        mods.standStillTimerMs += delta;
+        if (mods.standStillTimerMs >= 1400 && !mods.standStillBonusActive) {
+          mods.standStillBonusActive = true;
+          this.lootSystem.showFloatText(this.playerEntity.x, this.playerEntity.y - 25, '🛡️ STANDING GROUND! (+50% DMG)', '#facc15');
+        }
+      } else {
+        if (mods.standStillBonusActive) {
+          mods.standStillBonusActive = false;
+          mods.standStillTimerMs = 0;
+          this.playerEntity.applySlow(0.25, 1200); // Heavy start penalty
+        } else {
+          mods.standStillTimerMs = 0;
+        }
+      }
+    }
+
+    // 2. Markovka: Speed Thirst Kill-Streak Decay
+    if (heroId === 'hero_markovka') {
+      if (mods.killStreakTimerMs > 0) {
+        mods.killStreakTimerMs -= delta;
+        if (mods.killStreakTimerMs <= 0) {
+          mods.killStreakStacks = 0;
+        }
+      }
+    }
+
+    // 3. Baklazhan: Momentum Ram Charge
+    if (heroId === 'hero_baklazhan') {
+      if (isMoving) {
+        mods.straightRunTimerMs += delta;
+        mods.momentumSpeedBonus = Math.min(0.40, (mods.straightRunTimerMs / 2200) * 0.40);
+        this.playerEntity.applySpeedBoost(1.0 + mods.momentumSpeedBonus, 150);
+
+        if (mods.momentumSpeedBonus >= 0.25) {
+          this.applyAreaDamageToEnemies(this.playerEntity.x, this.playerEntity.y, 44, 18);
+        }
+      } else {
+        mods.straightRunTimerMs = 0;
+        mods.momentumSpeedBonus = 0;
+      }
+    }
   }
 
   private handleAcidPools(delta: number): void {
@@ -666,9 +843,12 @@ export class GameScene extends Phaser.Scene {
   private shutdown(): void {
     this.unbindEvents.forEach((unbind) => unbind());
     this.unbindEvents = [];
+    this.audio.stopBgm();
     this.inputManager.destroy();
     this.lootSystem.clear();
     this.acidPools.forEach((p) => p.sprite.destroy());
     this.acidPools = [];
+    this.slimeTrailSegments.forEach((s) => s.sprite.destroy());
+    this.slimeTrailSegments = [];
   }
 }

@@ -3,6 +3,8 @@ import type { UpgradeDefinition } from '../../data/definitions';
 import { ALL_UPGRADES } from '../../data/upgrades';
 import { GameState } from '../../core/GameState';
 import { createPlatformAdapter } from '../../../platform';
+import { getReadyEvolution, type EvolutionRecipe } from '../../data/evolutions';
+import { AudioManager } from '../../audio/AudioManager';
 
 export class LevelUpModal {
   private scene: Phaser.Scene;
@@ -56,21 +58,135 @@ export class LevelUpModal {
 
     this.elements.push(title, subtitle);
 
-    // 3. Get eligible options from GameState (respects 4-slot limit)
+    // 3. Check for ready weapon evolution
     const gameState = GameState.getInstance();
-    const options = gameState.getEligibleUpgrades(ALL_UPGRADES, 3);
+    const readyEvo = getReadyEvolution(gameState);
 
-    const cardWidth = 330;
+    const neededNormalCount = readyEvo ? 2 : 3;
+    const options = gameState.getEligibleUpgrades(ALL_UPGRADES, neededNormalCount);
+
+    const totalCards = (readyEvo ? 1 : 0) + options.length;
+    const cardWidth = 320;
     const cardHeight = 380;
-    const spacing = 35;
-    const totalW = options.length * cardWidth + (options.length - 1) * spacing;
+    const spacing = 28;
+    const totalW = totalCards * cardWidth + (totalCards - 1) * spacing;
     const startX = (width - totalW) / 2 + cardWidth / 2;
 
-    options.forEach((opt, idx) => {
-      const cardX = startX + idx * (cardWidth + spacing);
-      const cardY = height / 2 + 35;
+    let currentIdx = 0;
 
+    // Golden Evolution Card
+    if (readyEvo) {
+      const cardX = startX + currentIdx * (cardWidth + spacing);
+      const cardY = height / 2 + 35;
+      this.createEvolutionCard(readyEvo, cardX, cardY, cardWidth, cardHeight);
+      currentIdx++;
+    }
+
+    options.forEach((opt) => {
+      const cardX = startX + currentIdx * (cardWidth + spacing);
+      const cardY = height / 2 + 35;
       this.createCard(opt.upgrade, opt.levelToApply, cardX, cardY, cardWidth, cardHeight);
+      currentIdx++;
+    });
+  }
+
+  private createEvolutionCard(
+    evo: EvolutionRecipe,
+    x: number,
+    y: number,
+    w: number,
+    h: number
+  ): void {
+    const borderColor = 0xfacc15;
+    const bgColor = 0x581c87;
+
+    const bg = this.scene.add
+      .rectangle(x, y, w, h, bgColor, 0.98)
+      .setScrollFactor(0)
+      .setDepth(10002)
+      .setStrokeStyle(4, borderColor)
+      .setInteractive({ useHandCursor: true });
+
+    const badgeLabel = this.scene.add
+      .text(x, y - h / 2 + 32, '👑 СУПЕР-ЭВОЛЮЦИЯ', {
+        fontSize: '15px',
+        fontStyle: 'bold',
+        color: '#facc15',
+        fontFamily: 'monospace',
+      })
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(10003);
+
+    const nameText = this.scene.add
+      .text(x, y - h / 2 + 75, evo.comicTitle, {
+        fontSize: '20px',
+        fontStyle: 'bold',
+        color: '#fef08a',
+        fontFamily: 'monospace',
+        align: 'center',
+        wordWrap: { width: w - 30 },
+      })
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(10003);
+
+    const descText = this.scene.add
+      .text(x, y + 10, evo.description, {
+        fontSize: '14px',
+        color: '#f3e8ff',
+        fontFamily: 'monospace',
+        align: 'center',
+        wordWrap: { width: w - 35 },
+        lineSpacing: 5,
+      })
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(10003);
+
+    const selectBtn = this.scene.add
+      .rectangle(x, y + h / 2 - 40, w - 50, 44, 0xfacc15, 0.95)
+      .setScrollFactor(0)
+      .setDepth(10003);
+
+    const selectText = this.scene.add
+      .text(x, y + h / 2 - 40, 'МУТИРОВАТЬ!', {
+        fontSize: '16px',
+        fontStyle: 'bold',
+        color: '#0f172a',
+        fontFamily: 'monospace',
+      })
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(10004);
+
+    this.elements.push(bg, badgeLabel, nameText, descText, selectBtn, selectText);
+
+    // Pulsing gold glow
+    this.scene.tweens.add({
+      targets: bg,
+      scaleX: 1.02,
+      scaleY: 1.02,
+      duration: 500,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+    });
+
+    bg.on('pointerdown', () => {
+      this.platform.vibrate(60);
+      AudioManager.getInstance().playLevelUp();
+      evo.apply(GameState.getInstance());
+      this.hide();
+      this.onUpgradeSelected(
+        {
+          id: evo.id,
+          name: evo.name,
+          maxLevel: 1,
+          levels: [],
+        },
+        1
+      );
     });
   }
 

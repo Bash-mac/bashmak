@@ -66,6 +66,7 @@ export interface PlayerModifiers {
   splashRadius: number; // radius
   splashPercent: number; // damage ratio
   splashKnockback: boolean;
+  knockbackMultiplier: number;
   splashStun: boolean;
 
   // 4. Ядовитая слюна
@@ -114,21 +115,39 @@ export interface PlayerModifiers {
   acidTrail: boolean;
 
   // Active Weapons
+  slimeSpitLevel: number;
+  laceWhipLevel: number;
+  carrotBarrageLevel: number;
+  eggplantRollLevel: number;
   homingDaggersLevel: number;
   homingDaggersCount: number;
-  bouncingBonesLevel: number;
-  bouncingBonesCount: number;
+  megaBootLevel: number;
   lightningZapLevel: number;
   staticZapCharge: number;
   staticZapMax: number;
   acidTrailLevel: number;
   acidTrailDps: number;
+  hasSlimeTrail: boolean;
 
   // Global Tomes
   tomeQuantity: number;
   tomeSpeed: number;
   tomeMagnet: number;
   tomeCritSize: number;
+
+  // Hero trait runtime state
+  standStillTimerMs: number;
+  standStillBonusActive: boolean;  // Bashmak: damage/armor boost when stationary
+  killStreakStacks: number;         // Markovka: kill streak speed stacks
+  killStreakTimerMs: number;
+  momentumSpeedBonus: number;       // Baklazhan: bonus from continuous movement
+  straightRunTimerMs: number;
+
+  // Super Evolutions
+  isAcidTsunamiEvolved: boolean;
+  isTyphoonFlailEvolved: boolean;
+  isGatlingCarrotEvolved: boolean;
+  isPlanetaryRollEvolved: boolean;
 }
 
 export type UpgradeCategory = 'weapon' | 'tome' | 'consumable';

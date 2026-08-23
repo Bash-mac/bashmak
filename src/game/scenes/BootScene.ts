@@ -44,20 +44,49 @@ export class BootScene extends Phaser.Scene {
     this.load.image('face_furious', '/assets/sprites/expressions/face_furious.png');
     this.load.image('face_victorious', '/assets/sprites/expressions/face_victorious.png');
 
-    // Tony The Worm Animated Sprites & UI
-    this.load.image('tony_portrait', '/assets/sprites/tony/portrait.png');
-    this.load.image('tony_logo', '/assets/sprites/tony/logo.png');
-    this.load.image('tony_spit_projectile', '/assets/sprites/tony/spit_projectile.png');
+    // Vypolzok (Tony) New 90s Gross-Out Assets & UI
+    this.load.image('vypolzok_portrait', '/assets/sprites/vypolzok/ui/portrait_vypolzok.webp');
+    this.load.image('tony_portrait', '/assets/sprites/vypolzok/ui/portrait_vypolzok.webp');
+    this.load.image('hud_face_smug', '/assets/sprites/vypolzok/ui/hud_face_smug.webp');
+    this.load.image('hud_face_bored', '/assets/sprites/vypolzok/ui/hud_face_bored.webp');
+    this.load.image('hud_face_injured', '/assets/sprites/vypolzok/ui/hud_face_injured.webp');
+    this.load.image('icon_slime_spit', '/assets/sprites/vypolzok/ui/icon_slime_spit.webp');
+    this.load.image('icon_trait_trail', '/assets/sprites/vypolzok/ui/icon_trait_trail.webp');
 
+    // Vypolzok Character Sprites
     for (let i = 1; i <= 4; i++) {
-      this.load.image(`tony_idle_${i}`, `/assets/sprites/tony/idle_${i}.png`);
-      this.load.image(`tony_hurt_${i}`, `/assets/sprites/tony/hurt_${i}.png`);
-      this.load.image(`tony_dead_${i}`, `/assets/sprites/tony/dead_${i}.png`);
-      this.load.image(`tony_spit_${i}`, `/assets/sprites/tony/spit_${i}.png`);
+      this.load.image(`vypolzok_idle_${i}`, `/assets/sprites/vypolzok/idle/idle_${i}.webp`);
+      this.load.image(`tony_idle_${i}`, `/assets/sprites/vypolzok/idle/idle_${i}.webp`);
+      this.load.image(`vypolzok_spit_${i}`, `/assets/sprites/vypolzok/spit/spit_${i}.webp`);
+      this.load.image(`tony_spit_${i}`, `/assets/sprites/vypolzok/spit/spit_${i}.webp`);
+      this.load.image(`vypolzok_hurt_${i}`, `/assets/sprites/vypolzok/hurt/hurt_${i}.webp`);
+      this.load.image(`tony_hurt_${i}`, `/assets/sprites/vypolzok/hurt/hurt_${i}.webp`);
     }
-    for (let i = 1; i <= 3; i++) {
-      this.load.image(`tony_run_${i}`, `/assets/sprites/tony/run_${i}.png`);
+    for (let i = 1; i <= 5; i++) {
+      this.load.image(`vypolzok_run_${i}`, `/assets/sprites/vypolzok/run/run_${i}.webp`);
+      this.load.image(`vypolzok_dead_${i}`, `/assets/sprites/vypolzok/dead/dead_${i}.webp`);
+      this.load.image(`tony_dead_${i}`, `/assets/sprites/vypolzok/dead/dead_${i}.webp`);
     }
+    // Backward compatibility aliases for run
+    this.load.image('tony_run_1', '/assets/sprites/vypolzok/run/run_1.webp');
+    this.load.image('tony_run_2', '/assets/sprites/vypolzok/run/run_2.webp');
+    this.load.image('tony_run_3', '/assets/sprites/vypolzok/run/run_3.webp');
+
+    // VFX Sprites
+    for (let i = 1; i <= 4; i++) {
+      this.load.image(`vfx_acid_pool_${i}`, `/assets/sprites/vypolzok/vfx/acid_pool/acid_pool_${i}.webp`);
+      this.load.image(`vfx_impact_splat_${i}`, `/assets/sprites/vypolzok/vfx/impact_splat/impact_splat_${i}.webp`);
+    }
+    for (let i = 1; i <= 5; i++) {
+      this.load.image(`vfx_slime_trail_${i}`, `/assets/sprites/vypolzok/vfx/slime_trail/slime_trail_${i}.webp`);
+    }
+    for (let i = 1; i <= 9; i++) {
+      this.load.image(`vfx_spit_proj_${i}`, `/assets/sprites/vypolzok/vfx/spit_proj/spit_proj_${i}.webp`);
+    }
+
+    // Default primary projectile texture
+    this.load.image('tex_homing_dagger', '/assets/sprites/vypolzok/vfx/spit_proj/spit_proj_1.webp');
+    this.load.image('tex_acid_pool', '/assets/sprites/vypolzok/vfx/acid_pool/acid_pool_1.webp');
 
     // Combat FX
     this.load.image('fx_slime', '/assets/sprites/poses/fx_slime.png');
@@ -67,76 +96,157 @@ export class BootScene extends Phaser.Scene {
 
   create(): void {
     this.createPlaceholderTextures();
-    this.createTonyAnimations();
+    this.createVypolzokAnimations();
     this.scene.start('MenuScene');
   }
 
-  private createTonyAnimations(): void {
-    // 1. Idle (breathing/wiggle)
+  private createVypolzokAnimations(): void {
+    // 1. Idle (drinking soda, scratching belly, smug grin)
+    const idleFrames = [
+      { key: 'vypolzok_idle_1' },
+      { key: 'vypolzok_idle_2' },
+      { key: 'vypolzok_idle_3' },
+      { key: 'vypolzok_idle_4' },
+      { key: 'vypolzok_idle_3' },
+      { key: 'vypolzok_idle_2' },
+    ];
+    this.anims.create({
+      key: 'vypolzok_anim_idle',
+      frames: idleFrames,
+      frameRate: 6,
+      repeat: -1,
+    });
     this.anims.create({
       key: 'tony_anim_idle',
-      frames: [
-        { key: 'tony_idle_1' },
-        { key: 'tony_idle_2' },
-        { key: 'tony_idle_3' },
-        { key: 'tony_idle_4' },
-        { key: 'tony_idle_3' },
-        { key: 'tony_idle_2' },
-      ],
+      frames: idleFrames,
       frameRate: 6,
       repeat: -1,
     });
 
-    // 2. Run (squash & stretch crawl)
+    // 2. Run (slimy drag racing squash & stretch)
+    const runFrames = [
+      { key: 'vypolzok_run_1' },
+      { key: 'vypolzok_run_2' },
+      { key: 'vypolzok_run_3' },
+      { key: 'vypolzok_run_4' },
+      { key: 'vypolzok_run_5' },
+    ];
+    this.anims.create({
+      key: 'vypolzok_anim_run',
+      frames: runFrames,
+      frameRate: 10,
+      repeat: -1,
+    });
     this.anims.create({
       key: 'tony_anim_run',
-      frames: [
-        { key: 'tony_run_1' },
-        { key: 'tony_run_2' },
-        { key: 'tony_run_3' },
-        { key: 'tony_run_2' },
-      ],
-      frameRate: 9,
+      frames: runFrames,
+      frameRate: 10,
       repeat: -1,
     });
 
-    // 3. Spit / Attack
+    // 3. Spit / Attack (mouth open 180°, huge blast)
+    const spitFrames = [
+      { key: 'vypolzok_spit_1' },
+      { key: 'vypolzok_spit_2' },
+      { key: 'vypolzok_spit_3' },
+      { key: 'vypolzok_spit_4' },
+    ];
+    this.anims.create({
+      key: 'vypolzok_anim_spit',
+      frames: spitFrames,
+      frameRate: 14,
+      repeat: 0,
+    });
     this.anims.create({
       key: 'tony_anim_spit',
+      frames: spitFrames,
+      frameRate: 14,
+      repeat: 0,
+    });
+
+    // 4. Hurt (bulging eyes, dislocated jaw)
+    const hurtFrames = [
+      { key: 'vypolzok_hurt_1' },
+      { key: 'vypolzok_hurt_2' },
+      { key: 'vypolzok_hurt_3' },
+      { key: 'vypolzok_hurt_4' },
+    ];
+    this.anims.create({
+      key: 'vypolzok_anim_hurt',
+      frames: hurtFrames,
+      frameRate: 12,
+      repeat: 0,
+    });
+    this.anims.create({
+      key: 'tony_anim_hurt',
+      frames: hurtFrames,
+      frameRate: 12,
+      repeat: 0,
+    });
+
+    // 5. Dead (splat into slime + soda can)
+    const deadFrames = [
+      { key: 'vypolzok_dead_1' },
+      { key: 'vypolzok_dead_2' },
+      { key: 'vypolzok_dead_3' },
+      { key: 'vypolzok_dead_4' },
+      { key: 'vypolzok_dead_5' },
+    ];
+    this.anims.create({
+      key: 'vypolzok_anim_dead',
+      frames: deadFrames,
+      frameRate: 8,
+      repeat: 0,
+    });
+    this.anims.create({
+      key: 'tony_anim_dead',
+      frames: deadFrames,
+      frameRate: 8,
+      repeat: 0,
+    });
+
+    // 6. VFX: Acid Pool Bubbling
+    this.anims.create({
+      key: 'vfx_anim_acid_pool',
       frames: [
-        { key: 'tony_spit_1' },
-        { key: 'tony_spit_2' },
-        { key: 'tony_spit_3' },
-        { key: 'tony_spit_4' },
+        { key: 'vfx_acid_pool_1' },
+        { key: 'vfx_acid_pool_2' },
+        { key: 'vfx_acid_pool_3' },
+        { key: 'vfx_acid_pool_4' },
+      ],
+      frameRate: 8,
+      repeat: -1,
+    });
+
+    // 7. VFX: Impact Splat Explosion
+    this.anims.create({
+      key: 'vfx_anim_impact_splat',
+      frames: [
+        { key: 'vfx_impact_splat_1' },
+        { key: 'vfx_impact_splat_2' },
+        { key: 'vfx_impact_splat_3' },
+        { key: 'vfx_impact_splat_4' },
       ],
       frameRate: 14,
       repeat: 0,
     });
 
-    // 4. Hurt
+    // 8. VFX: Spit Projectile Flight Animation
     this.anims.create({
-      key: 'tony_anim_hurt',
+      key: 'vfx_anim_spit_proj',
       frames: [
-        { key: 'tony_hurt_1' },
-        { key: 'tony_hurt_2' },
-        { key: 'tony_hurt_3' },
-        { key: 'tony_hurt_4' },
+        { key: 'vfx_spit_proj_1' },
+        { key: 'vfx_spit_proj_2' },
+        { key: 'vfx_spit_proj_3' },
+        { key: 'vfx_spit_proj_4' },
+        { key: 'vfx_spit_proj_5' },
+        { key: 'vfx_spit_proj_6' },
+        { key: 'vfx_spit_proj_7' },
+        { key: 'vfx_spit_proj_8' },
+        { key: 'vfx_spit_proj_9' },
       ],
-      frameRate: 12,
-      repeat: 0,
-    });
-
-    // 5. Dead (splat)
-    this.anims.create({
-      key: 'tony_anim_dead',
-      frames: [
-        { key: 'tony_dead_1' },
-        { key: 'tony_dead_2' },
-        { key: 'tony_dead_3' },
-        { key: 'tony_dead_4' },
-      ],
-      frameRate: 6,
-      repeat: 0,
+      frameRate: 16,
+      repeat: -1,
     });
   }
 
@@ -330,20 +440,7 @@ export class BootScene extends Phaser.Scene {
     daggerGfx.generateTexture('tex_homing_dagger', 22, 16);
     daggerGfx.destroy();
 
-    // 17. Bouncing Bone (Ivory cartoon bone)
-    const boneGfx = this.make.graphics({ x: 0, y: 0 });
-    boneGfx.fillStyle(0xfef08a, 1);
-    boneGfx.fillRect(6, 7, 16, 6);
-    boneGfx.fillCircle(5, 5, 4);
-    boneGfx.fillCircle(5, 15, 4);
-    boneGfx.fillCircle(23, 5, 4);
-    boneGfx.fillCircle(23, 15, 4);
-    boneGfx.lineStyle(1.5, 0x713f12, 1);
-    boneGfx.strokeRect(6, 7, 16, 6);
-    boneGfx.generateTexture('tex_bouncing_bone', 28, 20);
-    boneGfx.destroy();
-
-    // 18. GOO Drop (Bright toxic green blob with yellow shine and gold outline)
+    // 17. GOO Drop (Bright toxic green blob with yellow shine and gold outline)
     const gooGfx = this.make.graphics({ x: 0, y: 0 });
     gooGfx.fillStyle(0x84cc16, 1);
     gooGfx.fillCircle(10, 10, 8);
@@ -355,5 +452,27 @@ export class BootScene extends Phaser.Scene {
     gooGfx.fillCircle(11, 11, 4);
     gooGfx.generateTexture('tex_goo_drop', 20, 20);
     gooGfx.destroy();
+
+    // 18. Carrot Projectile (Sharp orange carrot with comic outline)
+    const carrotGfx = this.make.graphics({ x: 0, y: 0 });
+    carrotGfx.fillStyle(0xf97316, 1);
+    carrotGfx.fillTriangle(24, 7, 0, 1, 0, 13);
+    carrotGfx.lineStyle(2, 0x7c2d12, 1);
+    carrotGfx.strokeTriangle(24, 7, 0, 1, 0, 13);
+    carrotGfx.fillStyle(0x22c55e, 1);
+    carrotGfx.fillRect(0, 4, 4, 6);
+    carrotGfx.generateTexture('tex_carrot_proj', 26, 16);
+    carrotGfx.destroy();
+
+    // 19. Eggplant Ball (Purple round rolling ball)
+    const eggGfx = this.make.graphics({ x: 0, y: 0 });
+    eggGfx.fillStyle(0x9333ea, 1);
+    eggGfx.fillCircle(16, 16, 14);
+    eggGfx.lineStyle(2, 0x581c87, 1);
+    eggGfx.strokeCircle(16, 16, 14);
+    eggGfx.fillStyle(0x22c55e, 1);
+    eggGfx.fillTriangle(16, 2, 12, 8, 20, 8);
+    eggGfx.generateTexture('tex_eggplant_ball', 32, 32);
+    eggGfx.destroy();
   }
 }

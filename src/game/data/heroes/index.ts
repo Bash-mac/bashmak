@@ -1,26 +1,26 @@
-﻿import type { HeroDefinition } from '../definitions';
+import type { HeroDefinition } from '../definitions';
 import { WORM_HERO } from './worm';
 import { BASHMAK_HERO } from './bashmak';
-import { HERO_SLOT_3 } from './hero3';
-import { HERO_SLOT_4 } from './hero4';
+import { MARKOVKA_HERO } from './markovka';
+import { BAKLAZHAN_HERO } from './baklazhan';
 
 export { WORM_HERO } from './worm';
 export { BASHMAK_HERO } from './bashmak';
-export { HERO_SLOT_3 } from './hero3';
-export { HERO_SLOT_4 } from './hero4';
+export { MARKOVKA_HERO } from './markovka';
+export { BAKLAZHAN_HERO } from './baklazhan';
 
 export const HEROES_REGISTRY: Record<string, HeroDefinition> = {
   [WORM_HERO.id]: WORM_HERO,
   [BASHMAK_HERO.id]: BASHMAK_HERO,
-  [HERO_SLOT_3.id]: HERO_SLOT_3,
-  [HERO_SLOT_4.id]: HERO_SLOT_4,
+  [MARKOVKA_HERO.id]: MARKOVKA_HERO,
+  [BAKLAZHAN_HERO.id]: BAKLAZHAN_HERO,
 };
 
 export const ALL_HEROES: HeroDefinition[] = [
   WORM_HERO,
   BASHMAK_HERO,
-  HERO_SLOT_3,
-  HERO_SLOT_4,
+  MARKOVKA_HERO,
+  BAKLAZHAN_HERO,
 ];
 
 export const STARTER_HERO = WORM_HERO;

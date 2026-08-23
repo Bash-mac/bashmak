@@ -45,6 +45,7 @@ export class GameState {
       splashRadius: 0,
       splashPercent: 0,
       splashKnockback: false,
+      knockbackMultiplier: 1.0,
       splashStun: false,
       poisonSalivaDmg: 0,
       poisonDurationMs: 3000,
@@ -77,22 +78,114 @@ export class GameState {
       acidTrail: false,
 
       // Active Weapons
-      homingDaggersLevel: 1, // Starts with Wireless Needles Lv.1
+      slimeSpitLevel: 0,
+      laceWhipLevel: 0,
+      carrotBarrageLevel: 0,
+      eggplantRollLevel: 0,
+      homingDaggersLevel: 0,
       homingDaggersCount: 1,
-      bouncingBonesLevel: 0,
-      bouncingBonesCount: 0,
+      megaBootLevel: 0,
       lightningZapLevel: 0,
       staticZapCharge: 0,
       staticZapMax: 100,
       acidTrailLevel: 0,
       acidTrailDps: 0,
+      hasSlimeTrail: false,
 
       // Global Tomes
       tomeQuantity: 0,
       tomeSpeed: 0,
       tomeMagnet: 0,
       tomeCritSize: 0,
+
+      // Hero Trait Runtime State
+      standStillTimerMs: 0,
+      standStillBonusActive: false,
+      killStreakStacks: 0,
+      killStreakTimerMs: 0,
+      momentumSpeedBonus: 0,
+      straightRunTimerMs: 0,
+
+      // Super Evolutions
+      isAcidTsunamiEvolved: false,
+      isTyphoonFlailEvolved: false,
+      isGatlingCarrotEvolved: false,
+      isPlanetaryRollEvolved: false,
     };
+  }
+
+  public applyStartingWeapon(startingWeaponId: string): void {
+    switch (startingWeaponId) {
+      case 'weapon_slime_spit':
+        this.playerModifiers.slimeSpitLevel = 1;
+        this.activeUpgrades.set('wpn_slime_spit', 1);
+        if (!this.selectedUpgrades.includes('wpn_slime_spit')) {
+          this.selectedUpgrades.push('wpn_slime_spit');
+        }
+        break;
+      case 'weapon_lace_whip':
+        this.playerModifiers.laceWhipLevel = 1;
+        this.activeUpgrades.set('wpn_lace_whip', 1);
+        if (!this.selectedUpgrades.includes('wpn_lace_whip')) {
+          this.selectedUpgrades.push('wpn_lace_whip');
+        }
+        break;
+      case 'weapon_carrot_barrage':
+        this.playerModifiers.carrotBarrageLevel = 1;
+        this.activeUpgrades.set('wpn_carrot_barrage', 1);
+        if (!this.selectedUpgrades.includes('wpn_carrot_barrage')) {
+          this.selectedUpgrades.push('wpn_carrot_barrage');
+        }
+        break;
+      case 'weapon_eggplant_roll':
+        this.playerModifiers.eggplantRollLevel = 1;
+        this.activeUpgrades.set('wpn_eggplant_roll', 1);
+        if (!this.selectedUpgrades.includes('wpn_eggplant_roll')) {
+          this.selectedUpgrades.push('wpn_eggplant_roll');
+        }
+        break;
+      case 'weapon_homing_daggers':
+        this.playerModifiers.homingDaggersLevel = 1;
+        this.playerModifiers.homingDaggersCount = 2;
+        this.activeUpgrades.set('wpn_homing_daggers', 1);
+        if (!this.selectedUpgrades.includes('wpn_homing_daggers')) {
+          this.selectedUpgrades.push('wpn_homing_daggers');
+        }
+        break;
+      case 'weapon_mega_boot':
+        this.playerModifiers.megaBootLevel = 1;
+        this.activeUpgrades.set('wpn_mega_boot', 1);
+        if (!this.selectedUpgrades.includes('wpn_mega_boot')) {
+          this.selectedUpgrades.push('wpn_mega_boot');
+        }
+        break;
+      case 'weapon_lightning_zap':
+        this.playerModifiers.lightningZapLevel = 1;
+        this.playerModifiers.staticZapMax = 100;
+        this.activeUpgrades.set('wpn_lightning_zap', 1);
+        if (!this.selectedUpgrades.includes('wpn_lightning_zap')) {
+          this.selectedUpgrades.push('wpn_lightning_zap');
+        }
+        break;
+      case 'weapon_acid_trail':
+        this.playerModifiers.acidTrail = true;
+        this.playerModifiers.acidTrailLevel = 1;
+        this.playerModifiers.acidTrailDps = 15;
+        this.activeUpgrades.set('wpn_acid_trail', 1);
+        if (!this.selectedUpgrades.includes('wpn_acid_trail')) {
+          this.selectedUpgrades.push('wpn_acid_trail');
+        }
+        break;
+      default:
+        // Default to homing daggers if unknown
+        this.playerModifiers.homingDaggersLevel = 1;
+        this.playerModifiers.homingDaggersCount = 2;
+        this.activeUpgrades.set('wpn_homing_daggers', 1);
+        if (!this.selectedUpgrades.includes('wpn_homing_daggers')) {
+          this.selectedUpgrades.push('wpn_homing_daggers');
+        }
+        break;
+    }
   }
 
   reset(): void {

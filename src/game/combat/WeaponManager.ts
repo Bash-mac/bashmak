@@ -1,6 +1,10 @@
 ﻿import type { IWeapon, WeaponContext } from './weapons/IWeapon';
+import { SlimeSpitWeapon } from './weapons/SlimeSpitWeapon';
+import { LaceWhipWeapon } from './weapons/LaceWhipWeapon';
+import { CarrotBarrageWeapon } from './weapons/CarrotBarrageWeapon';
+import { EggplantRollWeapon } from './weapons/EggplantRollWeapon';
 import { HomingDaggersWeapon } from './weapons/HomingDaggersWeapon';
-import { BouncingBonesWeapon } from './weapons/BouncingBonesWeapon';
+import { MegaBootWeapon } from './weapons/MegaBootWeapon';
 import { LightningZapWeapon } from './weapons/LightningZapWeapon';
 import { AcidTrailWeapon } from './weapons/AcidTrailWeapon';
 
@@ -9,8 +13,12 @@ export class WeaponManager {
 
   constructor() {
     this.weapons = [
+      new SlimeSpitWeapon(),
+      new LaceWhipWeapon(),
+      new CarrotBarrageWeapon(),
+      new EggplantRollWeapon(),
       new HomingDaggersWeapon(),
-      new BouncingBonesWeapon(),
+      new MegaBootWeapon(),
       new LightningZapWeapon(),
       new AcidTrailWeapon(),
     ];
@@ -29,10 +37,13 @@ export class WeaponManager {
   }
 
   public reset(): void {
-    // Reinstantiate to reset local weapon timers
     this.weapons = [
+      new SlimeSpitWeapon(),
+      new LaceWhipWeapon(),
+      new CarrotBarrageWeapon(),
+      new EggplantRollWeapon(),
       new HomingDaggersWeapon(),
-      new BouncingBonesWeapon(),
+      new MegaBootWeapon(),
       new LightningZapWeapon(),
       new AcidTrailWeapon(),
     ];

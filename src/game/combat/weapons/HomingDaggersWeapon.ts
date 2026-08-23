@@ -86,6 +86,10 @@ export class HomingDaggersWeapon implements IWeapon {
     proj.setData('speed', 580);
     proj.setDepth(9);
 
+    if (ctx.scene.anims.exists('vfx_anim_spit_proj')) {
+      proj.play('vfx_anim_spit_proj');
+    }
+
     if (isCrit) {
       proj.setTint(0xfacc15);
     }

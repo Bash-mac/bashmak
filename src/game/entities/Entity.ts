@@ -25,6 +25,8 @@ export class Entity {
   // Status effect timers
   private slowTimer = 0;
   private slowAmount = 0;
+  private speedBoostTimer = 0;
+  private speedBoostAmount = 0;
   private poisonTimer = 0;
   private poisonDps = 0;
   private poisonTickAccumulator = 0;
@@ -61,10 +63,19 @@ export class Entity {
   }
 
   get effectiveSpeed(): number {
+    let spd = this.stats.speed;
     if (this.slowTimer > 0) {
-      return this.stats.speed * (1 - this.slowAmount);
+      spd *= (1 - this.slowAmount);
     }
-    return this.stats.speed;
+    if (this.speedBoostTimer > 0) {
+      spd *= this.speedBoostAmount;
+    }
+    return spd;
+  }
+
+  applySpeedBoost(multiplier: number, durationMs: number): void {
+    this.speedBoostAmount = multiplier;
+    this.speedBoostTimer = durationMs;
   }
 
   applySlow(percent: number, durationMs: number): void {
@@ -90,6 +101,14 @@ export class Entity {
     // Knockback timer
     if (this.knockbackTimer > 0) {
       this.knockbackTimer -= deltaMs;
+    }
+
+    // Speed boost timer
+    if (this.speedBoostTimer > 0) {
+      this.speedBoostTimer -= deltaMs;
+      if (this.speedBoostTimer <= 0) {
+        this.speedBoostAmount = 0;
+      }
     }
 
     // Slow effect

@@ -1,6 +1,7 @@
-﻿import Phaser from 'phaser';
+import Phaser from 'phaser';
 import type { IWeapon, WeaponContext } from './IWeapon';
 import type { Entity } from '../../entities/Entity';
+import { AudioManager } from '../../audio/AudioManager';
 
 export class LightningZapWeapon implements IWeapon {
   readonly id = 'weapon_lightning_zap';
@@ -75,6 +76,7 @@ export class LightningZapWeapon implements IWeapon {
       });
     }
 
+    AudioManager.getInstance().playLightningZap();
     ctx.vibrate?.(30);
   }
 }

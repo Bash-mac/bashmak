@@ -5,6 +5,203 @@ export const WORM_UPGRADES: UpgradeDefinition[] = [
   // --- ⚔️ ACTIVE WEAPONS (АРСЕНАЛ ОРУЖИЯ) ---
   // ==========================================
 
+  // 0. Слизеплюй (Slime Spit)
+  {
+    id: 'wpn_slime_spit',
+    name: 'Слизеплюй',
+    category: 'weapon',
+    maxLevel: 5,
+    levels: [
+      {
+        level: 1,
+        description: 'Плевок сгустком едкой слизи. Замедляет врагов на 35% и оставляет лужи на полу.',
+        apply: (mod) => {
+          mod.slimeSpitLevel = 1;
+          mod.multishotCount = Math.max(mod.multishotCount, 1);
+        },
+      },
+      {
+        level: 2,
+        description: 'Залп +1 сгусток слизи + урон +25%.',
+        apply: (mod) => {
+          mod.slimeSpitLevel = 2;
+          mod.damagePercentBonus += 0.15;
+        },
+      },
+      {
+        level: 3,
+        description: '★ ЕДКИЙ ЗАЛП: 3 сгустка слизи с гарантированным созданием кислоты под врагами.',
+        apply: (mod) => {
+          mod.slimeSpitLevel = 3;
+          mod.multishotCount += 1;
+        },
+      },
+      {
+        level: 4,
+        description: 'Слизь пробивает первого врага насквозь (pierce +1) и увеличивает размер луж.',
+        apply: (mod) => {
+          mod.slimeSpitLevel = 4;
+          mod.pierceCount += 1;
+          mod.fatSpitScale += 0.3;
+        },
+      },
+      {
+        level: 5,
+        description: '★ ТОКСИЧЕСКИЙ ГЕЙЗЕР: 5 огромных сгустков со 100% шансом вызвать кислотный взрыв!',
+        apply: (mod) => {
+          mod.slimeSpitLevel = 5;
+          mod.multishotCount += 2;
+          mod.splashPercent += 0.40;
+        },
+      },
+    ],
+  },
+
+  // 0.1 Шнуровой Кнут (Lace Whip)
+  {
+    id: 'wpn_lace_whip',
+    name: 'Шнуровой Кнут',
+    category: 'weapon',
+    maxLevel: 5,
+    levels: [
+      {
+        level: 1,
+        description: 'Хлесткий удар шнурком по дуге 180° перед собой с мощным отбрасыванием.',
+        apply: (mod) => {
+          mod.laceWhipLevel = 1;
+        },
+      },
+      {
+        level: 2,
+        description: 'Урон +30%, радиус дуги взмаха +20%.',
+        apply: (mod) => {
+          mod.laceWhipLevel = 2;
+          mod.damagePercentBonus += 0.15;
+        },
+      },
+      {
+        level: 3,
+        description: '★ ДВОЙНОЙ ХЛЫСТ: Хлещет спереди и сзади одновременно!',
+        apply: (mod) => {
+          mod.laceWhipLevel = 3;
+        },
+      },
+      {
+        level: 4,
+        description: 'Урон +40%, сила отбрасывания врагов +50%.',
+        apply: (mod) => {
+          mod.laceWhipLevel = 4;
+          mod.knockbackMultiplier += 0.5;
+        },
+      },
+      {
+        level: 5,
+        description: '★ СЕЙСМИЧЕСКИЙ КНУТ: Удары вызывают комиксные взрывы и оглушают цели!',
+        apply: (mod) => {
+          mod.laceWhipLevel = 5;
+          mod.damagePercentBonus += 0.35;
+          mod.splashPercent += 0.30;
+        },
+      },
+    ],
+  },
+
+  // 0.2 Морковный Град (Carrot Barrage)
+  {
+    id: 'wpn_carrot_barrage',
+    name: 'Морковный Град',
+    category: 'weapon',
+    maxLevel: 5,
+    levels: [
+      {
+        level: 1,
+        description: 'Залп 2 острых морковок. Каждая пробивает 1 врага насквозь.',
+        apply: (mod) => {
+          mod.carrotBarrageLevel = 1;
+        },
+      },
+      {
+        level: 2,
+        description: 'Скорость полета морковок +25%, урон +20%.',
+        apply: (mod) => {
+          mod.carrotBarrageLevel = 2;
+          mod.damagePercentBonus += 0.10;
+        },
+      },
+      {
+        level: 3,
+        description: '★ МОРКОВНЫЙ ВЕЕР: Залп 3 морковок за выстрел.',
+        apply: (mod) => {
+          mod.carrotBarrageLevel = 3;
+        },
+      },
+      {
+        level: 4,
+        description: 'Морковки пробивают +1 дополнительного врага насквозь.',
+        apply: (mod) => {
+          mod.carrotBarrageLevel = 4;
+          mod.pierceCount += 1;
+        },
+      },
+      {
+        level: 5,
+        description: '★ ЯРОСТНЫЙ ШКВАЛ: Залп 5 пробивающих морковок с повышенным шансом крита!',
+        apply: (mod) => {
+          mod.carrotBarrageLevel = 5;
+          mod.critChance += 0.15;
+        },
+      },
+    ],
+  },
+
+  // 0.3 Фиолетовый Шар (Eggplant Roll)
+  {
+    id: 'wpn_eggplant_roll',
+    name: 'Фиолетовый Шар',
+    category: 'weapon',
+    maxLevel: 5,
+    levels: [
+      {
+        level: 1,
+        description: 'Периодический рывок-перекат в неуязвимости со сбиванием врагов с ног.',
+        apply: (mod) => {
+          mod.eggplantRollLevel = 1;
+        },
+      },
+      {
+        level: 2,
+        description: 'Урон тарана +30%, сила отбрасывания врагов +40%.',
+        apply: (mod) => {
+          mod.eggplantRollLevel = 2;
+          mod.damagePercentBonus += 0.15;
+        },
+      },
+      {
+        level: 3,
+        description: '★ ТЯЖЕЛЫЙ БОУЛИНГ: Длительность переката увеличена, радиус тарана +25%.',
+        apply: (mod) => {
+          mod.eggplantRollLevel = 3;
+        },
+      },
+      {
+        level: 4,
+        description: 'Перезарядка переката сокращена на 1.0 сек.',
+        apply: (mod) => {
+          mod.eggplantRollLevel = 4;
+          mod.attackSpeedBonus += 0.20;
+        },
+      },
+      {
+        level: 5,
+        description: '★ НЕОСТАНОВИМЫЙ ТАРАН: Перекат наносит двойной урон и расплющивает толпы!',
+        apply: (mod) => {
+          mod.eggplantRollLevel = 5;
+          mod.damagePercentBonus += 0.50;
+        },
+      },
+    ],
+  },
+
   // 1. Самонаводящиеся иглы (Wireless Needles / Daggers)
   {
     id: 'wpn_homing_daggers',
@@ -58,58 +255,46 @@ export const WORM_UPGRADES: UpgradeDefinition[] = [
     ],
   },
 
-  // 2. Рикошетящие кости (Bouncing Bones)
+  // 2. Тяжёлый Башмак (Mega Boot / Stomp)
   {
-    id: 'wpn_bouncing_bones',
-    name: 'Тяжёлая кость',
+    id: 'wpn_mega_boot',
+    name: 'Тяжёлый Башмак',
     category: 'weapon',
     maxLevel: 5,
     levels: [
       {
         level: 1,
-        description: 'Запуск вращающейся кости, отскакивающей от стен и мобов 3 раза.',
+        description: 'Сокрушительный пинок перед героем (радиус 75px, урон 35, сильное отбрасывание).',
         apply: (mod) => {
-          mod.bouncingBonesLevel = 1;
-          mod.bouncingBonesCount = 1;
-          mod.bounceCount += 3;
+          mod.megaBootLevel = 1;
         },
       },
       {
         level: 2,
-        description: 'Запуск 2 костей + урон костей +30%.',
+        description: 'Радиус удара +25%, урон +35%.',
         apply: (mod) => {
-          mod.bouncingBonesLevel = 2;
-          mod.bouncingBonesCount = 2;
-          mod.damagePercentBonus += 0.15;
+          mod.megaBootLevel = 2;
         },
       },
       {
         level: 3,
-        description: '★ КОСТЕЛОМ: 3 кости с 5 отскоками. Оглушают врагов на 0.4с.',
+        description: '★ ДВОЙНОЙ ТОПОТ: Башмак бьет одновременно спереди и сзади героя!',
         apply: (mod) => {
-          mod.bouncingBonesLevel = 3;
-          mod.bouncingBonesCount = 3;
-          mod.bounceCount += 2;
-          mod.splashStun = true;
+          mod.megaBootLevel = 3;
         },
       },
       {
         level: 4,
-        description: 'Кости увеличиваются в размерах на +50% и пробивают броню.',
+        description: 'Урон +40%, перезарядка удара ускорена на 20%.',
         apply: (mod) => {
-          mod.bouncingBonesLevel = 4;
-          mod.armorShred += 2;
-          mod.fatSpitScale += 0.5;
+          mod.megaBootLevel = 4;
         },
       },
       {
         level: 5,
-        description: '★ БОНЕРАНГ ТИТАНА: 4 гигантские кости с бесконечным рикошетом и взрывом на осколки!',
+        description: '★ ТИТАНИЧЕСКИЙ ШЛЕПОК: Круговой разлом на 360° с удвоенным радиусом и сокрушительным импактом!',
         apply: (mod) => {
-          mod.bouncingBonesLevel = 5;
-          mod.bouncingBonesCount = 4;
-          mod.bounceCount += 10;
-          mod.splashPercent += 0.35;
+          mod.megaBootLevel = 5;
         },
       },
     ],
@@ -237,7 +422,6 @@ export const WORM_UPGRADES: UpgradeDefinition[] = [
           mod.tomeQuantity = 1;
           mod.multishotCount += 1;
           mod.homingDaggersCount += 1;
-          mod.bouncingBonesCount += 1;
         },
       },
       {
@@ -247,7 +431,6 @@ export const WORM_UPGRADES: UpgradeDefinition[] = [
           mod.tomeQuantity = 2;
           mod.multishotCount += 1;
           mod.homingDaggersCount += 1;
-          mod.bouncingBonesCount += 1;
         },
       },
       {
@@ -257,7 +440,6 @@ export const WORM_UPGRADES: UpgradeDefinition[] = [
           mod.tomeQuantity = 3;
           mod.multishotCount += 1;
           mod.homingDaggersCount += 1;
-          mod.bouncingBonesCount += 1;
         },
       },
       {
@@ -267,7 +449,6 @@ export const WORM_UPGRADES: UpgradeDefinition[] = [
           mod.tomeQuantity = 4;
           mod.multishotCount += 1;
           mod.homingDaggersCount += 1;
-          mod.bouncingBonesCount += 1;
         },
       },
       {
@@ -277,7 +458,6 @@ export const WORM_UPGRADES: UpgradeDefinition[] = [
           mod.tomeQuantity = 5;
           mod.multishotCount += 1;
           mod.homingDaggersCount += 2;
-          mod.bouncingBonesCount += 1;
           mod.damagePercentBonus += 0.25;
         },
       },

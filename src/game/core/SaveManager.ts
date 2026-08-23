@@ -7,6 +7,7 @@ export interface SaveData {
   goo: number;
   powerUps: Record<string, number>;
   unlockedHeroIds: string[];
+  selectedHeroId: string;
   stats: {
     totalRuns: number;
     totalKills: number;
@@ -39,6 +40,7 @@ export class SaveManager {
       goo: 0,
       powerUps: {},
       unlockedHeroIds: ['hero_worm'],
+      selectedHeroId: 'hero_worm',
       stats: {
         totalRuns: 0,
         totalKills: 0,
@@ -97,6 +99,33 @@ export class SaveManager {
       return true;
     }
     return false;
+  }
+
+  public getSelectedHeroId(): string {
+    return this.data.selectedHeroId || 'hero_worm';
+  }
+
+  public setSelectedHeroId(id: string): void {
+    this.data.selectedHeroId = id;
+    this.save();
+  }
+
+  public isHeroUnlocked(id: string): boolean {
+    return this.data.unlockedHeroIds?.includes(id) ?? false;
+  }
+
+  public unlockHero(id: string): void {
+    if (!this.data.unlockedHeroIds) {
+      this.data.unlockedHeroIds = ['hero_worm'];
+    }
+    if (!this.data.unlockedHeroIds.includes(id)) {
+      this.data.unlockedHeroIds.push(id);
+      this.save();
+    }
+  }
+
+  public getUnlockedHeroIds(): string[] {
+    return this.data.unlockedHeroIds || ['hero_worm'];
   }
 
   public getPowerUpLevel(id: string): number {

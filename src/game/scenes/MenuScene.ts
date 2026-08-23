@@ -1,9 +1,16 @@
 import Phaser from 'phaser';
 import { createPlatformAdapter } from '../../platform';
 import { SaveManager } from '../core/SaveManager';
+import { HeroSelectModal } from './ui/HeroSelectModal';
+import { getHeroById } from '../data/heroes';
+import { AudioManager } from '../audio/AudioManager';
+import { GrimoireModal } from './ui/GrimoireModal';
 
 export class MenuScene extends Phaser.Scene {
   private platform = createPlatformAdapter();
+  private heroModal!: HeroSelectModal;
+  private grimoireModal!: GrimoireModal;
+  private selectedHeroText?: Phaser.GameObjects.Text;
 
   constructor() {
     super({ key: 'MenuScene' });
@@ -104,15 +111,30 @@ export class MenuScene extends Phaser.Scene {
       });
     });
 
-    // 4. Vertical Button Stack (Left side)
+    // 4. Hero Selection & Grimoire Modals
+    this.heroModal = new HeroSelectModal(this, (hero) => {
+      this.updateHeroBadge(hero.name);
+    });
+    this.grimoireModal = new GrimoireModal(this);
+
+    const currentHero = getHeroById(SaveManager.getInstance().getSelectedHeroId());
+
+    // 5. Vertical Button Stack (Left side)
     const buttonConfigs = [
       { key: 'btn_play', y: -125, scale: 0.62, action: () => this.startGame() },
-      { key: 'btn_heroes', y: -65, scale: 0.62, action: () => this.onButtonClick('Heroes') },
+      { key: 'btn_heroes', y: -65, scale: 0.62, action: () => this.openHeroSelect() },
       { key: 'btn_upgrades', y: -8, scale: 0.62, action: () => this.openUpgrades() },
-      { key: 'btn_bestiary', y: 50, scale: 0.62, action: () => this.onButtonClick('Bestiary') },
+      { key: 'btn_bestiary', y: 50, scale: 0.62, action: () => this.grimoireModal.show() },
       { key: 'btn_settings', y: 108, scale: 0.62, action: () => this.onButtonClick('Settings') },
       { key: 'btn_quit', y: 168, scale: 0.62, action: () => this.onButtonClick('Quit') },
     ];
+
+    this.selectedHeroText = this.add.text(-380, -35, `[ ${currentHero.name} ]`, {
+      fontSize: '12px',
+      fontStyle: 'bold',
+      color: '#4ade80',
+      fontFamily: 'monospace',
+    }).setOrigin(0.5);
 
     const buttons: Phaser.GameObjects.Image[] = [];
     buttonConfigs.forEach((cfg, idx) => {
@@ -144,6 +166,8 @@ export class MenuScene extends Phaser.Scene {
       });
 
       btn.on('pointerdown', () => {
+        AudioManager.getInstance().init();
+        AudioManager.getInstance().playClick();
         this.platform.vibrate(30);
         this.tweens.add({
           targets: btn,
@@ -241,6 +265,7 @@ export class MenuScene extends Phaser.Scene {
       ratShadow,
       rat,
       ...buttons,
+      this.selectedHeroText,
       dailyGoo,
       mission,
       social,
@@ -259,6 +284,17 @@ export class MenuScene extends Phaser.Scene {
       color: '#64748b',
       fontFamily: 'monospace',
     }).setOrigin(1, 1);
+  }
+
+  private openHeroSelect(): void {
+    this.platform.vibrate(30);
+    this.heroModal.show();
+  }
+
+  private updateHeroBadge(heroName: string): void {
+    if (this.selectedHeroText) {
+      this.selectedHeroText.setText(`[ ${heroName} ]`);
+    }
   }
 
   private openUpgrades(): void {

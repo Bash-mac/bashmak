@@ -30,29 +30,27 @@ export class HUD {
     this.scene = scene;
     this.container = scene.add.container(0, 0).setScrollFactor(0).setDepth(9000);
 
-    // Avatar Expression Portrait
+    // Avatar Expression Portrait (Circular comic badge 68x68)
     this.avatarFrame = scene.add.graphics();
-    this.avatarFrame.fillStyle(0x0f172a, 0.9);
-    this.avatarFrame.lineStyle(2, 0x4ade80, 1);
-    this.avatarFrame.fillRoundedRect(12, 16, 62, 54, 8);
-    this.avatarFrame.strokeRoundedRect(12, 16, 62, 54, 8);
+    this.avatarFrame.fillStyle(0x090d16, 0.85);
+    this.avatarFrame.fillCircle(46, 46, 34);
 
-    this.avatarImage = scene.add.image(43, 43, 'tony_portrait').setDisplaySize(54, 50);
+    this.avatarImage = scene.add.image(46, 46, 'hud_face_smug').setDisplaySize(68, 68);
 
     // HP Bar
     this.hpBarBackground = scene.add.graphics();
     this.hpBarFill = scene.add.graphics();
-    this.hpText = scene.add.text(84, 40, 'HP: 100/100', {
+    this.hpText = scene.add.text(92, 42, 'HP: 100/100', {
       fontSize: '14px',
       fontStyle: 'bold',
       color: '#ffffff',
       fontFamily: 'monospace',
     });
 
-    // XP Bar (across the top)
+    // XP Bar / Level Text
     this.xpBarBackground = scene.add.graphics();
     this.xpBarFill = scene.add.graphics();
-    this.levelText = scene.add.text(84, 56, 'LVL 1', {
+    this.levelText = scene.add.text(92, 58, 'LVL 1', {
       fontSize: '15px',
       fontStyle: 'bold',
       color: '#4ade80',
@@ -123,7 +121,7 @@ export class HUD {
   updateHp(current: number, max: number): void {
     const width = 200;
     const height = 18;
-    const x = 84;
+    const x = 92;
     const y = 18;
 
     this.hpBarBackground.clear();
@@ -139,13 +137,18 @@ export class HUD {
 
     this.hpText.setText(`HP: ${Math.ceil(current)}/${max}`);
 
-    // Update Bashmak Expression Avatar based on Health
+    // Update Expression Avatar based on Health and Hero
+    const isWorm = (this.scene.registry.get('selectedHeroId') || 'hero_worm') === 'hero_worm';
+    const smugKey = isWorm ? 'hud_face_smug' : 'face_smug';
+    const boredKey = isWorm ? 'hud_face_bored' : 'face_bored';
+    const injuredKey = isWorm ? 'hud_face_injured' : 'face_injured';
+
     if (ratio > 0.65) {
-      this.avatarImage.setTexture('face_smug');
+      this.avatarImage.setTexture(this.scene.textures.exists(smugKey) ? smugKey : 'face_smug');
     } else if (ratio >= 0.30) {
-      this.avatarImage.setTexture('face_bored');
+      this.avatarImage.setTexture(this.scene.textures.exists(boredKey) ? boredKey : 'face_bored');
     } else {
-      this.avatarImage.setTexture('face_injured');
+      this.avatarImage.setTexture(this.scene.textures.exists(injuredKey) ? injuredKey : 'face_injured');
     }
   }
 
