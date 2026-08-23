@@ -28,6 +28,15 @@ export class BrowserPlatformAdapter implements IPlatformAdapter {
   }
 
   requestFullscreen(): void {
+    // Only request fullscreen on mobile touch devices (to hide browser address bar)
+    const isMobile =
+      /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+      ('ontouchstart' in window && window.innerWidth <= 1024);
+
+    if (!isMobile) {
+      return; // PC Desktop stays in normal windowed mode
+    }
+
     try {
       if (!document.fullscreenElement) {
         const el = document.documentElement as any;

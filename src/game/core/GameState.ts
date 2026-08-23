@@ -10,6 +10,7 @@ export class GameState {
   public runTime = 0; // In seconds
   public kills = 0;
   public score = 0;
+  public gooCollected = 0;
   public isGameOver = false;
 
   // Progression
@@ -98,6 +99,7 @@ export class GameState {
     this.runTime = 0;
     this.kills = 0;
     this.score = 0;
+    this.gooCollected = 0;
     this.isGameOver = false;
     this.level = 1;
     this.currentXp = 0;
@@ -216,6 +218,15 @@ export class GameState {
     this.score += 100;
   }
 
+  addGoo(amount: number): void {
+    if (this.isGameOver) return;
+    this.gooCollected += amount;
+    EventBus.getInstance().emit('goo:gained', {
+      amount,
+      totalRunGoo: this.gooCollected,
+    });
+  }
+
   endRun(won = false): void {
     if (this.isGameOver) return;
     this.isGameOver = true;
@@ -224,6 +235,8 @@ export class GameState {
       timeSurvived: Math.floor(this.runTime),
       kills: this.kills,
       level: this.level,
+      score: this.score,
+      gooCollected: this.gooCollected,
     });
   }
 }

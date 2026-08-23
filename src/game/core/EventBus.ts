@@ -8,9 +8,10 @@ export interface GameEvents {
   'enemy:damaged': { id: string; currentHp: number; damage: number };
   'enemy:died': { id: string; xpValue: number; x: number; y: number };
   'xp:gained': { amount: number; totalXp: number; level: number; nextLevelXp: number };
+  'goo:gained': { amount: number; totalRunGoo: number };
   'player:levelUp': { newLevel: number };
   'run:started': void;
-  'run:ended': { won: boolean; timeSurvived: number; kills: number; level: number };
+  'run:ended': { won: boolean; timeSurvived: number; kills: number; level: number; score?: number; gooCollected?: number };
 }
 
 export class EventBus {

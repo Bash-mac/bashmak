@@ -44,6 +44,21 @@ export class BootScene extends Phaser.Scene {
     this.load.image('face_furious', '/assets/sprites/expressions/face_furious.png');
     this.load.image('face_victorious', '/assets/sprites/expressions/face_victorious.png');
 
+    // Tony The Worm Animated Sprites & UI
+    this.load.image('tony_portrait', '/assets/sprites/tony/portrait.png');
+    this.load.image('tony_logo', '/assets/sprites/tony/logo.png');
+    this.load.image('tony_spit_projectile', '/assets/sprites/tony/spit_projectile.png');
+
+    for (let i = 1; i <= 4; i++) {
+      this.load.image(`tony_idle_${i}`, `/assets/sprites/tony/idle_${i}.png`);
+      this.load.image(`tony_hurt_${i}`, `/assets/sprites/tony/hurt_${i}.png`);
+      this.load.image(`tony_dead_${i}`, `/assets/sprites/tony/dead_${i}.png`);
+      this.load.image(`tony_spit_${i}`, `/assets/sprites/tony/spit_${i}.png`);
+    }
+    for (let i = 1; i <= 3; i++) {
+      this.load.image(`tony_run_${i}`, `/assets/sprites/tony/run_${i}.png`);
+    }
+
     // Combat FX
     this.load.image('fx_slime', '/assets/sprites/poses/fx_slime.png');
     this.load.image('fx_impact', '/assets/sprites/poses/fx_impact.png');
@@ -52,7 +67,77 @@ export class BootScene extends Phaser.Scene {
 
   create(): void {
     this.createPlaceholderTextures();
+    this.createTonyAnimations();
     this.scene.start('MenuScene');
+  }
+
+  private createTonyAnimations(): void {
+    // 1. Idle (breathing/wiggle)
+    this.anims.create({
+      key: 'tony_anim_idle',
+      frames: [
+        { key: 'tony_idle_1' },
+        { key: 'tony_idle_2' },
+        { key: 'tony_idle_3' },
+        { key: 'tony_idle_4' },
+        { key: 'tony_idle_3' },
+        { key: 'tony_idle_2' },
+      ],
+      frameRate: 6,
+      repeat: -1,
+    });
+
+    // 2. Run (squash & stretch crawl)
+    this.anims.create({
+      key: 'tony_anim_run',
+      frames: [
+        { key: 'tony_run_1' },
+        { key: 'tony_run_2' },
+        { key: 'tony_run_3' },
+        { key: 'tony_run_2' },
+      ],
+      frameRate: 9,
+      repeat: -1,
+    });
+
+    // 3. Spit / Attack
+    this.anims.create({
+      key: 'tony_anim_spit',
+      frames: [
+        { key: 'tony_spit_1' },
+        { key: 'tony_spit_2' },
+        { key: 'tony_spit_3' },
+        { key: 'tony_spit_4' },
+      ],
+      frameRate: 14,
+      repeat: 0,
+    });
+
+    // 4. Hurt
+    this.anims.create({
+      key: 'tony_anim_hurt',
+      frames: [
+        { key: 'tony_hurt_1' },
+        { key: 'tony_hurt_2' },
+        { key: 'tony_hurt_3' },
+        { key: 'tony_hurt_4' },
+      ],
+      frameRate: 12,
+      repeat: 0,
+    });
+
+    // 5. Dead (splat)
+    this.anims.create({
+      key: 'tony_anim_dead',
+      frames: [
+        { key: 'tony_dead_1' },
+        { key: 'tony_dead_2' },
+        { key: 'tony_dead_3' },
+        { key: 'tony_dead_4' },
+      ],
+      frameRate: 6,
+      repeat: 0,
+    });
   }
 
   private createPlaceholderTextures(): void {
@@ -257,5 +342,18 @@ export class BootScene extends Phaser.Scene {
     boneGfx.strokeRect(6, 7, 16, 6);
     boneGfx.generateTexture('tex_bouncing_bone', 28, 20);
     boneGfx.destroy();
+
+    // 18. GOO Drop (Bright toxic green blob with yellow shine and gold outline)
+    const gooGfx = this.make.graphics({ x: 0, y: 0 });
+    gooGfx.fillStyle(0x84cc16, 1);
+    gooGfx.fillCircle(10, 10, 8);
+    gooGfx.lineStyle(2, 0xfacc15, 1); // Gold rim
+    gooGfx.strokeCircle(10, 10, 8);
+    gooGfx.fillStyle(0xfef08a, 1); // Shiny highlight
+    gooGfx.fillCircle(7, 7, 3);
+    gooGfx.fillStyle(0x22c55e, 0.8);
+    gooGfx.fillCircle(11, 11, 4);
+    gooGfx.generateTexture('tex_goo_drop', 20, 20);
+    gooGfx.destroy();
   }
 }

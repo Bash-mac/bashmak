@@ -37,7 +37,7 @@ export class HUD {
     this.avatarFrame.fillRoundedRect(12, 16, 62, 54, 8);
     this.avatarFrame.strokeRoundedRect(12, 16, 62, 54, 8);
 
-    this.avatarImage = scene.add.image(43, 43, 'face_smug').setDisplaySize(56, 46);
+    this.avatarImage = scene.add.image(43, 43, 'tony_portrait').setDisplaySize(54, 50);
 
     // HP Bar
     this.hpBarBackground = scene.add.graphics();

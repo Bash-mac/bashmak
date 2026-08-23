@@ -51,30 +51,49 @@ export class SpawnManager {
     }
 
     // 2. Exact Vampire Survivors Target Population Curve
-    let targetPopulation = 25;
-    if (minutes < 1.0) {
-      targetPopulation = 25;
+    let targetPopulation = 10;
+    let maxBatchSize = 2;
+    let spawnInterval = 600;
+
+    if (minutes < 0.6) {
+      targetPopulation = 10;
+      maxBatchSize = 2;
+      spawnInterval = 600;
+    } else if (minutes < 1.2) {
+      targetPopulation = 22;
+      maxBatchSize = 3;
+      spawnInterval = 450;
     } else if (minutes < 2.5) {
-      targetPopulation = 45;
+      targetPopulation = 42;
+      maxBatchSize = 4;
+      spawnInterval = 350;
     } else if (minutes < 4.0) {
-      targetPopulation = 70;
-    } else if (minutes < 5.0) {
+      targetPopulation = 65;
+      maxBatchSize = 5;
+      spawnInterval = 250;
+    } else if (minutes < 6.0) {
       targetPopulation = 90;
+      maxBatchSize = 5;
+      spawnInterval = 200;
     } else if (minutes < 8.0) {
       targetPopulation = 110;
+      maxBatchSize = 6;
+      spawnInterval = 200;
     } else {
       targetPopulation = 130;
+      maxBatchSize = 7;
+      spawnInterval = 180;
     }
 
     // If population is healthy, check interval
     if (this.currentActiveCount >= targetPopulation) return;
 
     this.spawnTimer += deltaMs;
-    // Fast replenishment (every 250ms spawn batches of 3-5 until target is reached)
-    if (this.spawnTimer >= 250) {
+    // Replenish deficit smoothly
+    if (this.spawnTimer >= spawnInterval) {
       this.spawnTimer = 0;
       const deficit = targetPopulation - this.currentActiveCount;
-      const batchSize = Math.min(5, deficit);
+      const batchSize = Math.min(maxBatchSize, deficit);
 
       for (let i = 0; i < batchSize; i++) {
         const def = this.selectEnemyDefinition(minutes);

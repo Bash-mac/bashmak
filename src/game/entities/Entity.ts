@@ -28,6 +28,9 @@ export class Entity {
   private poisonTimer = 0;
   private poisonDps = 0;
   private poisonTickAccumulator = 0;
+  public knockbackTimer = 0;
+  public knockbackVx = 0;
+  public knockbackVy = 0;
 
   // Attack cooldown tracker for enemies
   public attackCooldown = 0;
@@ -74,7 +77,21 @@ export class Entity {
     this.poisonTimer = durationMs;
   }
 
+  applyKnockback(vx: number, vy: number, durationMs = 120): void {
+    this.knockbackVx = vx;
+    this.knockbackVy = vy;
+    this.knockbackTimer = durationMs;
+    if (this.sprite?.body) {
+      this.sprite.body.setVelocity(vx, vy);
+    }
+  }
+
   updateStatusEffects(deltaMs: number, onPoisonDamage?: (dmg: number) => void): void {
+    // Knockback timer
+    if (this.knockbackTimer > 0) {
+      this.knockbackTimer -= deltaMs;
+    }
+
     // Slow effect
     if (this.slowTimer > 0) {
       this.slowTimer -= deltaMs;

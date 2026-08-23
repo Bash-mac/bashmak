@@ -22,30 +22,48 @@ src/
 │   ├── VirtualJoystickInputSource.ts
 │   └── InputManager.ts
 ├── game/
-│   ├── core/           # Чистая доменная логика и шина событий
+│   ├── core/           # Чистая доменная логика, шина событий, сохранения
 │   │   ├── EventBus.ts
-│   │   └── GameState.ts
+│   │   ├── GameState.ts
+│   │   └── SaveManager.ts
 │   ├── entities/       # Сущности и их компоненты (Composition)
 │   │   ├── Entity.ts
 │   │   └── components/
 │   │       ├── StatsComponent.ts
 │   │       └── HealthComponent.ts
-│   ├── data/           # Data-driven контент (герои, враги, оружие)
+│   ├── data/           # Data-driven контент (герои, враги, пассивки, мета)
 │   │   ├── definitions.ts
 │   │   ├── heroes.ts
-│   │   └── enemies.ts
-│   ├── combat/         # Боевой движок (расчет урона, брони, смерть)
-│   │   └── CombatSystem.ts
-│   ├── spawning/       # Управление спавном и волнами
+│   │   ├── enemies.ts
+│   │   ├── upgrades.ts
+│   │   └── metaUpgrades.ts
+│   ├── combat/         # Боевой движок и оружие (1 файл на 1 пушку)
+│   │   ├── CombatSystem.ts
+│   │   ├── WeaponManager.ts
+│   │   └── weapons/
+│   │       ├── IWeapon.ts
+│   │       ├── HomingDaggersWeapon.ts
+│   │       ├── BouncingBonesWeapon.ts
+│   │       ├── LightningZapWeapon.ts
+│   │       └── AcidTrailWeapon.ts
+│   ├── ai/             # ИИ мобов, флокинг/разделение толпы, боссы
+│   │   └── EnemyAISystem.ts
+│   ├── loot/           # Спавн кристаллов XP, капель GOO, прогрессивный магнит
+│   │   └── LootSystem.ts
+│   ├── map/            # Генератор препятствий, бочек, алтарей
+│   │   └── MapGenerator.ts
+│   ├── spawning/       # Управление спавном и кривой популяции
 │   │   └── SpawnManager.ts
-│   └── scenes/         # Сцены Phaser (только оркестрация и визуал)
+│   └── scenes/         # Сцены Phaser (только тонкая оркестрация и визуал)
 │       ├── BootScene.ts
 │       ├── MenuScene.ts
 │       ├── GameScene.ts
+│       ├── UpgradesScene.ts
 │       ├── ResultScene.ts
 │       └── ui/
-│           └── HUD.ts
-└── main.ts             # Точка входа приложения (GameApplication)
+│           ├── HUD.ts
+│           └── LevelUpModal.ts
+└── main.ts             # Точка входа приложения
 ```
 
 ---

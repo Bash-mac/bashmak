@@ -1,17 +1,29 @@
 import type { StatsData, StatsComponent } from '../entities/components/StatsComponent';
 import type { HealthComponent } from '../entities/components/HealthComponent';
 
+export interface HeroTrait {
+  id: string;
+  name: string;
+  comicTag: string;
+  description: string;
+  apply?: (modifiers: PlayerModifiers, stats: StatsData) => void;
+}
+
 export interface HeroDefinition {
   id: string;
   name: string;
+  comicTitle?: string;
   description: string;
+  lore?: string;
   textureKey: string;
+  portraitKey?: string;
   stats: StatsData;
-  attackIntervalMs: number;
-  attackRange: number;
-  projectileSpeed: number;
-  projectileSize: number;
   startingWeaponId: string;
+  trait?: HeroTrait;
+  attackIntervalMs?: number;
+  attackRange?: number;
+  projectileSpeed?: number;
+  projectileSize?: number;
 }
 
 export type EnemyArchetype = 'fodder' | 'swarmer' | 'sprinter' | 'tank' | 'exploder' | 'miniboss' | 'boss';

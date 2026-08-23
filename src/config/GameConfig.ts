@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { BootScene } from '../game/scenes/BootScene';
 import { MenuScene } from '../game/scenes/MenuScene';
 import { GameScene } from '../game/scenes/GameScene';
+import { UpgradesScene } from '../game/scenes/UpgradesScene';
 import { ResultScene } from '../game/scenes/ResultScene';
 
 export const GameConfig: Phaser.Types.Core.GameConfig = {
@@ -21,7 +22,7 @@ export const GameConfig: Phaser.Types.Core.GameConfig = {
       debug: false,
     },
   },
-  scene: [BootScene, MenuScene, GameScene, ResultScene],
+  scene: [BootScene, MenuScene, GameScene, UpgradesScene, ResultScene],
   input: {
     activePointers: 3,
   },

@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { createPlatformAdapter } from '../../platform';
+import { SaveManager } from '../core/SaveManager';
 
 export class MenuScene extends Phaser.Scene {
   private platform = createPlatformAdapter();
@@ -107,7 +108,7 @@ export class MenuScene extends Phaser.Scene {
     const buttonConfigs = [
       { key: 'btn_play', y: -125, scale: 0.62, action: () => this.startGame() },
       { key: 'btn_heroes', y: -65, scale: 0.62, action: () => this.onButtonClick('Heroes') },
-      { key: 'btn_upgrades', y: -8, scale: 0.62, action: () => this.onButtonClick('Upgrades') },
+      { key: 'btn_upgrades', y: -8, scale: 0.62, action: () => this.openUpgrades() },
       { key: 'btn_bestiary', y: 50, scale: 0.62, action: () => this.onButtonClick('Bestiary') },
       { key: 'btn_settings', y: 108, scale: 0.62, action: () => this.onButtonClick('Settings') },
       { key: 'btn_quit', y: 168, scale: 0.62, action: () => this.onButtonClick('Quit') },
@@ -223,6 +224,17 @@ export class MenuScene extends Phaser.Scene {
       topIcons.push(icon);
     });
 
+    // Top GOO Currency Badge
+    const gooBank = SaveManager.getInstance().getGoo();
+    const gooBadgeBg = this.add.rectangle(350, -310, 160, 38, 0x14532d, 0.9);
+    gooBadgeBg.setStrokeStyle(2, 0x4ade80);
+    const gooBadgeText = this.add.text(350, -310, `🧪 ${gooBank}`, {
+      fontSize: '16px',
+      fontStyle: 'bold',
+      color: '#4ade80',
+      fontFamily: 'monospace',
+    }).setOrigin(0.5);
+
     uiContainer.add([
       logo,
       worm,
@@ -232,6 +244,8 @@ export class MenuScene extends Phaser.Scene {
       dailyGoo,
       mission,
       social,
+      gooBadgeBg,
+      gooBadgeText,
       ...topIcons,
     ]);
 
@@ -245,11 +259,11 @@ export class MenuScene extends Phaser.Scene {
       color: '#64748b',
       fontFamily: 'monospace',
     }).setOrigin(1, 1);
+  }
 
-    // Request Fullscreen on user tap to hide mobile browser address bar
-    this.input.once('pointerdown', () => {
-      this.platform.requestFullscreen?.();
-    });
+  private openUpgrades(): void {
+    this.platform.vibrate(30);
+    this.scene.start('UpgradesScene');
   }
 
   private startGame(): void {
