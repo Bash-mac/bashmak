@@ -239,6 +239,12 @@ export class HUD {
     }
   }
 
+  resize(width: number, _height: number): void {
+    const rightEdge = width - 16;
+    this.timerText.setX(rightEdge);
+    this.killsText.setX(rightEdge);
+  }
+
   destroy(): void {
     for (const unbind of this.unbinds) {
       unbind();

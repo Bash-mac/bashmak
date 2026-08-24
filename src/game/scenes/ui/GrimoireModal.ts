@@ -1,4 +1,4 @@
-﻿import Phaser from 'phaser';
+import Phaser from 'phaser';
 import { EVOLUTION_RECIPES } from '../../data/evolutions';
 import { GameState } from '../../core/GameState';
 import { AudioManager } from '../../audio/AudioManager';
@@ -27,20 +27,21 @@ export class GrimoireModal {
     this.elements.push(backdrop);
 
     // 2. Grimoire Book Container Box
-    const bookW = Math.min(880, width - 40);
-    const bookH = Math.min(580, height - 50);
+    const isPortrait = width < 650 || width < height;
+    const bookW = Math.min(880, width - 24);
+    const bookH = Math.min(580, height - 30);
 
     const bookBg = this.scene.add
       .rectangle(width / 2, height / 2, bookW, bookH, 0x1e1b4b, 0.98)
       .setScrollFactor(0)
       .setDepth(20001)
-      .setStrokeStyle(4, 0xfacc15);
+      .setStrokeStyle(isPortrait ? 2 : 4, 0xfacc15);
     this.elements.push(bookBg);
 
     // 3. Header Title
     const title = this.scene.add
-      .text(width / 2, height / 2 - bookH / 2 + 45, '📖 ГРИМУАР МУТАЦИЙ', {
-        fontSize: '32px',
+      .text(width / 2, height / 2 - bookH / 2 + (isPortrait ? 30 : 45), '📖 ГРИМУАР МУТАЦИЙ', {
+        fontSize: isPortrait ? '20px' : '32px',
         fontStyle: 'bold',
         color: '#facc15',
         fontFamily: 'monospace',
@@ -50,8 +51,8 @@ export class GrimoireModal {
       .setDepth(20002);
 
     const subtitle = this.scene.add
-      .text(width / 2, height / 2 - bookH / 2 + 82, 'Формулы супер-эволюций: Оружие (Lv.5) + Фолиант (Lv.5)', {
-        fontSize: '15px',
+      .text(width / 2, height / 2 - bookH / 2 + (isPortrait ? 58 : 82), isPortrait ? 'Оружие (Lv.5) + Фолиант (Lv.5)' : 'Формулы супер-эволюций: Оружие (Lv.5) + Фолиант (Lv.5)', {
+        fontSize: isPortrait ? '11px' : '15px',
         color: '#cbd5e1',
         fontFamily: 'monospace',
       })
@@ -61,11 +62,12 @@ export class GrimoireModal {
     this.elements.push(title, subtitle);
 
     // 4. Render 4 Evolution Recipe Cards
-    const startY = height / 2 - bookH / 2 + 130;
-    const rowH = 88;
+    const startY = height / 2 - bookH / 2 + (isPortrait ? 95 : 130);
+    const rowH = isPortrait ? 78 : 88;
+    const spacing = isPortrait ? 8 : 12;
 
     EVOLUTION_RECIPES.forEach((recipe, idx) => {
-      const rowY = startY + idx * (rowH + 12);
+      const rowY = startY + idx * (rowH + spacing);
       const isEvolved = gameState.activeUpgrades.has(recipe.id);
       const weaponLvl = gameState.activeUpgrades.get(recipe.baseWeaponId) || 0;
       const tomeLvl = gameState.activeUpgrades.get(recipe.requiredTomeId) || 0;
@@ -75,15 +77,15 @@ export class GrimoireModal {
       const borderColor = isEvolved ? 0x34d399 : isReady ? 0xfacc15 : 0x334155;
 
       const card = this.scene.add
-        .rectangle(width / 2, rowY, bookW - 50, rowH, cardColor, 0.95)
+        .rectangle(width / 2, rowY, bookW - (isPortrait ? 20 : 50), rowH, cardColor, 0.95)
         .setScrollFactor(0)
         .setDepth(20002)
-        .setStrokeStyle(2, borderColor);
+        .setStrokeStyle(isPortrait ? 1 : 2, borderColor);
 
       // Recipe Title & Formula
       const nameText = this.scene.add
-        .text(width / 2 - bookW / 2 + 50, rowY - 22, recipe.comicTitle, {
-          fontSize: '18px',
+        .text(width / 2 - bookW / 2 + (isPortrait ? 20 : 50), rowY - (isPortrait ? 24 : 22), recipe.comicTitle, {
+          fontSize: isPortrait ? '13px' : '18px',
           fontStyle: 'bold',
           color: isEvolved ? '#34d399' : isReady ? '#facc15' : '#e2e8f0',
           fontFamily: 'monospace',
@@ -92,8 +94,8 @@ export class GrimoireModal {
         .setDepth(20003);
 
       const formulaText = this.scene.add
-        .text(width / 2 - bookW / 2 + 50, rowY + 3, `${recipe.baseWeaponName} (${weaponLvl}/5)  ➕  ${recipe.requiredTomeName} (${tomeLvl}/5)`, {
-          fontSize: '13px',
+        .text(width / 2 - bookW / 2 + (isPortrait ? 20 : 50), rowY - (isPortrait ? 4 : -3), `${recipe.baseWeaponName} (${weaponLvl}/5) ➕ ${recipe.requiredTomeName} (${tomeLvl}/5)`, {
+          fontSize: isPortrait ? '10px' : '13px',
           color: '#94a3b8',
           fontFamily: 'monospace',
         })
@@ -103,20 +105,33 @@ export class GrimoireModal {
       const statusTag = isEvolved
         ? '✅ АКТИВНО'
         : isReady
-        ? '🔥 ГОТОВО К СИНТЕЗУ'
+        ? '🔥 ГОТОВО'
         : '🔒 ЗАКРЫТО';
       const statusColor = isEvolved ? '#34d399' : isReady ? '#facc15' : '#64748b';
 
-      const tagText = this.scene.add
-        .text(width / 2 + bookW / 2 - 65, rowY, statusTag, {
-          fontSize: '14px',
-          fontStyle: 'bold',
-          color: statusColor,
-          fontFamily: 'monospace',
-        })
-        .setOrigin(1, 0.5)
-        .setScrollFactor(0)
-        .setDepth(20003);
+      let tagText: Phaser.GameObjects.Text;
+      if (isPortrait) {
+        tagText = this.scene.add
+          .text(width / 2 - bookW / 2 + 20, rowY + 16, statusTag, {
+            fontSize: '10px',
+            fontStyle: 'bold',
+            color: statusColor,
+            fontFamily: 'monospace',
+          })
+          .setScrollFactor(0)
+          .setDepth(20003);
+      } else {
+        tagText = this.scene.add
+          .text(width / 2 + bookW / 2 - 65, rowY, statusTag, {
+            fontSize: '14px',
+            fontStyle: 'bold',
+            color: statusColor,
+            fontFamily: 'monospace',
+          })
+          .setOrigin(1, 0.5)
+          .setScrollFactor(0)
+          .setDepth(20003);
+      }
 
       this.elements.push(card, nameText, formulaText, tagText);
     });

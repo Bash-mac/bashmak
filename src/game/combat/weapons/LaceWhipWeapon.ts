@@ -1,4 +1,4 @@
-﻿import Phaser from 'phaser';
+import Phaser from 'phaser';
 import type { IWeapon, WeaponContext } from './IWeapon';
 import { AudioManager } from '../../audio/AudioManager';
 
@@ -11,7 +11,8 @@ export class LaceWhipWeapon implements IWeapon {
 
   update(delta: number, ctx: WeaponContext): void {
     const mods = ctx.gameState.playerModifiers;
-    const whipLvl = mods.laceWhipLevel || 1;
+    if ((mods.laceWhipLevel ?? 0) <= 0) return;
+    const whipLvl = mods.laceWhipLevel;
 
     const baseSpeed = (ctx.player.stats.attackSpeed ?? 1.0) * (1 + mods.attackSpeedBonus);
     const baseInterval = 1200 / baseSpeed;

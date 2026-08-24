@@ -1,4 +1,4 @@
-﻿/**
+/**
  * AudioManager — Звуковой движок Bashmak (Web Audio API)
  * Полностью процедурный синтез 90s Gross-Out Cartoon SFX + фоновый бит без тяжелых внешних файлов.
  */
@@ -13,10 +13,13 @@ export class AudioManager {
   private xpStreakCount = 0;
   private xpStreakResetTimer: number | null = null;
 
-  // BGM Loop State
-  private bgmIntervalId: number | null = null;
+  // BGM Lookahead Scheduler State
+  private bgmSchedulerId: number | null = null;
   private bgmStep = 0;
+  private bgmNextNoteTime = 0;
   private isBgmPlaying = false;
+  private static readonly BGM_TEMPO_S = 0.135; // ~111 BPM
+  private static readonly BGM_LOOKAHEAD_S = 0.15; // schedule this far ahead
 
   private constructor() {
     // AudioContext will be initialized on first user gesture
@@ -326,84 +329,80 @@ export class AudioManager {
 
     this.isBgmPlaying = true;
     this.bgmStep = 0;
+    this.bgmNextNoteTime = this.ctx!.currentTime;
+
+    const schedule = () => {
+      if (!this.isBgmPlaying || !this.ctx) return;
+      while (this.bgmNextNoteTime < this.ctx.currentTime + AudioManager.BGM_LOOKAHEAD_S) {
+        this.scheduleBgmNote(this.bgmStep, this.bgmNextNoteTime);
+        this.bgmStep++;
+        this.bgmNextNoteTime += AudioManager.BGM_TEMPO_S;
+      }
+    };
+
+    // 25ms scheduler tick — only fills lookahead buffer, no audio created here
+    this.bgmSchedulerId = window.setInterval(schedule, 25);
+    schedule();
+  }
+
+  private scheduleBgmNote(step: number, time: number): void {
+    const ctx = this.ctx!;
 
     // Funk Bassline Scale (in Hz)
     const bassline = [
       65.41, 0, 65.41, 77.78, 0, 87.31, 0, 98.00,
-      65.41, 65.41, 0, 116.54, 110.00, 98.00, 87.31, 77.78
+      65.41, 65.41, 0, 116.54, 110.00, 98.00, 87.31, 77.78,
     ];
 
-    const tempoMs = 135; // ~111 BPM 90s breakbeat funk
+    const noteFreq = bassline[step % bassline.length];
 
-    this.bgmIntervalId = window.setInterval(() => {
-      if (!this.isBgmPlaying || this.isMuted || !this.ctx) return;
+    if (noteFreq > 0) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(noteFreq, time);
+      osc.frequency.exponentialRampToValueAtTime(noteFreq * 0.95, time + 0.12);
+      gain.gain.setValueAtTime(this.bgmVolume * 0.22, time);
+      gain.gain.exponentialRampToValueAtTime(0.001, time + 0.14);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(time);
+      osc.stop(time + 0.15); // browser GCs node immediately after stop
+    }
 
-      const now = this.ctx.currentTime;
-      const noteFreq = bassline[this.bgmStep % bassline.length];
-
-      if (noteFreq > 0) {
-        // Slap Bass Tone
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(noteFreq, now);
-        osc.frequency.exponentialRampToValueAtTime(noteFreq * 0.95, now + 0.12);
-
-        gain.gain.setValueAtTime(this.bgmVolume * 0.22, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
-
-        osc.connect(gain);
-        gain.connect(this.ctx.destination);
-
-        osc.start(now);
-        osc.stop(now + 0.15);
-      }
-
-      // Kick on 0, 8; Snare-pop on 4, 12
-      if (this.bgmStep % 8 === 0) {
-        // Kick
-        const kickOsc = this.ctx.createOscillator();
-        const kickGain = this.ctx.createGain();
-        kickOsc.type = 'sine';
-        kickOsc.frequency.setValueAtTime(110, now);
-        kickOsc.frequency.exponentialRampToValueAtTime(35, now + 0.08);
-
-        kickGain.gain.setValueAtTime(this.bgmVolume * 0.35, now);
-        kickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
-
-        kickOsc.connect(kickGain);
-        kickGain.connect(this.ctx.destination);
-
-        kickOsc.start(now);
-        kickOsc.stop(now + 0.1);
-      } else if (this.bgmStep % 8 === 4) {
-        // Snare / Rim Pop
-        const snareOsc = this.ctx.createOscillator();
-        const snareGain = this.ctx.createGain();
-        snareOsc.type = 'triangle';
-        snareOsc.frequency.setValueAtTime(320, now);
-        snareOsc.frequency.exponentialRampToValueAtTime(120, now + 0.05);
-
-        snareGain.gain.setValueAtTime(this.bgmVolume * 0.25, now);
-        snareGain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
-
-        snareOsc.connect(snareGain);
-        snareGain.connect(this.ctx.destination);
-
-        snareOsc.start(now);
-        snareOsc.stop(now + 0.07);
-      }
-
-      this.bgmStep++;
-    }, tempoMs);
+    // Kick on beats 0, 8; Snare-pop on 4, 12
+    if (step % 8 === 0) {
+      const kickOsc = ctx.createOscillator();
+      const kickGain = ctx.createGain();
+      kickOsc.type = 'sine';
+      kickOsc.frequency.setValueAtTime(110, time);
+      kickOsc.frequency.exponentialRampToValueAtTime(35, time + 0.08);
+      kickGain.gain.setValueAtTime(this.bgmVolume * 0.35, time);
+      kickGain.gain.exponentialRampToValueAtTime(0.001, time + 0.09);
+      kickOsc.connect(kickGain);
+      kickGain.connect(ctx.destination);
+      kickOsc.start(time);
+      kickOsc.stop(time + 0.1);
+    } else if (step % 8 === 4) {
+      const snareOsc = ctx.createOscillator();
+      const snareGain = ctx.createGain();
+      snareOsc.type = 'triangle';
+      snareOsc.frequency.setValueAtTime(320, time);
+      snareOsc.frequency.exponentialRampToValueAtTime(120, time + 0.05);
+      snareGain.gain.setValueAtTime(this.bgmVolume * 0.25, time);
+      snareGain.gain.exponentialRampToValueAtTime(0.001, time + 0.06);
+      snareOsc.connect(snareGain);
+      snareGain.connect(ctx.destination);
+      snareOsc.start(time);
+      snareOsc.stop(time + 0.07);
+    }
   }
 
   public stopBgm(): void {
     this.isBgmPlaying = false;
-    if (this.bgmIntervalId !== null) {
-      window.clearInterval(this.bgmIntervalId);
-      this.bgmIntervalId = null;
+    if (this.bgmSchedulerId !== null) {
+      window.clearInterval(this.bgmSchedulerId);
+      this.bgmSchedulerId = null;
     }
   }
 

@@ -1,14 +1,12 @@
 import Phaser from 'phaser';
 import { createPlatformAdapter } from '../../platform';
 import { SaveManager } from '../core/SaveManager';
-import { HeroSelectModal } from './ui/HeroSelectModal';
 import { getHeroById } from '../data/heroes';
 import { AudioManager } from '../audio/AudioManager';
 import { GrimoireModal } from './ui/GrimoireModal';
 
 export class MenuScene extends Phaser.Scene {
   private platform = createPlatformAdapter();
-  private heroModal!: HeroSelectModal;
   private grimoireModal!: GrimoireModal;
   private selectedHeroText?: Phaser.GameObjects.Text;
 
@@ -29,6 +27,20 @@ export class MenuScene extends Phaser.Scene {
     // 2. Universal Scalable UI Container (Centered & fit to visible area)
     const uiScale = Math.min(width / 1280, height / 720);
     const uiContainer = this.add.container(width / 2, height / 2).setScale(uiScale);
+
+    // Dynamic resize repositioning on phone rotation / viewport changes
+    const onResize = (gameSize: Phaser.Structs.Size) => {
+      const w = gameSize.width;
+      const h = gameSize.height;
+      const newBgScale = Math.max(w / 1280, h / 720);
+      bg.setPosition(w / 2, h / 2).setScale(newBgScale);
+      const newUiScale = Math.min(w / 1280, h / 720);
+      uiContainer.setPosition(w / 2, h / 2).setScale(newUiScale);
+    };
+    this.scale.on('resize', onResize);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.scale.off('resize', onResize);
+    });
 
     // Inside uiContainer, (0, 0) is the center of the 1280x720 canvas
     // Logo (Top Left)
@@ -111,10 +123,7 @@ export class MenuScene extends Phaser.Scene {
       });
     });
 
-    // 4. Hero Selection & Grimoire Modals
-    this.heroModal = new HeroSelectModal(this, (hero) => {
-      this.updateHeroBadge(hero.name);
-    });
+    // 4. Grimoire Modal
     this.grimoireModal = new GrimoireModal(this);
 
     const currentHero = getHeroById(SaveManager.getInstance().getSelectedHeroId());
@@ -288,12 +297,19 @@ export class MenuScene extends Phaser.Scene {
 
   private openHeroSelect(): void {
     this.platform.vibrate(30);
-    this.heroModal.show();
-  }
-
-  private updateHeroBadge(heroName: string): void {
     if (this.selectedHeroText) {
-      this.selectedHeroText.setText(`[ ${heroName} ]`);
+      this.selectedHeroText.setText('[ 🪱 ВЫПОЛЗОК (ЕДИНСТВЕННЫЙ) ]');
+      this.tweens.add({
+        targets: this.selectedHeroText,
+        scaleX: 1.25,
+        scaleY: 1.25,
+        color: '#facc15',
+        duration: 150,
+        yoyo: true,
+        onComplete: () => {
+          this.selectedHeroText?.setText('[ 🪱 ВЫПОЛЗОК ]');
+        },
+      });
     }
   }
 

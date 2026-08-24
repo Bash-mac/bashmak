@@ -19,9 +19,16 @@ declare global {
         colorScheme?: 'light' | 'dark';
         themeParams?: Record<string, string>;
         isExpanded?: boolean;
+        isFullscreen?: boolean;
         ready: () => void;
         expand: () => void;
         close: () => void;
+        requestFullscreen?: () => void;
+        exitFullscreen?: () => void;
+        lockOrientation?: () => void;
+        unlockOrientation?: () => void;
+        setHeaderColor?: (color: string) => void;
+        setBackgroundColor?: (color: string) => void;
         disableVerticalSwipes?: () => void;
         HapticFeedback?: {
           impactOccurred: (style: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft') => void;
@@ -49,6 +56,39 @@ export class TelegramPlatformAdapter implements IPlatformAdapter {
       if (typeof wa.disableVerticalSwipes === 'function') {
         wa.disableVerticalSwipes();
       }
+      if (typeof wa.setHeaderColor === 'function') {
+        wa.setHeaderColor('#0b0e14');
+      }
+      if (typeof wa.setBackgroundColor === 'function') {
+        wa.setBackgroundColor('#0b0e14');
+      }
+      if (typeof wa.requestFullscreen === 'function') {
+        try {
+          wa.requestFullscreen();
+        } catch {
+          // Ignored
+        }
+      }
+      if (typeof wa.unlockOrientation === 'function') {
+        try {
+          wa.unlockOrientation();
+        } catch {
+          // Ignored
+        }
+      }
+
+      // Запрос полного экрана при первом касании экрана игроком
+      const tryFullscreen = () => {
+        if (typeof wa.requestFullscreen === 'function' && !wa.isFullscreen) {
+          try {
+            wa.requestFullscreen();
+          } catch {
+            // Ignored
+          }
+        }
+      };
+      window.addEventListener('pointerdown', tryFullscreen);
+
       console.log(`[Platform] Initialized TelegramPlatformAdapter (v${wa.version}, platform: ${wa.platform})`);
     } else {
       console.warn('[Platform] Telegram WebApp object not found, running in fallback mode');

@@ -1,4 +1,4 @@
-﻿import Phaser from 'phaser';
+import Phaser from 'phaser';
 import type { Entity } from '../entities/Entity';
 import type { SpawnManager } from '../spawning/SpawnManager';
 
@@ -29,6 +29,20 @@ export class EnemyAISystem {
     const playerX = ctx.player.x;
     const playerY = ctx.player.y;
 
+    // --- Spatial bucket grid for O(N) separation instead of O(N²) ---
+    const CELL = 48; // px, slightly larger than separationRadius=42
+    const spatialGrid = new Map<number, Entity[]>();
+    const cellKey = (cx: number, cy: number) => cx * 100003 + cy;
+    for (const e of enemiesList) {
+      if (!e.isAlive || !e.sprite) continue;
+      const cx = Math.floor(e.x / CELL);
+      const cy = Math.floor(e.y / CELL);
+      const key = cellKey(cx, cy);
+      const bucket = spatialGrid.get(key);
+      if (bucket) bucket.push(e);
+      else spatialGrid.set(key, [e]);
+    }
+
     for (const enemy of enemiesList) {
       if (!enemy.isAlive || !enemy.sprite || enemy.isExploding) continue;
 
@@ -57,22 +71,29 @@ export class EnemyAISystem {
       const angleToPlayer = Phaser.Math.Angle.Between(enemy.x, enemy.y, playerX, playerY);
       const spd = enemy.effectiveSpeed;
 
-      // Flocking Separation Force (prevents dense clumping)
+      // Flocking Separation Force — only check 3x3 neighboring cells (O(k) per enemy)
       let sepX = 0;
       let sepY = 0;
       const separationRadius = 42;
+      const separationRadiusSq = separationRadius * separationRadius;
+      const ecx = Math.floor(enemy.x / CELL);
+      const ecy = Math.floor(enemy.y / CELL);
 
-      for (const other of enemiesList) {
-        if (other.id !== enemy.id && other.isAlive && other.sprite) {
-          const dx = enemy.x - other.x;
-          const dy = enemy.y - other.y;
-          const distSq = dx * dx + dy * dy;
-
-          if (distSq < separationRadius * separationRadius && distSq > 0.01) {
-            const d = Math.sqrt(distSq);
-            const force = (separationRadius - d) / separationRadius;
-            sepX += (dx / d) * force * 55;
-            sepY += (dy / d) * force * 55;
+      for (let dx = -1; dx <= 1; dx++) {
+        for (let dy = -1; dy <= 1; dy++) {
+          const neighbors = spatialGrid.get(cellKey(ecx + dx, ecy + dy));
+          if (!neighbors) continue;
+          for (const other of neighbors) {
+            if (other.id === enemy.id) continue;
+            const ox = enemy.x - other.x;
+            const oy = enemy.y - other.y;
+            const distSq = ox * ox + oy * oy;
+            if (distSq < separationRadiusSq && distSq > 0.01) {
+              const d = Math.sqrt(distSq);
+              const force = (separationRadius - d) / separationRadius;
+              sepX += (ox / d) * force * 55;
+              sepY += (oy / d) * force * 55;
+            }
           }
         }
       }

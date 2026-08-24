@@ -1,4 +1,4 @@
-﻿import Phaser from 'phaser';
+import Phaser from 'phaser';
 import type { IWeapon, WeaponContext } from './IWeapon';
 import { AudioManager } from '../../audio/AudioManager';
 
@@ -12,7 +12,8 @@ export class EggplantRollWeapon implements IWeapon {
 
   update(delta: number, ctx: WeaponContext): void {
     const mods = ctx.gameState.playerModifiers;
-    const rollLevel = mods.eggplantRollLevel || 1;
+    if ((mods.eggplantRollLevel ?? 0) <= 0) return;
+    const rollLevel = mods.eggplantRollLevel;
 
     const baseInterval = (4500 - (rollLevel - 1) * 400) / (1 + mods.attackSpeedBonus * 0.5);
 

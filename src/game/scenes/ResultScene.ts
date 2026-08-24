@@ -9,17 +9,45 @@ export class ResultScene extends Phaser.Scene {
   }
 
   create(): void {
-    const { width, height } = this.cameras.main;
+    this.cameras.main.resetFX();
+    this.cameras.main.setScroll(0, 0);
+    this.cameras.main.setBackgroundColor('#090d16');
+    this.cameras.main.fadeIn(300, 9, 13, 22);
+
+    const width = this.scale.width;
+    const height = this.scale.height;
     const state = GameState.getInstance();
     const saveManager = SaveManager.getInstance();
     const platform = createPlatformAdapter();
 
-    // Background
-    this.add.rectangle(0, 0, width, height, 0x090d16, 0.95).setOrigin(0, 0);
+    // 1. Background
+    const bg = this.add.rectangle(width / 2, height / 2, width, height, 0x090d16, 0.96);
 
+    // 2. Responsive UI Container
+    const calcUiScale = (w: number, h: number) => {
+      const isPortrait = w < 600 || w < h;
+      return isPortrait ? Math.min(1.0, (w - 24) / 380) : Math.min(1.0, (h - 30) / 480);
+    };
+
+    const uiScale = calcUiScale(width, height);
+    const uiContainer = this.add.container(width / 2, height / 2).setScale(uiScale);
+
+    // Dynamic resize handler
+    const onResize = (gameSize: Phaser.Structs.Size) => {
+      const w = gameSize.width;
+      const h = gameSize.height;
+      bg.setPosition(w / 2, h / 2).setSize(w, h);
+      uiContainer.setPosition(w / 2, h / 2).setScale(calcUiScale(w, h));
+    };
+    this.scale.on('resize', onResize);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.scale.off('resize', onResize);
+    });
+
+    // Content inside uiContainer (centered at 0, 0)
     // Header
-    this.add.text(width / 2, 80, 'RUN ENDED', {
-      fontSize: '36px',
+    const title = this.add.text(0, -190, 'ЗАБЕГ ОКОНЧЕН', {
+      fontSize: '34px',
       fontStyle: 'bold',
       color: '#ef4444',
       fontFamily: 'monospace',
@@ -33,43 +61,43 @@ export class ResultScene extends Phaser.Scene {
     const timeSurvived = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 
     const statsInfo = [
-      `Time Survived: ${timeSurvived}`,
-      `Enemies Defeated: ${state.kills}`,
-      `Level Reached: ${state.level}`,
-      `Final Score: ${state.score}`,
+      `⏱ Время: ${timeSurvived}`,
+      `💀 Врагов убито: ${state.kills}`,
+      `⭐ Уровень: ${state.level}`,
+      `🏆 Счёт: ${state.score}`,
     ];
 
-    this.add.text(width / 2, 175, statsInfo.join('\n'), {
-      fontSize: '16px',
+    const statsText = this.add.text(0, -110, statsInfo.join('\n'), {
+      fontSize: '15px',
       align: 'center',
       color: '#e2e8f0',
       fontFamily: 'monospace',
-      lineSpacing: 6,
+      lineSpacing: 5,
     }).setOrigin(0.5);
 
     // GOO Earnings Box
-    const gooBoxY = 265;
-    const gooBg = this.add.rectangle(width / 2, gooBoxY, 260, 52, 0x14532d, 0.9);
+    const gooBoxY = -25;
+    const gooBg = this.add.rectangle(0, gooBoxY, 280, 52, 0x14532d, 0.95);
     gooBg.setStrokeStyle(2, 0x4ade80);
 
-    this.add.text(width / 2, gooBoxY - 10, `+${state.gooCollected} GOO EARNED!`, {
-      fontSize: '17px',
+    const gooText = this.add.text(0, gooBoxY - 10, `+${state.gooCollected} СЛИЗИ (GOO) ПОЛУЧЕНО!`, {
+      fontSize: '14px',
       fontStyle: 'bold',
       color: '#4ade80',
       fontFamily: 'monospace',
     }).setOrigin(0.5);
 
-    this.add.text(width / 2, gooBoxY + 12, `Total Bank: 🧪 ${saveManager.getGoo()}`, {
+    const bankText = this.add.text(0, gooBoxY + 12, `В банке: 🧪 ${saveManager.getGoo()}`, {
       fontSize: '13px',
       color: '#86efac',
       fontFamily: 'monospace',
     }).setOrigin(0.5);
 
     // 1. Play Again Button
-    const playBtn = this.add.rectangle(width / 2, height * 0.65, 230, 46, 0x16a34a).setInteractive({ useHandCursor: true });
+    const playBtn = this.add.rectangle(0, 50, 260, 44, 0x16a34a).setInteractive({ useHandCursor: true });
     playBtn.setStrokeStyle(2, 0x4ade80);
 
-    this.add.text(width / 2, height * 0.65, 'PLAY AGAIN', {
+    const playText = this.add.text(0, 50, 'ИГРАТЬ СНОВА', {
       fontSize: '16px',
       fontStyle: 'bold',
       color: '#ffffff',
@@ -82,11 +110,11 @@ export class ResultScene extends Phaser.Scene {
     });
 
     // 2. Upgrades Button
-    const upgBtn = this.add.rectangle(width / 2, height * 0.75, 230, 46, 0xb45309).setInteractive({ useHandCursor: true });
+    const upgBtn = this.add.rectangle(0, 108, 260, 44, 0xb45309).setInteractive({ useHandCursor: true });
     upgBtn.setStrokeStyle(2, 0xfacc15);
 
-    this.add.text(width / 2, height * 0.75, '🧪 UPGRADES SHOP', {
-      fontSize: '15px',
+    const upgText = this.add.text(0, 108, '🧪 ЛАБОРАТОРИЯ МУТАЦИЙ', {
+      fontSize: '14px',
       fontStyle: 'bold',
       color: '#fef08a',
       fontFamily: 'monospace',
@@ -98,10 +126,10 @@ export class ResultScene extends Phaser.Scene {
     });
 
     // 3. Menu Button
-    const menuBtn = this.add.rectangle(width / 2, height * 0.85, 230, 42, 0x334155).setInteractive({ useHandCursor: true });
+    const menuBtn = this.add.rectangle(0, 164, 260, 40, 0x334155).setInteractive({ useHandCursor: true });
     menuBtn.setStrokeStyle(1, 0x64748b);
 
-    this.add.text(width / 2, height * 0.85, 'MAIN MENU', {
+    const menuText = this.add.text(0, 164, 'ГЛАВНОЕ МЕНЮ', {
       fontSize: '14px',
       color: '#ffffff',
       fontFamily: 'monospace',
@@ -111,5 +139,19 @@ export class ResultScene extends Phaser.Scene {
       platform.vibrate(30);
       this.scene.start('MenuScene');
     });
+
+    uiContainer.add([
+      title,
+      statsText,
+      gooBg,
+      gooText,
+      bankText,
+      playBtn,
+      playText,
+      upgBtn,
+      upgText,
+      menuBtn,
+      menuText,
+    ]);
   }
 }

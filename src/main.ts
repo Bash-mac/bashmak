@@ -19,6 +19,19 @@ export class GameApplication {
     // 2. Initialize Phaser Game instance
     this.game = new Phaser.Game(GameConfig);
 
+    // Auto-adapt canvas on dynamic orientation change or window resize
+    const handleResize = () => {
+      if (this.game && this.game.scale) {
+        this.game.scale.resize(window.innerWidth, window.innerHeight);
+        this.game.scale.refresh();
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', () => {
+      setTimeout(handleResize, 150);
+      setTimeout(handleResize, 400);
+    });
+
     console.log(`[GameApplication] Game initialized on platform: ${this.platform.platformType}`);
   }
 

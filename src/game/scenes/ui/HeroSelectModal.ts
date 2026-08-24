@@ -73,19 +73,40 @@ export class HeroSelectModal {
 
     this.elements.push(title, subtitle, closeBtn);
 
-    // 3. Render 4 Hero Cards in a Row
-    const cardWidth = 240;
-    const cardHeight = 440;
-    const gap = 20;
-    const totalRowWidth = ALL_HEROES.length * cardWidth + (ALL_HEROES.length - 1) * gap;
-    const startX = (width - totalRowWidth) / 2 + cardWidth / 2;
-    const centerY = height / 2 + 30;
+    // 3. Render Hero Cards (2x2 grid in portrait, 4 in a row in landscape)
+    const isPortrait = width < 850 || width < height;
 
-    ALL_HEROES.forEach((hero, index) => {
-      const cardX = startX + index * (cardWidth + gap);
-      const isSelected = hero.id === currentSelectedId;
-      this.createHeroCard(hero, cardX, centerY, cardWidth, cardHeight, isSelected);
-    });
+    if (isPortrait) {
+      const cardWidth = Math.min((width - 40) / 2, 185);
+      const cardHeight = Math.min((height - 120) / 2, 270);
+      const gapX = 12;
+      const gapY = 12;
+      const totalGridW = 2 * cardWidth + gapX;
+      const startX = (width - totalGridW) / 2 + cardWidth / 2;
+      const startY = 100 + cardHeight / 2;
+
+      ALL_HEROES.forEach((hero, index) => {
+        const col = index % 2;
+        const row = Math.floor(index / 2);
+        const cardX = startX + col * (cardWidth + gapX);
+        const cardY = startY + row * (cardHeight + gapY);
+        const isSelected = hero.id === currentSelectedId;
+        this.createHeroCard(hero, cardX, cardY, cardWidth, cardHeight, isSelected, true);
+      });
+    } else {
+      const cardWidth = Math.min(240, (width - 60) / ALL_HEROES.length - 15);
+      const cardHeight = Math.min(440, height - 120);
+      const gap = 16;
+      const totalRowWidth = ALL_HEROES.length * cardWidth + (ALL_HEROES.length - 1) * gap;
+      const startX = (width - totalRowWidth) / 2 + cardWidth / 2;
+      const centerY = height / 2 + 30;
+
+      ALL_HEROES.forEach((hero, index) => {
+        const cardX = startX + index * (cardWidth + gap);
+        const isSelected = hero.id === currentSelectedId;
+        this.createHeroCard(hero, cardX, centerY, cardWidth, cardHeight, isSelected, false);
+      });
+    }
   }
 
   private createHeroCard(
@@ -94,7 +115,8 @@ export class HeroSelectModal {
     y: number,
     w: number,
     h: number,
-    isSelected: boolean
+    isSelected: boolean,
+    isCompact = false
   ): void {
     const cardContainer = this.scene.add.container(x, y).setDepth(10002).setScrollFactor(0);
 
@@ -124,13 +146,13 @@ export class HeroSelectModal {
 
     // Hero Portrait / Sprite
     const portraitKey = hero.portraitKey || hero.textureKey || 'tony_portrait';
-    const portrait = this.scene.add.image(0, -h / 2 + 75, portraitKey);
-    portrait.setDisplaySize(70, 70);
+    const portrait = this.scene.add.image(0, isCompact ? -h / 2 + 45 : -h / 2 + 75, portraitKey);
+    portrait.setDisplaySize(isCompact ? 48 : 70, isCompact ? 48 : 70);
 
     // Hero Name & Comic Tag
     const nameText = this.scene.add
-      .text(0, -h / 2 + 125, hero.name, {
-        fontSize: '18px',
+      .text(0, isCompact ? -h / 2 + 78 : -h / 2 + 125, hero.name, {
+        fontSize: isCompact ? '14px' : '18px',
         fontStyle: 'bold',
         color: isSelected ? '#4ade80' : '#ffffff',
         fontFamily: 'monospace',
@@ -138,36 +160,38 @@ export class HeroSelectModal {
       .setOrigin(0.5);
 
     const titleText = this.scene.add
-      .text(0, -h / 2 + 145, hero.comicTitle || '', {
-        fontSize: '11px',
+      .text(0, isCompact ? -h / 2 + 94 : -h / 2 + 145, hero.comicTitle || '', {
+        fontSize: isCompact ? '9px' : '11px',
         color: '#facc15',
         fontFamily: 'monospace',
       })
       .setOrigin(0.5);
 
     // Stats Grid
-    const statsY = -h / 2 + 180;
-    const statsLines = [
-      `HP: ${hero.stats.maxHp}  |  SPD: ${hero.stats.speed}`,
-      `DMG: ${hero.stats.damage}  |  ARMOR: ${hero.stats.armor ?? 0}`,
-      `ATK SPD: ${hero.stats.attackSpeed ?? 1.0}×`,
-    ];
+    const statsY = isCompact ? -h / 2 + 110 : -h / 2 + 180;
+    const statsLines = isCompact
+      ? [`HP:${hero.stats.maxHp} SPD:${hero.stats.speed}`, `DMG:${hero.stats.damage} DEF:${hero.stats.armor ?? 0}`]
+      : [
+          `HP: ${hero.stats.maxHp}  |  SPD: ${hero.stats.speed}`,
+          `DMG: ${hero.stats.damage}  |  ARMOR: ${hero.stats.armor ?? 0}`,
+          `ATK SPD: ${hero.stats.attackSpeed ?? 1.0}×`,
+        ];
 
     const statsText = this.scene.add
       .text(0, statsY, statsLines.join('\n'), {
-        fontSize: '12px',
+        fontSize: isCompact ? '10px' : '12px',
         color: '#cbd5e1',
         fontFamily: 'monospace',
         align: 'center',
-        lineSpacing: 4,
+        lineSpacing: isCompact ? 2 : 4,
       })
       .setOrigin(0.5, 0);
 
     // Trait Section
-    const traitY = -h / 2 + 255;
+    const traitY = isCompact ? -h / 2 + 150 : -h / 2 + 255;
     const traitHeader = this.scene.add
       .text(0, traitY, `⚡ ${hero.trait?.name || 'Трейт'}:`, {
-        fontSize: '12px',
+        fontSize: isCompact ? '10px' : '12px',
         fontStyle: 'bold',
         color: '#38bdf8',
         fontFamily: 'monospace',
@@ -175,26 +199,27 @@ export class HeroSelectModal {
       .setOrigin(0.5, 0);
 
     const traitDesc = this.scene.add
-      .text(0, traitY + 18, hero.trait?.description || '', {
-        fontSize: '11px',
+      .text(0, traitY + (isCompact ? 13 : 18), hero.trait?.description || '', {
+        fontSize: isCompact ? '9px' : '11px',
         color: '#94a3b8',
         fontFamily: 'monospace',
         align: 'center',
-        wordWrap: { width: w - 24 },
-        lineSpacing: 2,
+        wordWrap: { width: w - (isCompact ? 16 : 24) },
+        lineSpacing: 1,
       })
       .setOrigin(0.5, 0);
 
     // Select Button
-    const btnY = h / 2 - 35;
+    const btnH = isCompact ? 26 : 36;
+    const btnY = h / 2 - (isCompact ? 20 : 35);
     const btnBg = this.scene.add.graphics();
     const btnColor = isSelected ? 0x22c55e : 0x3b82f6;
     btnBg.fillStyle(btnColor, 1);
-    btnBg.fillRoundedRect(-w / 2 + 20, btnY - 18, w - 40, 36, 8);
+    btnBg.fillRoundedRect(-w / 2 + (isCompact ? 12 : 20), btnY - btnH / 2, w - (isCompact ? 24 : 40), btnH, 6);
 
     const btnText = this.scene.add
       .text(0, btnY, isSelected ? 'ВЫБРАН' : 'ВЫБРАТЬ', {
-        fontSize: '14px',
+        fontSize: isCompact ? '11px' : '14px',
         fontStyle: 'bold',
         color: '#ffffff',
         fontFamily: 'monospace',

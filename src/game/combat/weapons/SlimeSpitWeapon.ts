@@ -11,8 +11,8 @@ export class SlimeSpitWeapon implements IWeapon {
 
   update(delta: number, ctx: WeaponContext): void {
     const mods = ctx.gameState.playerModifiers;
-    // Slime Spit fires if level is active or if hero starts with it
-    const spitLevel = mods.slimeSpitLevel || 1;
+    if ((mods.slimeSpitLevel ?? 0) <= 0) return;
+    const spitLevel = mods.slimeSpitLevel;
 
     const baseSpeed = (ctx.player.stats.attackSpeed ?? 1.3) * (1 + mods.attackSpeedBonus);
     const baseInterval = 770 / baseSpeed;

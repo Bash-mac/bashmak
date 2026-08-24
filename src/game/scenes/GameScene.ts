@@ -128,7 +128,16 @@ export class GameScene extends Phaser.Scene {
     // 6. Collisions & Events
     this.setupCollisions();
     this.setupEvents();
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.shutdown, this);
+
+    const onGameResize = (gameSize: Phaser.Structs.Size) => {
+      this.hud?.resize(gameSize.width, gameSize.height);
+    };
+    this.scale.on('resize', onGameResize);
+
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.scale.off('resize', onGameResize);
+      this.shutdown();
+    }, this);
 
     this.audio.init();
     this.audio.startBgm();
@@ -460,13 +469,17 @@ export class GameScene extends Phaser.Scene {
 
     const sprite = this.playerEntity.sprite;
     if (sprite && sprite.active && this.playerEntity.isAlive) {
-      sprite.play('tony_anim_hurt');
+      if (this.anims.exists('vypolzok_anim_hurt')) {
+        sprite.play('vypolzok_anim_hurt');
+      }
       sprite.setData('isHurt', true);
       this.time.delayedCall(300, () => {
         if (sprite.active && this.playerEntity.isAlive) {
           sprite.setData('isHurt', false);
           const mv = this.inputManager.getMovementVector();
-          sprite.play(mv.x !== 0 || mv.y !== 0 ? 'tony_anim_run' : 'tony_anim_idle', true);
+          if (this.anims.exists('vypolzok_anim_run')) {
+            sprite.play(mv.x !== 0 || mv.y !== 0 ? 'vypolzok_anim_run' : 'vypolzok_anim_idle', true);
+          }
         }
       });
     }
@@ -510,31 +523,36 @@ export class GameScene extends Phaser.Scene {
     this.audio.stopBgm();
     this.gameState.endRun(false);
 
-    this.saveManager.recordRunResult({
-      timeSurvived: Math.floor(this.gameState.runTime),
-      kills: this.gameState.kills,
-      score: this.gameState.score,
-      gooEarned: this.gameState.gooCollected,
-      won: false,
-    });
+    try {
+      this.saveManager.recordRunResult({
+        timeSurvived: Math.floor(this.gameState.runTime),
+        kills: this.gameState.kills,
+        score: this.gameState.score,
+        gooEarned: this.gameState.gooCollected,
+        won: false,
+      });
+    } catch (e) {
+      console.warn('[GameScene] Error recording run result:', e);
+    }
 
     const sprite = this.playerEntity.sprite;
     if (sprite && sprite.active) {
       sprite.setVelocity(0, 0);
-      const isWorm = (this.currentHero?.textureKey?.startsWith('vypolzok') || this.currentHero?.textureKey?.startsWith('tony')) ?? true;
-      if (isWorm && this.anims.exists('vypolzok_anim_dead')) {
+      if (this.anims.exists('vypolzok_anim_dead')) {
         sprite.play('vypolzok_anim_dead');
       } else {
         sprite.setAngle(90);
         sprite.setAlpha(0.6);
       }
     }
+
+    this.cameras.main.stopFollow();
     this.physics.pause();
 
-    this.cameras.main.fade(900, 11, 14, 20, false, (_cam: any, progress: number) => {
-      if (progress === 1) {
-        this.scene.start('ResultScene');
-      }
+    // Transition cleanly to ResultScene after death animation
+    this.time.delayedCall(450, () => {
+      this.cameras.main.resetFX();
+      this.scene.start('ResultScene');
     });
   }
 

@@ -1,4 +1,4 @@
-﻿import Phaser from 'phaser';
+import Phaser from 'phaser';
 import type { IWeapon, WeaponContext } from './IWeapon';
 import type { Entity } from '../../entities/Entity';
 import { AudioManager } from '../../audio/AudioManager';
@@ -11,7 +11,8 @@ export class CarrotBarrageWeapon implements IWeapon {
 
   update(delta: number, ctx: WeaponContext): void {
     const mods = ctx.gameState.playerModifiers;
-    const carrotLevel = mods.carrotBarrageLevel || 1;
+    if ((mods.carrotBarrageLevel ?? 0) <= 0) return;
+    const carrotLevel = mods.carrotBarrageLevel;
 
     const baseSpeed = (ctx.player.stats.attackSpeed ?? 1.4) * (1 + mods.attackSpeedBonus);
     const baseInterval = 550 / baseSpeed;
