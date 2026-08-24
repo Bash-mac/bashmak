@@ -1,4 +1,4 @@
-﻿import Phaser from 'phaser';
+import Phaser from 'phaser';
 
 export interface MapObjects {
   pillarsGroup: Phaser.Physics.Arcade.StaticGroup;
@@ -11,6 +11,35 @@ export class MapGenerator {
     // 1. World Bounds & Floor
     scene.physics.world.setBounds(0, 0, worldSize, worldSize);
     scene.add.tileSprite(0, 0, worldSize, worldSize, 'tex_floor').setOrigin(0, 0);
+
+    // 1.1 Floor Decals (Sewage, Cracks, Graffiti)
+    const decalKeys = ['floor_sewage', 'floor_cracked', 'floor_graffiti'];
+    const totalDecals = 65; // ~65 spots across 4000x4000 map
+    for (let i = 0; i < totalDecals; i++) {
+      const dx = Phaser.Math.Between(150, worldSize - 150);
+      const dy = Phaser.Math.Between(150, worldSize - 150);
+      const key = Phaser.Utils.Array.GetRandom(decalKeys);
+      const decal = scene.add.image(dx, dy, key);
+      decal.setDepth(1);
+      decal.setRotation(Phaser.Math.FloatBetween(0, Math.PI * 2));
+      decal.setScale(Phaser.Math.FloatBetween(0.85, 1.25));
+      decal.setAlpha(Phaser.Math.FloatBetween(0.75, 0.95));
+    }
+
+    // 1.2 Architectural Ground Details (Manholes, Grates, Valves, Slime Sources)
+    const archKeys = ['prop_manhole', 'prop_grate', 'prop_valve', 'prop_slime_source'];
+    const totalArchProps = 40;
+    for (let i = 0; i < totalArchProps; i++) {
+      const ax = Phaser.Math.Between(200, worldSize - 200);
+      const ay = Phaser.Math.Between(200, worldSize - 200);
+      const key = Phaser.Utils.Array.GetRandom(archKeys);
+      const prop = scene.add.image(ax, ay, key);
+      prop.setDepth(2);
+      prop.setDisplaySize(72, 72);
+      if (key !== 'prop_slime_source') {
+        prop.setRotation(Phaser.Math.FloatBetween(0, Math.PI * 2));
+      }
+    }
 
     const pillarsGroup = scene.physics.add.staticGroup();
     const barrelsGroup = scene.physics.add.staticGroup();
@@ -30,8 +59,12 @@ export class MapGenerator {
       }
 
       const pillar = pillarsGroup.create(px, py, 'tex_prop_pillar') as Phaser.Types.Physics.Arcade.SpriteWithStaticBody;
+      pillar.setDisplaySize(80, 80);
       pillar.setDepth(7);
       pillar.refreshBody();
+      if (pillar.body) {
+        pillar.body.setCircle(32, 8, 8);
+      }
     }
 
     // 3. Breakable Barrels (60 barrels in small clusters)
@@ -43,12 +76,16 @@ export class MapGenerator {
 
       const count = Phaser.Math.Between(2, 4);
       for (let c = 0; c < count; c++) {
-        const bx = clusterX + (c % 2) * 32 + Phaser.Math.Between(-6, 6);
-        const by = clusterY + Math.floor(c / 2) * 32 + Phaser.Math.Between(-6, 6);
+        const bx = clusterX + (c % 2) * 44 + Phaser.Math.Between(-8, 8);
+        const by = clusterY + Math.floor(c / 2) * 44 + Phaser.Math.Between(-8, 8);
 
         const barrel = barrelsGroup.create(bx, by, 'tex_prop_barrel') as Phaser.Types.Physics.Arcade.SpriteWithStaticBody;
+        barrel.setDisplaySize(58, 64);
         barrel.setDepth(6);
         barrel.refreshBody();
+        if (barrel.body) {
+          barrel.body.setCircle(22, 7, 10);
+        }
       }
     }
 
@@ -60,13 +97,17 @@ export class MapGenerator {
       if (Phaser.Math.Distance.Between(sx, sy, spawnCenterX, spawnCenterY) < 300) continue;
 
       const shrine = shrinesGroup.create(sx, sy, 'tex_prop_shrine') as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
+      shrine.setDisplaySize(72, 82);
       shrine.setDepth(7);
+      if (shrine.body) {
+        shrine.body.setCircle(28, 8, 12);
+      }
 
       scene.tweens.add({
         targets: shrine,
-        scaleX: 1.15,
-        scaleY: 1.15,
-        duration: 800,
+        scaleX: shrine.scaleX * 1.08,
+        scaleY: shrine.scaleY * 1.08,
+        duration: 900,
         yoyo: true,
         repeat: -1,
       });

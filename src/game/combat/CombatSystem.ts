@@ -72,4 +72,27 @@ export class CombatSystem {
 
     return effectiveDamage;
   }
+
+  applyAreaDamage(
+    attacker: Entity,
+    enemiesMap: Map<string, Entity>,
+    x: number,
+    y: number,
+    radius: number,
+    dmg: number,
+    excludeId?: string,
+    onHit?: (enemy: Entity) => void
+  ): void {
+    const radiusSq = radius * radius;
+    for (const enemy of enemiesMap.values()) {
+      if (enemy.id !== excludeId && enemy.isAlive && !enemy.isExploding) {
+        const dx = enemy.x - x;
+        const dy = enemy.y - y;
+        if (dx * dx + dy * dy <= radiusSq) {
+          this.applyDamage(attacker, enemy, dmg);
+          onHit?.(enemy);
+        }
+      }
+    }
+  }
 }

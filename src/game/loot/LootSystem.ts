@@ -1,4 +1,4 @@
-﻿import Phaser from 'phaser';
+import Phaser from 'phaser';
 import type { PlayerModifiers } from '../data/definitions';
 import { SaveManager } from '../core/SaveManager';
 import { WORM_HERO } from '../data/heroes';
@@ -113,7 +113,15 @@ export class LootSystem {
   }
 
   public clear(): void {
-    this.gemsGroup.clear(true, true);
-    this.gooDropsGroup.clear(true, true);
+    try {
+      if (this.gemsGroup?.children) {
+        this.gemsGroup.clear(true, true);
+      }
+      if (this.gooDropsGroup?.children) {
+        this.gooDropsGroup.clear(true, true);
+      }
+    } catch {
+      // Groups already destroyed by Phaser scene manager
+    }
   }
 }

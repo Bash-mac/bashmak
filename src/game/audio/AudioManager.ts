@@ -243,6 +243,42 @@ export class AudioManager {
   }
 
   // =========================================================================
+  // --- 💀 7.5. PLAYER DEATH: Cartoon Defeat Whistle & Heavy Splat Bass Drop ---
+  // =========================================================================
+  public playPlayerDeath(): void {
+    if (this.isMuted || !this.ensureContext()) return;
+    const ctx = this.ctx!;
+    const now = ctx.currentTime;
+
+    // 1. Descending comic slide
+    const slideOsc = ctx.createOscillator();
+    const slideGain = ctx.createGain();
+    slideOsc.type = 'sawtooth';
+    slideOsc.frequency.setValueAtTime(440, now);
+    slideOsc.frequency.exponentialRampToValueAtTime(60, now + 0.45);
+    slideGain.gain.setValueAtTime(this.sfxVolume * 0.7, now);
+    slideGain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+    slideOsc.connect(slideGain);
+    slideGain.connect(ctx.destination);
+    slideOsc.start(now);
+    slideOsc.stop(now + 0.52);
+
+    // 2. Heavy low bass splat impact
+    const thudOsc = ctx.createOscillator();
+    const thudGain = ctx.createGain();
+    thudOsc.type = 'sine';
+    thudOsc.frequency.setValueAtTime(150, now + 0.35);
+    thudOsc.frequency.exponentialRampToValueAtTime(30, now + 0.8);
+    thudGain.gain.setValueAtTime(0, now);
+    thudGain.gain.setValueAtTime(this.sfxVolume * 0.9, now + 0.35);
+    thudGain.gain.exponentialRampToValueAtTime(0.001, now + 0.85);
+    thudOsc.connect(thudGain);
+    thudGain.connect(ctx.destination);
+    thudOsc.start(now + 0.35);
+    thudOsc.stop(now + 0.88);
+  }
+
+  // =========================================================================
   // --- 🎺 8. LEVEL UP: 90s Victory Fanfare Arpeggio ---
   // =========================================================================
   public playLevelUp(): void {

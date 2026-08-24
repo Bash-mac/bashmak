@@ -92,6 +92,22 @@ export class BootScene extends Phaser.Scene {
     this.load.image('fx_slime', '/assets/sprites/poses/fx_slime.png');
     this.load.image('fx_impact', '/assets/sprites/poses/fx_impact.png');
     this.load.image('fx_poison', '/assets/sprites/poses/fx_poison.png');
+
+    // Map Floor Tiles & Decals
+    this.load.image('tex_floor', '/assets/sprites/map/tex_floor.webp');
+    this.load.image('floor_cracked', '/assets/sprites/map/floor_cracked.webp');
+    this.load.image('floor_sewage', '/assets/sprites/map/floor_sewage.webp');
+    this.load.image('floor_rusted', '/assets/sprites/map/floor_rusted.webp');
+    this.load.image('floor_graffiti', '/assets/sprites/map/floor_graffiti.webp');
+
+    // Map Architecture & Interactive Props
+    this.load.image('tex_prop_pillar', '/assets/sprites/map/props/tex_prop_pillar.webp');
+    this.load.image('tex_prop_barrel', '/assets/sprites/map/props/tex_prop_barrel.webp');
+    this.load.image('tex_prop_shrine', '/assets/sprites/map/props/tex_prop_shrine.webp');
+    this.load.image('prop_manhole', '/assets/sprites/map/props/prop_manhole.webp');
+    this.load.image('prop_grate', '/assets/sprites/map/props/prop_grate.webp');
+    this.load.image('prop_valve', '/assets/sprites/map/props/prop_valve.webp');
+    this.load.image('prop_slime_source', '/assets/sprites/map/props/prop_slime_source.webp');
   }
 
   create(): void {
@@ -387,47 +403,6 @@ export class BootScene extends Phaser.Scene {
     gemGfx.generateTexture('tex_gem', 16, 16);
     gemGfx.destroy();
 
-    // 12. Floor Tile
-    const floorGfx = this.make.graphics({ x: 0, y: 0 });
-    floorGfx.fillStyle(0x0a0e1a, 1);
-    floorGfx.fillRect(0, 0, 64, 64);
-    floorGfx.lineStyle(1, 0x141e33, 0.8);
-    floorGfx.strokeRect(0, 0, 64, 64);
-    floorGfx.generateTexture('tex_floor', 64, 64);
-    floorGfx.destroy();
-
-    // 13. Breakable Barrel (Wood/Green toxic barrel)
-    const barrelGfx = this.make.graphics({ x: 0, y: 0 });
-    barrelGfx.fillStyle(0x78350f, 1);
-    barrelGfx.fillCircle(14, 14, 12);
-    barrelGfx.lineStyle(2, 0xfacc15, 1);
-    barrelGfx.strokeCircle(14, 14, 12);
-    barrelGfx.fillStyle(0x84cc16, 1);
-    barrelGfx.fillCircle(14, 14, 4);
-    barrelGfx.generateTexture('tex_prop_barrel', 28, 28);
-    barrelGfx.destroy();
-
-    // 14. Obstacle Pillar (Dark grey stone column)
-    const pillarGfx = this.make.graphics({ x: 0, y: 0 });
-    pillarGfx.fillStyle(0x334155, 1);
-    pillarGfx.fillRect(0, 0, 36, 36);
-    pillarGfx.lineStyle(3, 0x64748b, 1);
-    pillarGfx.strokeRect(0, 0, 36, 36);
-    pillarGfx.fillStyle(0x1e293b, 1);
-    pillarGfx.fillRect(6, 6, 24, 24);
-    pillarGfx.generateTexture('tex_prop_pillar', 36, 36);
-    pillarGfx.destroy();
-
-    // 15. Power-Up Shrine (Gold/Purple crystal shrine)
-    const shrineGfx = this.make.graphics({ x: 0, y: 0 });
-    shrineGfx.fillStyle(0xa855f7, 1);
-    shrineGfx.fillTriangle(16, 0, 0, 16, 32, 16);
-    shrineGfx.fillTriangle(0, 16, 32, 16, 16, 32);
-    shrineGfx.lineStyle(2, 0xfacc15, 1);
-    shrineGfx.strokeTriangle(16, 0, 0, 16, 32, 16);
-    shrineGfx.strokeTriangle(0, 16, 32, 16, 16, 32);
-    shrineGfx.generateTexture('tex_prop_shrine', 32, 32);
-    shrineGfx.destroy();
 
     // 16. Wireless Homing Dagger (Cyan glowing sharp projectile)
     const daggerGfx = this.make.graphics({ x: 0, y: 0 });
