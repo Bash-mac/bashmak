@@ -1,7 +1,11 @@
-﻿import type Phaser from 'phaser';
+import type Phaser from 'phaser';
 import type { Entity } from '../../entities/Entity';
 import type { GameState } from '../../core/GameState';
 import type { CombatSystem } from '../CombatSystem';
+
+import type { ProjectilePool } from '../ProjectilePool';
+import type { DamageNumberPool } from '../DamageNumberPool';
+import type { VfxPool } from '../VfxPool';
 
 export interface WeaponContext {
   scene: Phaser.Scene;
@@ -10,6 +14,9 @@ export interface WeaponContext {
   combatSystem: CombatSystem;
   projectilesGroup: Phaser.Physics.Arcade.Group;
   enemiesMap: Map<string, Entity>;
+  projectilePool?: ProjectilePool;
+  damageNumbers?: DamageNumberPool;
+  vfxPool?: VfxPool;
   flashSprite?: (sprite: Phaser.GameObjects.Sprite, color: number) => void;
   vibrate?: (ms: number) => void;
   spawnAcidPool?: (x: number, y: number, radius: number, damage: number, durationMs: number, isPlayer: boolean) => void;
@@ -19,4 +26,5 @@ export interface IWeapon {
   readonly id: string;
   readonly name: string;
   update(delta: number, ctx: WeaponContext): void;
+  reset?(): void;
 }

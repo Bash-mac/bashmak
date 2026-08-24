@@ -8,6 +8,9 @@ import type { HazardSystem, HazardContext } from '../map/HazardSystem';
 import type { MapObjects } from '../map/MapGenerator';
 import type { HUD } from '../scenes/ui/HUD';
 import type { AudioManager } from '../audio/AudioManager';
+import type { ProjectilePool } from './ProjectilePool';
+import type { DamageNumberPool } from './DamageNumberPool';
+import type { VfxPool } from './VfxPool';
 
 export interface CollisionContext {
   scene: Phaser.Scene;
@@ -23,6 +26,9 @@ export interface CollisionContext {
   eventBus: EventBus;
   hud: HUD;
   audio: AudioManager;
+  projectilePool?: ProjectilePool;
+  damageNumbers?: DamageNumberPool;
+  vfxPool?: VfxPool;
   getPlayerIframeTimer: () => number;
   applyDamageToPlayer: (dmg: number) => void;
   getHazardCtx: () => HazardContext;
@@ -30,26 +36,66 @@ export interface CollisionContext {
 
 export class CollisionManager {
   public static setup(ctx: CollisionContext): void {
-    const { scene, player, enemiesMap, enemiesGroup, projectilesGroup, mapObjects, combatSystem, lootSystem, hazardSystem, gameState, eventBus, hud, audio } = ctx;
+    const {
+      scene,
+      player,
+      enemiesMap,
+      enemiesGroup,
+      projectilesGroup,
+      mapObjects,
+      combatSystem,
+      lootSystem,
+      hazardSystem,
+      gameState,
+      eventBus,
+      hud,
+      audio,
+      projectilePool,
+      damageNumbers,
+      vfxPool,
+    } = ctx;
 
     // 1. Projectiles vs Enemies
     scene.physics.add.overlap(projectilesGroup, enemiesGroup, (projObj, enemyObj) => {
       const proj = projObj as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
       const enemy = enemiesMap.get((enemyObj as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody).getData('entityId'));
       if (enemy && enemy.isAlive && !enemy.isExploding && proj.active) {
-        combatSystem.applyDamage(player, enemy, (proj.getData('damage') as number) || 10);
-        if (scene.anims.exists('vfx_anim_impact_splat')) {
+        const damage = (proj.getData('damage') as number) || 10;
+        const isCrit = (proj.getData('isCrit') as boolean) || false;
+        combatSystem.applyDamage(player, enemy, damage);
+
+        if (damageNumbers) {
+          damageNumbers.showDamage(enemy.x, enemy.y, damage, isCrit);
+        }
+
+        if (vfxPool) {
+          vfxPool.spawnImpactSplat(proj.x, proj.y, 0.75);
+        } else if (scene.anims.exists('vfx_anim_impact_splat')) {
           const splat = scene.add.sprite(proj.x, proj.y, 'vfx_impact_splat_1').setDepth(12).setScale(0.75);
           splat.play('vfx_anim_impact_splat').once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => splat.destroy());
         }
+
         if (proj.getData('isSlimeSpit')) {
           enemy.applySlow(0.35, 1800);
-          if (Math.random() < 0.60) hazardSystem.spawnAcidPool(scene, proj.x, proj.y, 32, 5, 2200, true);
+          if (Math.random() < 0.60) {
+            hazardSystem.spawnAcidPool(scene, proj.x, proj.y, 32, 5, 2200, true);
+          }
         }
+
         const pierce = (proj.getData('pierce') as number) || 0;
-        if (pierce > 0) proj.setData('pierce', pierce - 1);
-        else proj.destroy();
-        hazardSystem.flashSprite(scene, enemy.sprite!, 0xffffff);
+        if (pierce > 0) {
+          proj.setData('pierce', pierce - 1);
+        } else {
+          if (projectilePool) {
+            projectilePool.releaseProjectile(proj);
+          } else {
+            proj.destroy();
+          }
+        }
+
+        if (enemy.sprite) {
+          hazardSystem.flashSprite(scene, enemy.sprite, 0xffffff);
+        }
       }
     });
 
@@ -65,7 +111,9 @@ export class CollisionManager {
           const angle = Phaser.Math.Angle.Between(player.x, player.y, enemy.x, enemy.y);
           enemy.applyKnockback(Math.cos(angle) * 220, Math.sin(angle) * 220, 160);
         }
-        if (ctx.getPlayerIframeTimer() <= 0) ctx.applyDamageToPlayer(enemy.stats.damage);
+        if (ctx.getPlayerIframeTimer() <= 0) {
+          ctx.applyDamageToPlayer(enemy.stats.damage);
+        }
       }
     });
 
@@ -84,7 +132,7 @@ export class CollisionManager {
       const by = barrel.y;
       barrel.destroy();
       const roll = Math.random();
-      if (roll < 0.40) lootSystem.spawnGem(bx, by, 6);
+      if (roll < 0.40) lootSystem.spawnGem(bx, by, 6, player.x, player.y);
       else if (roll < 0.70) lootSystem.spawnGoo(bx, by, Phaser.Math.Between(1, 2));
       else if (roll < 0.88) {
         player.health.heal(25);
@@ -105,18 +153,20 @@ export class CollisionManager {
 
     scene.physics.add.overlap(player.sprite!, lootSystem.gemsGroup, (_p, gemObj) => {
       const gem = gemObj as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
+      if (!gem.active) return;
       const xp = (gem.getData('xpValue') as number) || 3;
-      gem.destroy();
+      lootSystem.releaseGem(gem);
       gameState.addXp(xp);
       audio.playXpPickup();
     });
 
     scene.physics.add.overlap(player.sprite!, lootSystem.gooDropsGroup, (_p, gooObj) => {
       const drop = gooObj as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
+      if (!drop.active) return;
       const val = (drop.getData('gooValue') as number) || 1;
       const gx = drop.x;
       const gy = drop.y;
-      drop.destroy();
+      lootSystem.releaseGoo(drop);
       gameState.addGoo(val);
       lootSystem.showFloatText(gx, gy, `+${val} GOO`);
       audio.playGooPickup();

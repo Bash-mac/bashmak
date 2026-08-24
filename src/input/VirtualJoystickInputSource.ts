@@ -102,6 +102,17 @@ export class VirtualJoystickInputSource implements IInputSource {
     }
   }
 
+  public setEnabled(enabled: boolean): void {
+    this.isEnabled = enabled;
+    if (!enabled) {
+      this.currentPointerId = null;
+      this.isPointerDown = false;
+      this.vector = { x: 0, y: 0 };
+      this.baseCircle?.setVisible(false);
+      this.thumbCircle?.setVisible(false);
+    }
+  }
+
   getVector(): InputVector {
     return this.isEnabled ? this.vector : { x: 0, y: 0 };
   }

@@ -41,6 +41,7 @@ export class HeroFactory {
       sprite,
     });
 
+    gameState.currentHeroId = heroId;
     gameState.applyStartingWeapon(currentHero.startingWeaponId);
     currentHero.trait?.apply?.(gameState.playerModifiers, playerEntity.stats);
     saveManager.applyToPlayerStats(playerEntity.stats, playerEntity.health, gameState.playerModifiers);

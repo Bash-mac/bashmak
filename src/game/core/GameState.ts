@@ -23,6 +23,9 @@ export class GameState {
   public selectedUpgrades: string[] = [];
   public playerModifiers: PlayerModifiers = this.createDefaultModifiers();
 
+  // Current selected hero
+  public currentHeroId = 'hero_worm';
+
   // Pending level ups waiting for modal choice
   public pendingLevelUps = 0;
 
@@ -252,6 +255,11 @@ export class GameState {
     const isSlotLimitReached = this.activeUpgrades.size >= 4;
 
     for (const upg of normalMutations) {
+      // Class exclusivity check
+      if (upg.exclusiveHeroId && upg.exclusiveHeroId !== this.currentHeroId) {
+        continue;
+      }
+
       const currentLvl = this.activeUpgrades.get(upg.id) || 0;
       if (currentLvl >= upg.maxLevel) continue; // MAX level reached
 

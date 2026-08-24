@@ -1,4 +1,4 @@
-﻿import type { GameState } from '../core/GameState';
+import type { GameState } from '../core/GameState';
 
 export interface EvolutionRecipe {
   id: string;
@@ -23,7 +23,7 @@ export const EVOLUTION_RECIPES: EvolutionRecipe[] = [
     baseWeaponId: 'wpn_slime_spit',
     baseWeaponName: 'Слизеплюй (Lv.5)',
     requiredTomeId: 'tome_magnet',
-    requiredTomeName: 'Фолиант Магнетизма (Lv.5)',
+    requiredTomeName: '«Липкая Жвачка» (Lv.5)',
     apply: (gameState: GameState) => {
       const mod = gameState.playerModifiers;
       mod.isAcidTsunamiEvolved = true;
@@ -37,7 +37,7 @@ export const EVOLUTION_RECIPES: EvolutionRecipe[] = [
     },
   },
 
-  // 2. Шнуровой Кнут Lv5 + Фолиант Количества Lv5 -> ТИФОННЫЙ ЦЕП
+  // 2. Шнуровой Кнут Lv5 + «Двойной Зоб» Lv5 -> ТИФОННЫЙ ЦЕП
   {
     id: 'evo_typhoon_flail',
     name: 'Тифонный Цеп',
@@ -46,7 +46,7 @@ export const EVOLUTION_RECIPES: EvolutionRecipe[] = [
     baseWeaponId: 'wpn_lace_whip',
     baseWeaponName: 'Шнуровой Кнут (Lv.5)',
     requiredTomeId: 'tome_quantity',
-    requiredTomeName: 'Фолиант Количества (Lv.5)',
+    requiredTomeName: '«Двойной Зоб» (Lv.5)',
     apply: (gameState: GameState) => {
       const mod = gameState.playerModifiers;
       mod.isTyphoonFlailEvolved = true;
@@ -58,16 +58,16 @@ export const EVOLUTION_RECIPES: EvolutionRecipe[] = [
     },
   },
 
-  // 3. Морковный Град Lv5 + Фолиант Скорости Lv5 -> ГАТЛИНГ-МОРКОВКА
+  // 3. Морковный Град Lv5 + «Турбо-Кеды» Lv5 -> ГАТЛИНГ-МОРКОВКА
   {
     id: 'evo_gatling_carrot',
     name: 'Гатлинг-Морковка',
     comicTitle: '★ GATLING CARROT ★',
-    description: 'Лазерный шквал из 20 сверхзвуковых пробивающих морковок в секунду со 100% шансом критического взрыва!',
+    description: 'Лазерный шквал из 20 сверхзвуковых бумерангов-пил в секунду со 100% шансом критического взрыва!',
     baseWeaponId: 'wpn_carrot_barrage',
     baseWeaponName: 'Морковный Град (Lv.5)',
     requiredTomeId: 'tome_speed',
-    requiredTomeName: 'Фолиант Скорости (Lv.5)',
+    requiredTomeName: '«Турбо-Кеды» (Lv.5)',
     apply: (gameState: GameState) => {
       const mod = gameState.playerModifiers;
       mod.isGatlingCarrotEvolved = true;
@@ -80,16 +80,16 @@ export const EVOLUTION_RECIPES: EvolutionRecipe[] = [
     },
   },
 
-  // 4. Фиолетовый Шар Lv5 + Фолиант Силы Lv5 -> ПЛАНЕТАРНЫЙ КАТАКЛИЗМ
+  // 4. Фиолетовый Шар Lv5 + «Слизь-Кола» Lv5 -> ПЛАНЕТАРНЫЙ КАТАКЛИЗМ
   {
     id: 'evo_planetary_roll',
     name: 'Планетарный Катаклизм',
     comicTitle: '★ PLANETARY ROLL ★',
-    description: 'Баклажан превращается в колоссальную сферу, сминающую боссов и вызывающую сейсмические взрывы на каждом метре!',
+    description: 'Баклажан превращается в колоссальную сферу-рикошет, сминающую боссов и вызывающую сейсмические взрывы на каждом метре!',
     baseWeaponId: 'wpn_eggplant_roll',
     baseWeaponName: 'Фиолетовый Шар (Lv.5)',
     requiredTomeId: 'tome_crit_size',
-    requiredTomeName: 'Фолиант Силы (Lv.5)',
+    requiredTomeName: '«Слизь-Кола» (Lv.5)',
     apply: (gameState: GameState) => {
       const mod = gameState.playerModifiers;
       mod.isPlanetaryRollEvolved = true;

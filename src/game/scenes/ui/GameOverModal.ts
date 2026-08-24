@@ -136,8 +136,10 @@ export class GameOverModal {
       isActionTriggered = true;
       this.platform.vibrate(30);
       this.audio.playClick();
-      this.clear();
-      this.scene.scene.restart();
+      this.scene.time.delayedCall(20, () => {
+        this.clear();
+        this.scene.scene.restart();
+      });
     });
     playBtn.on('pointerover', () => playBtn.setScale(1.03));
     playBtn.on('pointerout', () => playBtn.setScale(1.0));
@@ -167,8 +169,10 @@ export class GameOverModal {
       isActionTriggered = true;
       this.platform.vibrate(30);
       this.audio.playClick();
-      this.clear();
-      this.scene.scene.start('UpgradesScene');
+      this.scene.time.delayedCall(20, () => {
+        this.clear();
+        this.scene.scene.start('UpgradesScene');
+      });
     });
     upgBtn.on('pointerover', () => upgBtn.setScale(1.03));
     upgBtn.on('pointerout', () => upgBtn.setScale(1.0));
@@ -197,8 +201,10 @@ export class GameOverModal {
       isActionTriggered = true;
       this.platform.vibrate(30);
       this.audio.playClick();
-      this.clear();
-      this.scene.scene.start('MenuScene');
+      this.scene.time.delayedCall(20, () => {
+        this.clear();
+        this.scene.scene.start('MenuScene');
+      });
     });
     menuBtn.on('pointerover', () => menuBtn.setScale(1.03));
     menuBtn.on('pointerout', () => menuBtn.setScale(1.0));

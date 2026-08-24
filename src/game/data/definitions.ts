@@ -164,6 +164,7 @@ export interface UpgradeDefinition {
   category?: UpgradeCategory;
   isConsumable?: boolean;
   iconKey?: string;
+  exclusiveHeroId?: string;
   maxLevel: number;
   levels: UpgradeLevelConfig[];
 }

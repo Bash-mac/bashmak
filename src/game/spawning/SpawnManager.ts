@@ -49,7 +49,7 @@ export class SpawnManager {
     if (minutes >= 5.0 && !this.miniBossSpawned) {
       this.spawnMiniBoss(scaling);
     }
-    if (minutes >= 10.0 && !this.bossSpawned) {
+    if (minutes >= 8.0 && !this.bossSpawned) {
       this.spawnBoss(scaling);
     }
 

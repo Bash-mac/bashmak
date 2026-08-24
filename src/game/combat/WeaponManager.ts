@@ -1,11 +1,11 @@
-﻿import type { IWeapon, WeaponContext } from './weapons/IWeapon';
+import type { IWeapon, WeaponContext } from './weapons/IWeapon';
 import { SlimeSpitWeapon } from './weapons/SlimeSpitWeapon';
 import { LaceWhipWeapon } from './weapons/LaceWhipWeapon';
 import { CarrotBarrageWeapon } from './weapons/CarrotBarrageWeapon';
 import { EggplantRollWeapon } from './weapons/EggplantRollWeapon';
-import { HomingDaggersWeapon } from './weapons/HomingDaggersWeapon';
+import { OrbitingFliesWeapon } from './weapons/OrbitingFliesWeapon';
 import { MegaBootWeapon } from './weapons/MegaBootWeapon';
-import { LightningZapWeapon } from './weapons/LightningZapWeapon';
+import { ManholeDropWeapon } from './weapons/ManholeDropWeapon';
 import { AcidTrailWeapon } from './weapons/AcidTrailWeapon';
 
 export class WeaponManager {
@@ -17,9 +17,9 @@ export class WeaponManager {
       new LaceWhipWeapon(),
       new CarrotBarrageWeapon(),
       new EggplantRollWeapon(),
-      new HomingDaggersWeapon(),
+      new OrbitingFliesWeapon(),
       new MegaBootWeapon(),
-      new LightningZapWeapon(),
+      new ManholeDropWeapon(),
       new AcidTrailWeapon(),
     ];
   }
@@ -42,9 +42,9 @@ export class WeaponManager {
       new LaceWhipWeapon(),
       new CarrotBarrageWeapon(),
       new EggplantRollWeapon(),
-      new HomingDaggersWeapon(),
+      new OrbitingFliesWeapon(),
       new MegaBootWeapon(),
-      new LightningZapWeapon(),
+      new ManholeDropWeapon(),
       new AcidTrailWeapon(),
     ];
   }

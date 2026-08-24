@@ -1,95 +1,181 @@
 import Phaser from 'phaser';
 import type { IWeapon, WeaponContext } from './IWeapon';
+import type { Entity } from '../../entities/Entity';
 import { AudioManager } from '../../audio/AudioManager';
+
+interface ActiveRicochetBall {
+  sprite: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
+  bouncesLeft: number;
+  damage: number;
+  lastHitEnemyId?: string;
+  speed: number;
+  lifeTimerMs: number;
+}
 
 export class EggplantRollWeapon implements IWeapon {
   readonly id = 'weapon_eggplant_roll';
   readonly name = 'Фиолетовый Шар';
 
-  private rollCooldownTimer = 0;
-  private isRolling = false;
-  private rollDurationTimer = 0;
+  private attackTimer = 0;
+  private balls: ActiveRicochetBall[] = [];
+
+  public reset(): void {
+    this.attackTimer = 0;
+    this.balls = [];
+  }
 
   update(delta: number, ctx: WeaponContext): void {
+    // 1. Update active ricochets
+    this.updateRicochetBalls(delta, ctx);
+
+    // 2. Attack check
     const mods = ctx.gameState.playerModifiers;
     if ((mods.eggplantRollLevel ?? 0) <= 0) return;
     const rollLevel = mods.eggplantRollLevel;
 
-    const baseInterval = (4500 - (rollLevel - 1) * 400) / (1 + mods.attackSpeedBonus * 0.5);
+    const baseSpeed = (ctx.player.stats.attackSpeed ?? 1.0) * (1 + mods.attackSpeedBonus);
+    const baseInterval = 1400 / baseSpeed;
 
-    if (this.isRolling) {
-      this.rollDurationTimer -= delta;
-      this.handleRollingCollision(ctx, rollLevel);
+    this.attackTimer += delta;
+    if (this.attackTimer < baseInterval) return;
 
-      if (this.rollDurationTimer <= 0) {
-        this.isRolling = false;
-        if (ctx.player.sprite) {
-          ctx.player.sprite.clearTint();
-          ctx.player.sprite.setScale(0.72);
-        }
-      }
-      return;
-    }
+    const targets = this.findNearbyEnemies(ctx.player, ctx.enemiesMap, 300 + mods.extraRange);
+    if (targets.length === 0) return;
 
-    this.rollCooldownTimer += delta;
-    if (this.rollCooldownTimer >= baseInterval) {
-      const moveVector = ctx.player.sprite?.body
-        ? { x: ctx.player.sprite.body.velocity.x, y: ctx.player.sprite.body.velocity.y }
-        : { x: 0, y: 0 };
-      const isMoving = Math.abs(moveVector.x) > 10 || Math.abs(moveVector.y) > 10;
+    this.attackTimer = 0;
+    const primaryTarget = targets[0];
+    const damage = Math.round((35 + (rollLevel - 1) * 12) * (1 + mods.damagePercentBonus));
+    const bounces = 3 + (rollLevel >= 2 ? 1 : 0) + (rollLevel >= 3 ? 1 : 0) + (rollLevel >= 5 ? 2 : 0) + (mods.bounceCount || 0);
 
-      if (isMoving) {
-        this.startRoll(ctx, rollLevel);
-      }
-    }
-  }
-
-  private startRoll(ctx: WeaponContext, level: number): void {
-    this.rollCooldownTimer = 0;
-    this.isRolling = true;
-    this.rollDurationTimer = 1200 + (level >= 3 ? 300 : 0);
-
-    // Speed boost and visual roll cue
-    ctx.player.applySpeedBoost(1.7, this.rollDurationTimer);
-
-    if (ctx.player.sprite) {
-      ctx.player.sprite.setTint(0x9333ea);
-      ctx.player.sprite.setScale(0.85);
-
-      ctx.scene.tweens.add({
-        targets: ctx.player.sprite,
-        angle: ctx.player.sprite.flipX ? -360 : 360,
-        duration: 400,
-        repeat: 2,
-        ease: 'Linear',
-      });
-    }
-
+    this.launchBall(ctx, primaryTarget, damage, bounces);
     AudioManager.getInstance().playBashStomp();
-    ctx.vibrate?.(60);
   }
 
-  private handleRollingCollision(ctx: WeaponContext, level: number): void {
-    const px = ctx.player.x;
-    const py = ctx.player.y;
-    const hitRadius = 48;
-    const damage = Math.round((38 + (level - 1) * 12) * (1 + ctx.gameState.playerModifiers.damagePercentBonus));
+  private launchBall(ctx: WeaponContext, target: Entity, damage: number, bounces: number): void {
+    const proj = ctx.projectilePool
+      ? ctx.projectilePool.getProjectile('tex_eggplant_ball', ctx.player.x, ctx.player.y)
+      : (ctx.projectilesGroup.create(ctx.player.x, ctx.player.y, 'tex_eggplant_ball') as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody);
 
-    ctx.enemiesMap.forEach((enemy) => {
-      if (!enemy.isAlive || enemy.isExploding) return;
-      const dist = Phaser.Math.Distance.Between(px, py, enemy.x, enemy.y);
-      if (dist <= hitRadius) {
-        ctx.combatSystem.applyDamage(ctx.player, enemy, damage);
+    proj.setScale(1.1);
+    const radius = 16;
+    if (proj.body) {
+      proj.body.setCircle(
+        radius,
+        (proj.width - radius * 2) / 2,
+        (proj.height - radius * 2) / 2
+      );
+    }
+    proj.setData('damage', damage);
+    proj.setData('pierce', 999); // Doesn't destroy on collision, handled by ricochet
+    proj.setData('isEggplantBall', true);
+    proj.setDepth(9);
 
-        const angle = Phaser.Math.Angle.Between(px, py, enemy.x, enemy.y);
-        enemy.applyKnockback(Math.cos(angle) * 420, Math.sin(angle) * 420, 240);
+    const angle = Phaser.Math.Angle.Between(ctx.player.x, ctx.player.y, target.x, target.y);
+    const speed = 560;
+    proj.setVelocity(Math.cos(angle) * speed, Math.sin(angle) * speed);
 
-        if (enemy.sprite && ctx.flashSprite) {
-          ctx.flashSprite(enemy.sprite, 0xa855f7);
+    this.balls.push({
+      sprite: proj,
+      bouncesLeft: bounces,
+      damage,
+      speed,
+      lifeTimerMs: 2500,
+    });
+  }
+
+  private updateRicochetBalls(delta: number, ctx: WeaponContext): void {
+    for (let i = this.balls.length - 1; i >= 0; i--) {
+      const ball = this.balls[i];
+      const spr = ball.sprite;
+
+      if (!spr || !spr.active) {
+        this.balls.splice(i, 1);
+        continue;
+      }
+
+      ball.lifeTimerMs -= delta;
+      spr.rotation += 0.2; // Rolling animation
+
+      // Check collision with enemies for ricochet bounce
+      let hitOccurred = false;
+      ctx.enemiesMap.forEach((enemy) => {
+        if (hitOccurred || !enemy.isAlive || enemy.isExploding) return;
+        if (enemy.id === ball.lastHitEnemyId) return;
+
+        const dist = Phaser.Math.Distance.Between(spr.x, spr.y, enemy.x, enemy.y);
+        if (dist <= 36) {
+          hitOccurred = true;
+          ball.lastHitEnemyId = enemy.id;
+          ball.bouncesLeft--;
+
+          // Deal damage and huge knockback
+          ctx.combatSystem.applyDamage(ctx.player, enemy, ball.damage);
+          const angle = Phaser.Math.Angle.Between(spr.x, spr.y, enemy.x, enemy.y);
+          enemy.applyKnockback(Math.cos(angle) * 360, Math.sin(angle) * 360, 200);
+
+          if (ctx.vfxPool) {
+            ctx.vfxPool.spawnImpactSplat(spr.x, spr.y, 0.9);
+          }
+          AudioManager.getInstance().playImpactSplat();
+
+          if (ball.bouncesLeft <= 0) {
+            // Expired ricochets
+            if (ctx.projectilePool) {
+              ctx.projectilePool.releaseProjectile(spr);
+            } else {
+              spr.destroy();
+            }
+            this.balls.splice(i, 1);
+          } else {
+            // Find next target to bounce to
+            const nextTarget = this.findNextBounceTarget(spr.x, spr.y, enemy.id, ctx.enemiesMap, 280);
+            if (nextTarget) {
+              const bounceAngle = Phaser.Math.Angle.Between(spr.x, spr.y, nextTarget.x, nextTarget.y);
+              spr.setVelocity(Math.cos(bounceAngle) * ball.speed, Math.sin(bounceAngle) * ball.speed);
+            } else {
+              // Reverse velocity slightly with random offset
+              const bounceAngle = angle + Math.PI + Phaser.Math.FloatBetween(-0.6, 0.6);
+              spr.setVelocity(Math.cos(bounceAngle) * ball.speed, Math.sin(bounceAngle) * ball.speed);
+            }
+          }
         }
+      });
 
-        AudioManager.getInstance().playImpactSplat();
+      if (ball.lifeTimerMs <= 0 && spr.active) {
+        if (ctx.projectilePool) {
+          ctx.projectilePool.releaseProjectile(spr);
+        } else {
+          spr.destroy();
+        }
+        this.balls.splice(i, 1);
+      }
+    }
+  }
+
+  private findNextBounceTarget(x: number, y: number, excludeId: string, enemiesMap: Map<string, Entity>, range: number): Entity | null {
+    let closest: Entity | null = null;
+    let minDist = range;
+
+    enemiesMap.forEach((enemy) => {
+      if (!enemy.isAlive || enemy.isExploding || enemy.id === excludeId) return;
+      const dist = Phaser.Math.Distance.Between(x, y, enemy.x, enemy.y);
+      if (dist < minDist) {
+        minDist = dist;
+        closest = enemy;
       }
     });
+
+    return closest;
+  }
+
+  private findNearbyEnemies(player: Entity, enemiesMap: Map<string, Entity>, range: number): Entity[] {
+    const list: Entity[] = [];
+    enemiesMap.forEach((enemy) => {
+      if (!enemy.isAlive || enemy.isExploding) return;
+      const dist = Phaser.Math.Distance.Between(player.x, player.y, enemy.x, enemy.y);
+      if (dist <= range) list.push(enemy);
+    });
+    list.sort((a, b) => Phaser.Math.Distance.Between(player.x, player.y, a.x, a.y) - Phaser.Math.Distance.Between(player.x, player.y, b.x, b.y));
+    return list;
   }
 }

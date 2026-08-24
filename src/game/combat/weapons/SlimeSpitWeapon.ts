@@ -78,11 +78,13 @@ export class SlimeSpitWeapon implements IWeapon {
     angleOffset: number,
     spitLevel: number
   ): void {
-    const proj = ctx.projectilesGroup.create(
-      ctx.player.x,
-      ctx.player.y,
-      'vfx_spit_proj_1'
-    ) as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
+    const proj = ctx.projectilePool
+      ? ctx.projectilePool.getProjectile('vfx_spit_proj_1', ctx.player.x, ctx.player.y)
+      : (ctx.projectilesGroup.create(
+          ctx.player.x,
+          ctx.player.y,
+          'vfx_spit_proj_1'
+        ) as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody);
 
     if (ctx.scene.anims.exists('vfx_anim_spit_proj')) {
       proj.play('vfx_anim_spit_proj');
@@ -116,7 +118,13 @@ export class SlimeSpitWeapon implements IWeapon {
     AudioManager.getInstance().playSlimeSpit();
 
     ctx.scene.time.delayedCall(1300, () => {
-      if (proj && proj.active) proj.destroy();
+      if (proj && proj.active) {
+        if (ctx.projectilePool) {
+          ctx.projectilePool.releaseProjectile(proj);
+        } else {
+          proj.destroy();
+        }
+      }
     });
   }
 

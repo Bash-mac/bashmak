@@ -34,6 +34,10 @@ export class InputManager {
     return this.sources.some((s) => s.isActionPressed(action));
   }
 
+  setEnabled(enabled: boolean): void {
+    this.touchSource.setEnabled(enabled);
+  }
+
   destroy(): void {
     for (const source of this.sources) {
       source.destroy();

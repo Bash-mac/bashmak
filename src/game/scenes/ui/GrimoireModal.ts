@@ -51,7 +51,7 @@ export class GrimoireModal {
       .setDepth(20002);
 
     const subtitle = this.scene.add
-      .text(width / 2, height / 2 - bookH / 2 + (isPortrait ? 58 : 82), isPortrait ? 'Оружие (Lv.5) + Фолиант (Lv.5)' : 'Формулы супер-эволюций: Оружие (Lv.5) + Фолиант (Lv.5)', {
+      .text(width / 2, height / 2 - bookH / 2 + (isPortrait ? 58 : 82), isPortrait ? 'Оружие (Lv.5) + Пассивка (Lv.5)' : 'Формулы супер-эволюций: Оружие (Lv.5) + Пассивка (Lv.5)', {
         fontSize: isPortrait ? '11px' : '15px',
         color: '#cbd5e1',
         fontFamily: 'monospace',

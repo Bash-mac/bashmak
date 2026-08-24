@@ -3,6 +3,7 @@ import type { Entity } from '../entities/Entity';
 import type { LootSystem } from '../loot/LootSystem';
 import { AudioManager } from '../audio/AudioManager';
 import { createPlatformAdapter } from '../../platform';
+import { ObjectPool } from '../pools/ObjectPool';
 
 export interface AcidPool {
   sprite: Phaser.GameObjects.Sprite;
@@ -26,8 +27,29 @@ export interface HazardContext {
 
 export class HazardSystem {
   private acidPools: AcidPool[] = [];
+  private poolSpritePool?: ObjectPool<Phaser.GameObjects.Sprite>;
   private audio = AudioManager.getInstance();
   private platform = createPlatformAdapter();
+
+  private initPool(scene: Phaser.Scene): void {
+    if (!this.poolSpritePool) {
+      this.poolSpritePool = new ObjectPool<Phaser.GameObjects.Sprite>(scene, {
+        create: () => {
+          return scene.add.sprite(0, 0, 'vfx_acid_pool_1').setDepth(3);
+        },
+        onRelease: (sprite) => {
+          if (sprite && sprite.anims && typeof sprite.anims.stop === 'function') {
+            sprite.anims.stop();
+          }
+          sprite?.clearTint?.();
+          sprite?.setScale?.(1);
+          sprite?.setAlpha?.(1);
+        },
+        maxSize: 10,
+      });
+      this.poolSpritePool.prewarm(6);
+    }
+  }
 
   public spawnAcidPool(
     scene: Phaser.Scene,
@@ -38,12 +60,20 @@ export class HazardSystem {
     durationMs: number,
     isPlayer: boolean
   ): void {
+    this.initPool(scene);
+
     if (this.acidPools.length >= 6) {
       const old = this.acidPools.shift();
-      old?.sprite.destroy();
+      if (old && this.poolSpritePool) {
+        this.poolSpritePool.release(old.sprite);
+      }
     }
 
-    const sprite = scene.add.sprite(x, y, 'vfx_acid_pool_1');
+    const sprite = this.poolSpritePool
+      ? this.poolSpritePool.get()
+      : scene.add.sprite(x, y, 'vfx_acid_pool_1');
+
+    sprite.setPosition(x, y);
     sprite.setDisplaySize(radius * 2, radius * 2);
     sprite.setAlpha(0.85);
     sprite.setDepth(3);
@@ -71,7 +101,11 @@ export class HazardSystem {
       pool.tickCooldown -= delta;
 
       if (pool.timeLeftMs <= 0) {
-        pool.sprite.destroy();
+        if (this.poolSpritePool) {
+          this.poolSpritePool.release(pool.sprite);
+        } else {
+          pool.sprite.destroy();
+        }
         this.acidPools.splice(i, 1);
         continue;
       }
@@ -81,8 +115,8 @@ export class HazardSystem {
         if (pool.isPlayerPool) {
           ctx.applyAreaDamageToEnemies(pool.x, pool.y, pool.radius, pool.damage);
         } else {
-          const dist = Phaser.Math.Distance.Between(pool.x, pool.y, ctx.player.x, ctx.player.y);
-          if (dist <= pool.radius && ctx.player.isAlive) {
+          const dist = Phaser.Math.Distance.Between(ctx.player.x, ctx.player.y, pool.x, pool.y);
+          if (dist <= pool.radius) {
             ctx.applyDamageToPlayer(pool.damage);
           }
         }
@@ -90,62 +124,75 @@ export class HazardSystem {
     }
   }
 
-  public startExploderFuse(enemy: Entity, scene: Phaser.Scene, onDetonate: (e: Entity) => void): void {
-    if (enemy.isExploding) return;
-    enemy.isExploding = true;
+  public startExploderFuse(
+    exploder: Entity,
+    scene: Phaser.Scene,
+    onExplode: (e: Entity) => void
+  ): void {
+    if (exploder.isExploding) return;
+    exploder.isExploding = true;
+    exploder.stats.speed = 0;
+    if (exploder.sprite?.body) {
+      exploder.sprite.body.stop();
+    }
 
-    scene.time.delayedCall(600, () => {
-      onDetonate(enemy);
-    });
-
-    if (enemy.sprite) {
-      enemy.sprite.setVelocity(0, 0);
+    if (exploder.sprite) {
       scene.tweens.add({
-        targets: enemy.sprite,
-        scaleX: 1.4,
-        scaleY: 1.4,
-        duration: 200,
+        targets: exploder.sprite,
+        scaleX: 1.45,
+        scaleY: 1.45,
+        tint: 0xff0000,
         yoyo: true,
-        repeat: 2,
-        ease: 'Quad.easeInOut',
+        repeat: 3,
+        duration: 120,
+        onComplete: () => {
+          onExplode(exploder);
+        },
       });
-      this.flashSprite(scene, enemy.sprite, 0xff0000);
+    } else {
+      scene.time.delayedCall(800, () => onExplode(exploder));
     }
   }
 
-  public detonateExploder(enemy: Entity, ctx: HazardContext): void {
-    if (!enemy.sprite) return;
-    const x = enemy.x;
-    const y = enemy.y;
-    const radius = 90;
-    const dmg = Math.round(enemy.stats.damage * 1.5);
+  public detonateExploder(exploder: Entity, ctx: HazardContext): void {
+    const x = exploder.x;
+    const y = exploder.y;
+    const blastRadius = exploder.definition?.explosionRadius || 80;
+    const blastDmg = exploder.definition?.explosionDamage || 22;
 
-    enemy.destroy();
-    ctx.enemiesMap.delete(enemy.id);
-    this.audio.playExplosion();
+    this.spawnAcidPool(ctx.scene, x, y, blastRadius, 6, 3500, false);
 
-    const shockwave = ctx.scene.add.circle(x, y, radius, 0xdc2626, 0.7).setDepth(11);
+    const blastGfx = ctx.scene.add.graphics();
+    blastGfx.lineStyle(3, 0xef4444, 1);
+    blastGfx.fillStyle(0xdc2626, 0.5);
+    blastGfx.fillCircle(x, y, blastRadius);
+    blastGfx.strokeCircle(x, y, blastRadius);
+
     ctx.scene.tweens.add({
-      targets: shockwave,
+      targets: blastGfx,
       alpha: 0,
-      scaleX: 1.2,
-      scaleY: 1.2,
-      duration: 250,
-      onComplete: () => shockwave.destroy(),
+      scaleX: 1.3,
+      scaleY: 1.3,
+      duration: 300,
+      onComplete: () => blastGfx.destroy(),
     });
 
-    const distToPlayer = Phaser.Math.Distance.Between(x, y, ctx.player.x, ctx.player.y);
-    if (distToPlayer <= radius && ctx.player.isAlive) {
-      ctx.applyDamageToPlayer(dmg);
+    const distToPlayer = Phaser.Math.Distance.Between(ctx.player.x, ctx.player.y, x, y);
+    if (distToPlayer <= blastRadius) {
+      ctx.applyDamageToPlayer(blastDmg);
+      const angle = Phaser.Math.Angle.Between(x, y, ctx.player.x, ctx.player.y);
+      ctx.player.applyKnockback(Math.cos(angle) * 320, Math.sin(angle) * 320, 200);
     }
 
-    ctx.lootSystem.spawnGem(x, y, enemy.definition?.xpReward ?? 6);
-    ctx.applyAreaDamageToEnemies(x, y, radius, dmg);
+    ctx.applyAreaDamageToEnemies(x, y, blastRadius, blastDmg * 1.5);
+    this.audio.playExplosion();
+    this.platform.vibrate(40);
   }
 
   public triggerScreenWipeBlast(scene: Phaser.Scene, x: number, y: number, ctx: HazardContext): void {
     this.audio.playExplosion();
-    const blastGfx = scene.add.graphics().setDepth(12);
+
+    const blastGfx = scene.add.graphics();
     blastGfx.lineStyle(6, 0xfacc15, 1);
     blastGfx.fillStyle(0xa855f7, 0.4);
     blastGfx.fillCircle(x, y, 380);
@@ -175,14 +222,9 @@ export class HazardSystem {
   }
 
   public clear(): void {
-    try {
-      this.acidPools.forEach((p) => {
-        if (p.sprite?.active) {
-          p.sprite.destroy();
-        }
-      });
-    } catch {
-      // Ignore
+    if (this.poolSpritePool) {
+      this.poolSpritePool.clear();
+      this.poolSpritePool = undefined;
     }
     this.acidPools = [];
   }

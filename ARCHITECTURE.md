@@ -22,38 +22,55 @@ src/
 │   ├── VirtualJoystickInputSource.ts
 │   └── InputManager.ts
 ├── game/
-│   ├── core/           # Чистая доменная логика, шина событий, сохранения
+│   ├── core/           # Чистая доменная логика (Pure TS, БЕЗ импортов Phaser)
 │   │   ├── EventBus.ts
 │   │   ├── GameState.ts
 │   │   └── SaveManager.ts
+│   ├── pools/          # Пул объектов для 60 FPS (ObjectPool.ts)
+│   │   └── ObjectPool.ts
 │   ├── entities/       # Сущности и их компоненты (Composition)
 │   │   ├── Entity.ts
 │   │   └── components/
 │   │       ├── StatsComponent.ts
 │   │       └── HealthComponent.ts
-│   ├── data/           # Data-driven контент (герои, враги, пассивки, мета)
+│   ├── data/           # Data-driven контент (герои, враги, пассивки, эволюции)
 │   │   ├── definitions.ts
-│   │   ├── heroes.ts
+│   │   ├── evolutions.ts
+│   │   ├── heroes/
 │   │   ├── enemies.ts
 │   │   ├── upgrades.ts
 │   │   └── metaUpgrades.ts
-│   ├── combat/         # Боевой движок и оружие (1 файл на 1 пушку)
+│   ├── combat/         # Боевой движок, пулы пуль/урона и оружие
 │   │   ├── CombatSystem.ts
+│   │   ├── CollisionManager.ts
+│   │   ├── ProjectilePool.ts
+│   │   ├── DamageNumberPool.ts
+│   │   ├── VfxPool.ts
 │   │   ├── WeaponManager.ts
 │   │   └── weapons/
 │   │       ├── IWeapon.ts
+│   │       ├── SlimeSpitWeapon.ts
+│   │       ├── LaceWhipWeapon.ts
+│   │       ├── CarrotBarrageWeapon.ts
+│   │       ├── EggplantRollWeapon.ts
 │   │       ├── HomingDaggersWeapon.ts
-│   │       ├── BouncingBonesWeapon.ts
+│   │       ├── MegaBootWeapon.ts
 │   │       ├── LightningZapWeapon.ts
 │   │       └── AcidTrailWeapon.ts
+│   ├── audio/          # Звуковой движок (Web Audio API procedural synth)
+│   │   └── AudioManager.ts
+│   ├── traits/         # Трейты персонажей
+│   │   └── HeroTraitSystem.ts
 │   ├── ai/             # ИИ мобов, флокинг/разделение толпы, боссы
 │   │   └── EnemyAISystem.ts
 │   ├── loot/           # Спавн кристаллов XP, капель GOO, прогрессивный магнит
 │   │   └── LootSystem.ts
-│   ├── map/            # Генератор препятствий, бочек, алтарей
-│   │   └── MapGenerator.ts
+│   ├── map/            # Генератор препятствий, бочек, алтарей, лужи
+│   │   ├── MapGenerator.ts
+│   │   └── HazardSystem.ts
 │   ├── spawning/       # Управление спавном и кривой популяции
-│   │   └── SpawnManager.ts
+│   │   ├── SpawnManager.ts
+│   │   └── EnemyFactory.ts
 │   └── scenes/         # Сцены Phaser (только тонкая оркестрация и визуал)
 │       ├── BootScene.ts
 │       ├── MenuScene.ts
@@ -62,7 +79,10 @@ src/
 │       ├── ResultScene.ts
 │       └── ui/
 │           ├── HUD.ts
-│           └── LevelUpModal.ts
+│           ├── LevelUpModal.ts
+│           ├── GrimoireModal.ts
+│           ├── HeroSelectModal.ts
+│           └── GameOverModal.ts
 └── main.ts             # Точка входа приложения
 ```
 
@@ -94,6 +114,14 @@ src/
 
 ### 2.6. Phaser Scenes (`src/game/scenes`)
 - `GameScene` **не является God-объектом**. Она выступает тонким оркестратором: связывает Phaser Arcade Physics, рендеринг, камеры, таймеры и доменные системы (`CombatSystem`, `SpawnManager`, `InputManager`).
+
+---
+
+### 2.7. Pooling & High-Load Architecture (`src/game/pools`, `src/game/combat`)
+- Все высоконагруженные короткоживущие объекты (снаряды, кристаллы опыта, капли GOO, сплэши урона, всплывающие цифры) управляются через `ObjectPool<T>`.
+- Снаряды спавнятся через `ProjectilePool.getProjectile()`, возвращаются по таймеру или коллизии через `releaseProjectile()`.
+- Кристаллы опыта управляются через `LootSystem` с жестким ограничением в 90 штук и автослиянием (Gem Merging) дальних кристаллов.
+- Всплывающий урон использует `DamageNumberPool`.
 
 ---
 
@@ -132,6 +160,7 @@ src/
 ### Где будут Weapons / Abilities / Upgrades:
 - Контракты уже объявлены в `src/game/data/definitions.ts` (`WeaponDefinition`, `UpgradeDefinition`).
 - Реализации оружия и апгрейдов добавляются в `src/game/data/weapons.ts` и `src/game/data/upgrades.ts` как наборы модификаторов статов (`apply: (stats) => void`).
+- Любое новое оружие со снарядами спавнит пули **только через `ctx.projectilePool`**, а не через `scene.physics.add.sprite().destroy()`.
 
 ---
 
@@ -141,3 +170,5 @@ src/
 2. **Запрещено** обращаться к DOM напрямую из боевой логики или сущностей — изменения передаются через `EventBus` -> `HUD`.
 3. **Запрещено** хардкодить типы врагов через `if (enemy.type === '...')` внутри сцен — используйте свойства `EnemyDefinition` и компоненты.
 4. **Запрещено** хранить персистентное состояние игры внутри Phaser GameObjects.
+5. **Запрещено** спавнить и уничтожать снаряды, лут или сплэши через `scene.add.sprite().destroy()` — использовать строго `ProjectilePool`, `LootSystem`, `DamageNumberPool` и `VfxPool`.
+

@@ -104,7 +104,7 @@ export const MINI_BOSS_ELITE: EnemyDefinition = {
   xpReward: 30,
 };
 
-// 7. Финальный Босс — «Курган» (на 10-й минуте)
+// 7. Финальный Босс — «Курган» (на 8-й минуте)
 export const BOSS_KURGAN: EnemyDefinition = {
   id: 'boss_kurgan',
   name: 'Курган',
