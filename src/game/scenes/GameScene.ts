@@ -112,7 +112,11 @@ export class GameScene extends Phaser.Scene {
         const enemy = EnemyFactory.createEnemy(this.enemiesGroup, def, x, y, id, scaling);
         this.enemiesMap.set(id, enemy);
         this.eventBus.emit('enemy:spawned', { id, x, y });
-      }
+      },
+      () => ({
+        halfW: this.cameras.main.width / (2 * this.cameras.main.zoom),
+        halfH: this.cameras.main.height / (2 * this.cameras.main.zoom),
+      })
     );
 
     if (this.playerEntity.sprite) {

@@ -13,8 +13,15 @@ export class EnemyFactory {
     scaling?: EnemyScaling
   ): Entity {
     const sprite = enemiesGroup.create(x, y, definition.textureKey) as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
+    const radius = Math.max(16, (definition.size || 20) * 0.95);
     sprite.setCollideWorldBounds(true);
-    sprite.setCircle(definition.size / 2);
+    if (sprite.body) {
+      sprite.body.setCircle(
+        radius,
+        (sprite.width - radius * 2) / 2,
+        (sprite.height - radius * 2) / 2
+      );
+    }
     sprite.setData('entityId', id);
     sprite.setDepth(8);
 

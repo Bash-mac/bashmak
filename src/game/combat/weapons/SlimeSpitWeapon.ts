@@ -90,7 +90,14 @@ export class SlimeSpitWeapon implements IWeapon {
 
     const scale = (ctx.gameState.playerModifiers.fatSpitScale || 1.0) * (isCrit ? 1.4 : 1.0);
     proj.setScale(scale);
-    proj.setCircle(10 * scale);
+    const radius = 16 * scale;
+    if (proj.body) {
+      proj.body.setCircle(
+        radius,
+        (proj.width - radius * 2) / 2,
+        (proj.height - radius * 2) / 2
+      );
+    }
     proj.setData('damage', Math.round(damage));
     proj.setData('pierce', pierce);
     proj.setData('isSlimeSpit', true);

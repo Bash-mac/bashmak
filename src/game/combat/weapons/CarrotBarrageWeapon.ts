@@ -59,7 +59,14 @@ export class CarrotBarrageWeapon implements IWeapon {
 
     const scale = isSuperCrit ? 1.5 : 1.0;
     proj.setScale(scale);
-    proj.setCircle(8 * scale);
+    const radius = 14 * scale;
+    if (proj.body) {
+      proj.body.setCircle(
+        radius,
+        (proj.width - radius * 2) / 2,
+        (proj.height - radius * 2) / 2
+      );
+    }
     proj.setData('damage', Math.round(damage));
     proj.setData('pierce', pierce);
     proj.setData('isCarrot', true);

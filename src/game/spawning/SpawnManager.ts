@@ -18,6 +18,7 @@ export interface EnemyScaling {
 export class SpawnManager {
   private getPlayerPosition: () => { x: number; y: number; vx: number; vy: number };
   private spawnCallback: (definition: EnemyDefinition, x: number, y: number, scaling: EnemyScaling) => void;
+  private getViewportExtents?: () => { halfW: number; halfH: number };
 
   private spawnTimer = 0;
   private currentActiveCount = 0;
@@ -26,10 +27,12 @@ export class SpawnManager {
 
   constructor(
     getPlayerPosition: () => { x: number; y: number; vx: number; vy: number },
-    spawnCallback: (definition: EnemyDefinition, x: number, y: number, scaling: EnemyScaling) => void
+    spawnCallback: (definition: EnemyDefinition, x: number, y: number, scaling: EnemyScaling) => void,
+    getViewportExtents?: () => { halfW: number; halfH: number }
   ) {
     this.getPlayerPosition = getPlayerPosition;
     this.spawnCallback = spawnCallback;
+    this.getViewportExtents = getViewportExtents;
   }
 
   update(deltaMs: number, runTimeSeconds: number): void {
@@ -150,14 +153,23 @@ export class SpawnManager {
     return EXPLODER_SPORE;
   }
 
+  public getViewport(): { halfW: number; halfH: number; maxRadius: number } {
+    const extents = this.getViewportExtents?.() || { halfW: 680, halfH: 400 };
+    const halfW = Math.max(450, extents.halfW);
+    const halfH = Math.max(320, extents.halfH);
+    const maxRadius = Math.hypot(halfW, halfH);
+    return { halfW, halfH, maxRadius };
+  }
+
   /**
-   * Spawns strictly outside the camera viewport (perimeter + 60px)
+   * Spawns strictly outside the visible camera viewport (perimeter + 100px)
    */
   public getScreenPerimeterPosition(): { x: number; y: number } {
     const player = this.getPlayerPosition();
-    // 1280x720 screen half-extents
-    const halfW = 680;
-    const halfH = 400;
+    const { halfW, halfH } = this.getViewport();
+    const margin = 100;
+    const spawnW = halfW + margin;
+    const spawnH = halfH + margin;
 
     const side = Math.floor(Math.random() * 4);
     let offsetX = 0;
@@ -165,20 +177,20 @@ export class SpawnManager {
 
     switch (side) {
       case 0: // Top
-        offsetX = (Math.random() - 0.5) * halfW * 2;
-        offsetY = -halfH - 50;
+        offsetX = (Math.random() - 0.5) * spawnW * 2;
+        offsetY = -spawnH;
         break;
       case 1: // Bottom
-        offsetX = (Math.random() - 0.5) * halfW * 2;
-        offsetY = halfH + 50;
+        offsetX = (Math.random() - 0.5) * spawnW * 2;
+        offsetY = spawnH;
         break;
       case 2: // Left
-        offsetX = -halfW - 50;
-        offsetY = (Math.random() - 0.5) * halfH * 2;
+        offsetX = -spawnW;
+        offsetY = (Math.random() - 0.5) * spawnH * 2;
         break;
       case 3: // Right
-        offsetX = halfW + 50;
-        offsetY = (Math.random() - 0.5) * halfH * 2;
+        offsetX = spawnW;
+        offsetY = (Math.random() - 0.5) * spawnH * 2;
         break;
     }
 
@@ -190,10 +202,11 @@ export class SpawnManager {
 
   /**
    * Vampire Survivors Wrap-Around Reposition:
-   * Teleports distant enemies in front of the player's movement direction.
+   * Teleports distant enemies outside view in front of the player's movement direction.
    */
   public getRepositionPosition(): { x: number; y: number } {
     const player = this.getPlayerPosition();
+    const { maxRadius } = this.getViewport();
     let moveAngle = Math.atan2(player.vy, player.vx);
 
     // If player is standing still, pick a random angle
@@ -204,7 +217,7 @@ export class SpawnManager {
       moveAngle += (Math.random() - 0.5) * 1.4;
     }
 
-    const dist = 500 + Math.random() * 80;
+    const dist = maxRadius + 120 + Math.random() * 80;
     return {
       x: player.x + Math.cos(moveAngle) * dist,
       y: player.y + Math.sin(moveAngle) * dist,

@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "check:arch": "node scripts/check-architecture.mjs",
+    "build": "node scripts/check-architecture.mjs && tsc && vite build",
     "preview": "npm run build && wrangler pages dev dist",
     "deploy": "npm run build && wrangler pages deploy dist --project-name bashmak"
   },

@@ -77,9 +77,15 @@ export class HomingDaggersWeapon implements IWeapon {
   ): void {
     const proj = ctx.projectilesGroup.create(ctx.player.x, ctx.player.y, 'tex_homing_dagger') as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
     const scale = (ctx.gameState.playerModifiers.fatSpitScale || 1.0) * (isCrit ? 1.4 : 1.1);
-
     proj.setScale(scale);
-    proj.setCircle(7 * scale);
+    const radius = 14 * scale;
+    if (proj.body) {
+      proj.body.setCircle(
+        radius,
+        (proj.width - radius * 2) / 2,
+        (proj.height - radius * 2) / 2
+      );
+    }
     proj.setData('damage', Math.round(damage));
     proj.setData('pierce', pierce);
     proj.setData('isHoming', true);

@@ -55,8 +55,9 @@ export class EnemyAISystem {
       const def = enemy.definition;
       const distToPlayer = Phaser.Math.Distance.Between(enemy.x, enemy.y, playerX, playerY);
 
-      // Vampire Survivors Wrap-Around: If enemy is too far (> 850px), teleport ahead
-      if (distToPlayer > 850 && def?.archetype !== 'boss' && def?.archetype !== 'miniboss') {
+      // Vampire Survivors Wrap-Around: If enemy is too far (> maxViewRadius), teleport ahead
+      const maxViewRadius = ctx.spawnManager.getViewport().maxRadius + 180;
+      if (distToPlayer > maxViewRadius && def?.archetype !== 'boss' && def?.archetype !== 'miniboss') {
         const newPos = ctx.spawnManager.getRepositionPosition();
         enemy.sprite.setPosition(newPos.x, newPos.y);
         continue;

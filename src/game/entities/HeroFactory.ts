@@ -19,7 +19,16 @@ export class HeroFactory {
 
     const textureKey = currentHero.textureKey || 'vypolzok_idle_1';
     const sprite = scene.physics.add.sprite(x, y, textureKey);
-    sprite.setScale(0.72).setCollideWorldBounds(true).setCircle(24, 40, 56).setDepth(10);
+    sprite.setScale(0.72).setCollideWorldBounds(true).setDepth(10);
+
+    const radius = 22;
+    if (sprite.body) {
+      sprite.body.setCircle(
+        radius,
+        (sprite.width - radius * 2) / 2,
+        (sprite.height - radius * 2) / 2 + 2
+      );
+    }
 
     if ((textureKey.startsWith('vypolzok') || textureKey.startsWith('tony')) && scene.anims.exists('vypolzok_anim_idle')) {
       sprite.play('vypolzok_anim_idle');
