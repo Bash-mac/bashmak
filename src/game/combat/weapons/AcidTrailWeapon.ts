@@ -6,11 +6,17 @@ export class AcidTrailWeapon implements IWeapon {
   readonly name = 'Дырявый Носок';
 
   private stinkAuraTimer = 0;
+  private auraGfx?: Phaser.GameObjects.Graphics;
 
   update(delta: number, ctx: WeaponContext): void {
     const mods = ctx.gameState.playerModifiers;
     const level = mods.acidTrailLevel ?? 0;
-    if (level <= 0) return;
+    if (level <= 0) {
+      if (this.auraGfx) {
+        this.auraGfx.clear();
+      }
+      return;
+    }
 
     this.stinkAuraTimer += delta;
     if (this.stinkAuraTimer >= 450) {
@@ -26,8 +32,27 @@ export class AcidTrailWeapon implements IWeapon {
     const auraRadius = (70 + (level - 1) * 12) * (1 + (mods.extraRange > 0 ? 0.25 : 0));
     const damage = Math.round((12 + (level - 1) * 6) * (1 + mods.damagePercentBonus));
 
-    // Spawn green acid pool aura tick
-    ctx.spawnAcidPool?.(px, py, auraRadius * 0.7, damage, 1800, true);
+    // Stinky Sock Placeholder VFX: translucent green pulsing stench radius
+    if (!this.auraGfx) {
+      this.auraGfx = ctx.scene.add.graphics().setDepth(7);
+    }
+    this.auraGfx.clear();
+    this.auraGfx.lineStyle(2, 0x84cc16, 0.4);
+    this.auraGfx.fillStyle(0xa3e635, 0.08);
+    this.auraGfx.fillCircle(px, py, auraRadius);
+    this.auraGfx.strokeCircle(px, py, auraRadius);
+
+    ctx.scene.tweens.add({
+      targets: this.auraGfx,
+      alpha: 0,
+      duration: 380,
+      onComplete: () => {
+        if (this.auraGfx) {
+          this.auraGfx.clear();
+          this.auraGfx.setAlpha(1);
+        }
+      },
+    });
 
     // Damage enemies directly inside stench aura
     ctx.enemiesMap.forEach((enemy) => {

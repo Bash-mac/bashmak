@@ -163,10 +163,11 @@ export class HazardSystem {
     this.spawnAcidPool(ctx.scene, x, y, blastRadius, 6, 3500, false);
 
     const blastGfx = ctx.scene.add.graphics();
+    blastGfx.setPosition(x, y);
     blastGfx.lineStyle(3, 0xef4444, 1);
     blastGfx.fillStyle(0xdc2626, 0.5);
-    blastGfx.fillCircle(x, y, blastRadius);
-    blastGfx.strokeCircle(x, y, blastRadius);
+    blastGfx.fillCircle(0, 0, blastRadius);
+    blastGfx.strokeCircle(0, 0, blastRadius);
 
     ctx.scene.tweens.add({
       targets: blastGfx,
@@ -193,10 +194,11 @@ export class HazardSystem {
     this.audio.playExplosion();
 
     const blastGfx = scene.add.graphics();
+    blastGfx.setPosition(x, y);
     blastGfx.lineStyle(6, 0xfacc15, 1);
     blastGfx.fillStyle(0xa855f7, 0.4);
-    blastGfx.fillCircle(x, y, 380);
-    blastGfx.strokeCircle(x, y, 380);
+    blastGfx.fillCircle(0, 0, 380);
+    blastGfx.strokeCircle(0, 0, 380);
 
     scene.tweens.add({
       targets: blastGfx,

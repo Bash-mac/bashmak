@@ -15,7 +15,7 @@ export const WORM_UPGRADES: UpgradeDefinition[] = [
     levels: [
       {
         level: 1,
-        description: 'Минометный навес едкой кислоты. Замедляет врагов на 35% и создает кипящие лужи.',
+        description: 'Минометный навес едкой кислоты. Замедляет врагов на 35% и наносит урон сплэшем.',
         apply: (mod) => {
           mod.slimeSpitLevel = 1;
           mod.multishotCount = Math.max(mod.multishotCount, 1);
@@ -23,15 +23,16 @@ export const WORM_UPGRADES: UpgradeDefinition[] = [
       },
       {
         level: 2,
-        description: 'Залп +1 сгусток слизи + урон кислоты +25%.',
+        description: 'Залп +1 сгусток слизи (2 снаряда) + урон кислоты +25%.',
         apply: (mod) => {
           mod.slimeSpitLevel = 2;
-          mod.damagePercentBonus += 0.15;
+          mod.multishotCount = 2;
+          mod.damagePercentBonus += 0.25;
         },
       },
       {
         level: 3,
-        description: '★ ЕДКИЙ ЗАЛП: 3 сгустка слизи со 100% шансом создать лужи под врагами.',
+        description: '★ ЕДКИЙ ЗАЛП: 3 сгустка слизи с увеличенной скоростью полета.',
         apply: (mod) => {
           mod.slimeSpitLevel = 3;
           mod.multishotCount += 1;
@@ -39,7 +40,7 @@ export const WORM_UPGRADES: UpgradeDefinition[] = [
       },
       {
         level: 4,
-        description: 'Слизь пробивает первого врага (pierce +1) и увеличивает размер луж на 30%.',
+        description: 'Слизь пробивает первого врага (pierce +1) и увеличивает размер сгустков на 30%.',
         apply: (mod) => {
           mod.slimeSpitLevel = 4;
           mod.pierceCount += 1;

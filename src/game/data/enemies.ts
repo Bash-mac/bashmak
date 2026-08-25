@@ -9,15 +9,15 @@ export const FODDER_BAT: EnemyDefinition = {
   size: 12,
   mass: 1,
   stats: {
-    maxHp: 10,
-    speed: 170,
-    damage: 5,
+    maxHp: 6,
+    speed: 115,
+    damage: 4,
     armor: 0,
   },
   xpReward: 1,
 };
 
-// 2. Ползун (Swarmer) — базовая плотная масса
+// 2. Ползун (Swarmer) — базовая плотная медленная масса
 export const CRAWLER_SWARM: EnemyDefinition = {
   id: 'enemy_crawler',
   name: 'Ползун',
@@ -26,9 +26,9 @@ export const CRAWLER_SWARM: EnemyDefinition = {
   size: 16,
   mass: 2,
   stats: {
-    maxHp: 22,
-    speed: 130,
-    damage: 7,
+    maxHp: 18,
+    speed: 85,
+    damage: 6,
     armor: 0,
   },
   xpReward: 2,
@@ -44,7 +44,7 @@ export const SPRINTER_BUG: EnemyDefinition = {
   mass: 1,
   stats: {
     maxHp: 10,
-    speed: 205,
+    speed: 175,
     damage: 6,
     armor: 0,
   },
@@ -60,9 +60,9 @@ export const ARMORED_SLUG: EnemyDefinition = {
   size: 24,
   mass: 5,
   stats: {
-    maxHp: 75,
-    speed: 80,
-    damage: 15,
+    maxHp: 65,
+    speed: 65,
+    damage: 12,
     armor: 1,
   },
   xpReward: 6,
@@ -77,13 +77,13 @@ export const EXPLODER_SPORE: EnemyDefinition = {
   size: 16,
   mass: 2,
   stats: {
-    maxHp: 18,
-    speed: 160,
+    maxHp: 16,
+    speed: 130,
     damage: 5,
     armor: 0,
   },
   explosionRadius: 80,
-  explosionDamage: 22,
+  explosionDamage: 20,
   xpReward: 4,
 };
 

@@ -77,9 +77,6 @@ export class CollisionManager {
 
         if (proj.getData('isSlimeSpit')) {
           enemy.applySlow(0.35, 1800);
-          if (Math.random() < 0.60) {
-            hazardSystem.spawnAcidPool(scene, proj.x, proj.y, 32, 5, 2200, true);
-          }
         }
 
         const pierce = (proj.getData('pierce') as number) || 0;
@@ -147,6 +144,10 @@ export class CollisionManager {
       if (!shrine.active) return;
       const sx = shrine.x;
       const sy = shrine.y;
+      const beacon = shrine.getData('beacon') as Phaser.GameObjects.GameObject | undefined;
+      beacon?.destroy();
+      const aura = shrine.getData('aura') as Phaser.GameObjects.GameObject | undefined;
+      aura?.destroy();
       shrine.destroy();
       hazardSystem.triggerScreenWipeBlast(scene, sx, sy, ctx.getHazardCtx());
     });

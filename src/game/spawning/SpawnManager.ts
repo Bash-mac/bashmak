@@ -53,19 +53,26 @@ export class SpawnManager {
       this.spawnBoss(scaling);
     }
 
-    // 2. Exact Vampire Survivors Target Population Curve
-    let targetPopulation = 10;
-    let maxBatchSize = 2;
-    let spawnInterval = 600;
+    // 2. Smooth Early-Game to Late-Game Target Population Curve
+    let targetPopulation = 5;
+    let maxBatchSize = 1;
+    let spawnInterval = 1200;
 
-    if (minutes < 0.6) {
+    if (minutes < 0.4) {
+      // 0:00 - 0:24 (Warmup / tutorial farm)
+      targetPopulation = 5;
+      maxBatchSize = 1;
+      spawnInterval = 1200;
+    } else if (minutes < 0.8) {
+      // 0:24 - 0:48 (Early trickle)
       targetPopulation = 10;
       maxBatchSize = 2;
-      spawnInterval = 600;
-    } else if (minutes < 1.2) {
+      spawnInterval = 800;
+    } else if (minutes < 1.5) {
+      // 0:48 - 1:30 (First steady swarm)
       targetPopulation = 22;
       maxBatchSize = 3;
-      spawnInterval = 450;
+      spawnInterval = 500;
     } else if (minutes < 2.5) {
       targetPopulation = 42;
       maxBatchSize = 4;
@@ -125,27 +132,32 @@ export class SpawnManager {
   private selectEnemyDefinition(minutes: number): EnemyDefinition {
     const roll = Math.random();
 
-    // 0-1.0 min: 60% Fodder Bats, 40% Crawlers
-    if (minutes < 1.0) {
-      return roll < 0.6 ? FODDER_BAT : CRAWLER_SWARM;
+    // 0:00 - 0:30 (0 - 0.5m): 100% Fodder Bats (warmup XP farm)
+    if (minutes < 0.5) {
+      return FODDER_BAT;
     }
 
-    // 1.0-1.5 min: 45% Bats, 45% Crawlers, 10% Sprinters
-    if (minutes < 1.5) {
+    // 0:30 - 1:15 (0.5 - 1.25m): 75% Bats, 25% slow Crawlers
+    if (minutes < 1.25) {
+      return roll < 0.75 ? FODDER_BAT : CRAWLER_SWARM;
+    }
+
+    // 1:15 - 2:00 (1.25 - 2.0m): 45% Bats, 45% Crawlers, 10% Sprinters
+    if (minutes < 2.0) {
       if (roll < 0.45) return FODDER_BAT;
       if (roll < 0.90) return CRAWLER_SWARM;
       return SPRINTER_BUG;
     }
 
-    // 1.5-3.0 min: 20% Bats, 40% Crawlers, 25% Sprinters, 15% Armored Slugs
-    if (minutes < 3.0) {
+    // 2:00 - 3.5m: 20% Bats, 45% Crawlers, 20% Sprinters, 15% Armored Slugs
+    if (minutes < 3.5) {
       if (roll < 0.20) return FODDER_BAT;
-      if (roll < 0.60) return CRAWLER_SWARM;
+      if (roll < 0.65) return CRAWLER_SWARM;
       if (roll < 0.85) return SPRINTER_BUG;
       return ARMORED_SLUG;
     }
 
-    // 3.0+ min: Full enemy composition (including Exploder Spores)
+    // 3.5+ min: Full enemy composition (including Exploder Spores)
     if (roll < 0.15) return FODDER_BAT;
     if (roll < 0.45) return CRAWLER_SWARM;
     if (roll < 0.65) return SPRINTER_BUG;
