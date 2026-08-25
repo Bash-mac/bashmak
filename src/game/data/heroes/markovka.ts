@@ -10,8 +10,8 @@ export const MARKOVKA_HERO: HeroDefinition = {
   comicTitle: 'THE CARROT FURY',
   description: 'Стеклянная пушка. Быстрая, смертоносная, хрупкая. Убивай или умри.',
   lore: 'Генно-модифицированная морковка из заброшенной лаборатории. Скорость — её броня.',
-  textureKey: 'pose_alert',
-  portraitKey: 'face_angry',
+  textureKey: 'markovka_idle_1',
+  portraitKey: 'portrait_markovka',
   stats: {
     maxHp: 75,
     speed: 250,

@@ -69,7 +69,11 @@ export class CollisionManager {
         }
 
         if (vfxPool) {
-          vfxPool.spawnImpactSplat(proj.x, proj.y, 0.75);
+          if (proj.getData('isCarrot')) {
+            vfxPool.spawnCarrotSplat(proj.x, proj.y, 0.14);
+          } else {
+            vfxPool.spawnImpactSplat(proj.x, proj.y, 0.75);
+          }
         } else if (scene.anims.exists('vfx_anim_impact_splat')) {
           const splat = scene.add.sprite(proj.x, proj.y, 'vfx_impact_splat_1').setDepth(12).setScale(0.75);
           splat.play('vfx_anim_impact_splat').once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => splat.destroy());

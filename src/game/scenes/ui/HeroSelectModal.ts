@@ -120,10 +120,20 @@ export class HeroSelectModal {
   ): void {
     const cardContainer = this.scene.add.container(x, y).setDepth(10002).setScrollFactor(0);
 
+    // Check Hero Unlock State
+    const isDev = typeof window !== 'undefined' && (
+      (window as any).__DEV_HEROES__ === true ||
+      localStorage.getItem('dev_heroes_unlocked') === 'true' ||
+      window.location.search.includes('hero=markovka') ||
+      window.location.search.includes('dev=1')
+    );
+
+    const isUnlocked = hero.id === 'hero_worm' || (hero.id === 'hero_markovka' && isDev);
+
     // Background Panel
     const cardBg = this.scene.add.graphics();
-    const bgColor = isSelected ? 0x14532d : 0x1e293b;
-    const borderColor = isSelected ? 0x4ade80 : 0x475569;
+    const bgColor = isSelected ? 0x14532d : (isUnlocked ? 0x1e293b : 0x0f172a);
+    const borderColor = isSelected ? 0x4ade80 : (isUnlocked ? 0x475569 : 0x334155);
     const borderWidth = isSelected ? 3 : 1.5;
 
     cardBg.fillStyle(bgColor, 0.95);
@@ -142,19 +152,31 @@ export class HeroSelectModal {
           fontFamily: 'monospace',
         })
         .setOrigin(0.5);
+    } else if (!isUnlocked) {
+      selectedBadge = this.scene.add
+        .text(0, -h / 2 + 18, '🔒 СКОРО', {
+          fontSize: '11px',
+          fontStyle: 'bold',
+          color: '#94a3b8',
+          fontFamily: 'monospace',
+        })
+        .setOrigin(0.5);
     }
 
     // Hero Portrait / Sprite
     const portraitKey = hero.portraitKey || hero.textureKey || 'tony_portrait';
     const portrait = this.scene.add.image(0, isCompact ? -h / 2 + 45 : -h / 2 + 75, portraitKey);
     portrait.setDisplaySize(isCompact ? 48 : 70, isCompact ? 48 : 70);
+    if (!isUnlocked) {
+      portrait.setAlpha(0.35);
+    }
 
     // Hero Name & Comic Tag
     const nameText = this.scene.add
       .text(0, isCompact ? -h / 2 + 78 : -h / 2 + 125, hero.name, {
         fontSize: isCompact ? '14px' : '18px',
         fontStyle: 'bold',
-        color: isSelected ? '#4ade80' : '#ffffff',
+        color: isSelected ? '#4ade80' : (isUnlocked ? '#ffffff' : '#64748b'),
         fontFamily: 'monospace',
       })
       .setOrigin(0.5);
@@ -162,7 +184,7 @@ export class HeroSelectModal {
     const titleText = this.scene.add
       .text(0, isCompact ? -h / 2 + 94 : -h / 2 + 145, hero.comicTitle || '', {
         fontSize: isCompact ? '9px' : '11px',
-        color: '#facc15',
+        color: isUnlocked ? '#facc15' : '#475569',
         fontFamily: 'monospace',
       })
       .setOrigin(0.5);
@@ -180,7 +202,7 @@ export class HeroSelectModal {
     const statsText = this.scene.add
       .text(0, statsY, statsLines.join('\n'), {
         fontSize: isCompact ? '10px' : '12px',
-        color: '#cbd5e1',
+        color: isUnlocked ? '#cbd5e1' : '#475569',
         fontFamily: 'monospace',
         align: 'center',
         lineSpacing: isCompact ? 2 : 4,
@@ -193,7 +215,7 @@ export class HeroSelectModal {
       .text(0, traitY, `⚡ ${hero.trait?.name || 'Трейт'}:`, {
         fontSize: isCompact ? '10px' : '12px',
         fontStyle: 'bold',
-        color: '#38bdf8',
+        color: isUnlocked ? '#38bdf8' : '#334155',
         fontFamily: 'monospace',
       })
       .setOrigin(0.5, 0);
@@ -201,7 +223,7 @@ export class HeroSelectModal {
     const traitDesc = this.scene.add
       .text(0, traitY + (isCompact ? 13 : 18), hero.trait?.description || '', {
         fontSize: isCompact ? '9px' : '11px',
-        color: '#94a3b8',
+        color: isUnlocked ? '#94a3b8' : '#334155',
         fontFamily: 'monospace',
         align: 'center',
         wordWrap: { width: w - (isCompact ? 16 : 24) },
@@ -213,15 +235,16 @@ export class HeroSelectModal {
     const btnH = isCompact ? 26 : 36;
     const btnY = h / 2 - (isCompact ? 20 : 35);
     const btnBg = this.scene.add.graphics();
-    const btnColor = isSelected ? 0x22c55e : 0x3b82f6;
+    const btnColor = isSelected ? 0x22c55e : (isUnlocked ? 0x3b82f6 : 0x1e293b);
     btnBg.fillStyle(btnColor, 1);
     btnBg.fillRoundedRect(-w / 2 + (isCompact ? 12 : 20), btnY - btnH / 2, w - (isCompact ? 24 : 40), btnH, 6);
 
+    const btnLabel = isSelected ? 'ВЫБРАН' : (isUnlocked ? 'ВЫБРАТЬ' : 'ЗАКРЫТО');
     const btnText = this.scene.add
-      .text(0, btnY, isSelected ? 'ВЫБРАН' : 'ВЫБРАТЬ', {
+      .text(0, btnY, btnLabel, {
         fontSize: isCompact ? '11px' : '14px',
         fontStyle: 'bold',
-        color: '#ffffff',
+        color: isUnlocked ? '#ffffff' : '#64748b',
         fontFamily: 'monospace',
       })
       .setOrigin(0.5);
@@ -229,34 +252,36 @@ export class HeroSelectModal {
     // Make whole card or button interactive
     const hitArea = this.scene.add
       .rectangle(0, 0, w, h, 0x000000, 0)
-      .setInteractive({ useHandCursor: true });
+      .setInteractive({ useHandCursor: isUnlocked });
 
-    hitArea.on('pointerover', () => {
-      this.scene.tweens.add({
-        targets: cardContainer,
-        scaleX: 1.03,
-        scaleY: 1.03,
-        duration: 100,
-        ease: 'Quad.easeOut',
+    if (isUnlocked) {
+      hitArea.on('pointerover', () => {
+        this.scene.tweens.add({
+          targets: cardContainer,
+          scaleX: 1.03,
+          scaleY: 1.03,
+          duration: 100,
+          ease: 'Quad.easeOut',
+        });
       });
-    });
 
-    hitArea.on('pointerout', () => {
-      this.scene.tweens.add({
-        targets: cardContainer,
-        scaleX: 1.0,
-        scaleY: 1.0,
-        duration: 100,
-        ease: 'Quad.easeOut',
+      hitArea.on('pointerout', () => {
+        this.scene.tweens.add({
+          targets: cardContainer,
+          scaleX: 1.0,
+          scaleY: 1.0,
+          duration: 100,
+          ease: 'Quad.easeOut',
+        });
       });
-    });
 
-    hitArea.on('pointerdown', () => {
-      this.platform.vibrate(35);
-      SaveManager.getInstance().setSelectedHeroId(hero.id);
-      this.onHeroSelected(hero);
-      this.show(); // Refresh view with new active state
-    });
+      hitArea.on('pointerdown', () => {
+        this.platform.vibrate(35);
+        SaveManager.getInstance().setSelectedHeroId(hero.id);
+        this.onHeroSelected(hero);
+        this.show(); // Refresh view with new active state
+      });
+    }
 
     const elementsToAdd = [
       cardBg,

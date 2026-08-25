@@ -200,15 +200,16 @@ export class GameScene extends Phaser.Scene {
 
     const sprite = this.playerEntity.sprite;
     if (sprite?.active && this.playerEntity.isAlive) {
-      if (this.currentHero?.id === 'hero_worm' && this.anims.exists('vypolzok_anim_hurt')) sprite.play('vypolzok_anim_hurt');
+      const heroPrefix = this.currentHero?.id === 'hero_markovka' ? 'markovka' : 'vypolzok';
+      const hurtAnim = `${heroPrefix}_anim_hurt`;
+      if (this.anims.exists(hurtAnim)) sprite.play(hurtAnim);
       sprite.setData('isHurt', true);
       this.time.delayedCall(300, () => {
         if (sprite.active && this.playerEntity.isAlive) {
           sprite.setData('isHurt', false);
           const mv = this.inputManager.getMovementVector();
-          if (this.currentHero?.id === 'hero_worm' && this.anims.exists('vypolzok_anim_run')) {
-            sprite.play(mv.x !== 0 || mv.y !== 0 ? 'vypolzok_anim_run' : 'vypolzok_anim_idle', true);
-          }
+          const targetAnim = mv.x !== 0 || mv.y !== 0 ? `${heroPrefix}_anim_run` : `${heroPrefix}_anim_idle`;
+          if (this.anims.exists(targetAnim)) sprite.play(targetAnim, true);
         }
       });
     }
@@ -255,7 +256,9 @@ export class GameScene extends Phaser.Scene {
     const sprite = this.playerEntity.sprite;
     if (sprite?.active) {
       sprite.setVelocity(0, 0);
-      if (this.currentHero?.id === 'hero_worm' && this.anims.exists('vypolzok_anim_dead')) sprite.play('vypolzok_anim_dead');
+      const heroPrefix = this.currentHero?.id === 'hero_markovka' ? 'markovka' : 'vypolzok';
+      const deadAnim = `${heroPrefix}_anim_dead`;
+      if (this.anims.exists(deadAnim)) sprite.play(deadAnim);
       else this.tweens.add({ targets: sprite, angle: 90, scaleX: sprite.scaleX * 1.3, scaleY: sprite.scaleY * 0.6, alpha: 0.5, duration: 350, ease: 'Bounce.easeOut' });
     }
 
@@ -292,8 +295,9 @@ export class GameScene extends Phaser.Scene {
 
       const sprite = this.playerEntity.sprite;
       if (!sprite.getData('isHurt') && !sprite.getData('isAttacking')) {
-        const isWorm = (this.currentHero?.textureKey?.startsWith('vypolzok') || this.currentHero?.textureKey?.startsWith('tony')) ?? true;
-        if (isWorm && this.anims.exists('vypolzok_anim_run')) sprite.play(isMoving ? 'vypolzok_anim_run' : 'vypolzok_anim_idle', true);
+        const heroPrefix = this.currentHero?.id === 'hero_markovka' ? 'markovka' : 'vypolzok';
+        const targetAnim = isMoving ? `${heroPrefix}_anim_run` : `${heroPrefix}_anim_idle`;
+        if (this.anims.exists(targetAnim)) sprite.play(targetAnim, true);
       }
     }
 

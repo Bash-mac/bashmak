@@ -57,6 +57,21 @@ export class CarrotBarrageWeapon implements IWeapon {
       damage *= mods.critMultiplier;
     }
 
+    // Visual bat attack animation on player sprite
+    const playerSprite = ctx.player.sprite;
+    if (playerSprite && playerSprite.active && !playerSprite.getData('isHurt')) {
+      const animKey = 'markovka_anim_attack';
+      if (ctx.scene.anims.exists(animKey)) {
+        playerSprite.play(animKey, true);
+        playerSprite.setData('isAttacking', true);
+        ctx.scene.time.delayedCall(280, () => {
+          if (playerSprite.active && !playerSprite.getData('isHurt') && ctx.player.isAlive) {
+            playerSprite.setData('isAttacking', false);
+          }
+        });
+      }
+    }
+
     const carrotsCount = 2 + (carrotLevel >= 3 ? 1 : 0) + (carrotLevel >= 5 ? 2 : 0) + (mods.multishotCount > 1 ? mods.multishotCount - 1 : 0);
     const spreadAngle = 0.24;
     const startAngle = -((carrotsCount - 1) * spreadAngle) / 2;
@@ -70,18 +85,24 @@ export class CarrotBarrageWeapon implements IWeapon {
   }
 
   private fireCarrotBoomerang(ctx: WeaponContext, angle: number, damage: number, isSuperCrit: boolean, pierce: number): void {
+    const texKey = isSuperCrit ? 'tex_carrot_proj_crit' : 'tex_carrot_proj';
     const proj = ctx.projectilePool
-      ? ctx.projectilePool.getProjectile('tex_carrot_proj', ctx.player.x, ctx.player.y)
-      : (ctx.projectilesGroup.create(ctx.player.x, ctx.player.y, 'tex_carrot_proj') as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody);
+      ? ctx.projectilePool.getProjectile(texKey, ctx.player.x, ctx.player.y)
+      : (ctx.projectilesGroup.create(ctx.player.x, ctx.player.y, texKey) as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody);
 
-    const scale = isSuperCrit ? 1.5 : 1.0;
+    if (!isSuperCrit && ctx.scene.anims.exists('vfx_anim_carrot_fly')) {
+      proj.play('vfx_anim_carrot_fly');
+    }
+
+    const scale = isSuperCrit ? 0.28 : 0.20;
     proj.setScale(scale);
-    const radius = 14 * scale;
+    const targetRadius = isSuperCrit ? 16 : 11;
     if (proj.body) {
+      const bodyRadius = targetRadius / scale;
       proj.body.setCircle(
-        radius,
-        (proj.width - radius * 2) / 2,
-        (proj.height - radius * 2) / 2
+        bodyRadius,
+        (proj.width - bodyRadius * 2) / 2,
+        (proj.height - bodyRadius * 2) / 2
       );
     }
     proj.setData('damage', Math.round(damage));
@@ -92,6 +113,8 @@ export class CarrotBarrageWeapon implements IWeapon {
 
     if (isSuperCrit) {
       proj.setTint(0xf97316);
+    } else {
+      proj.clearTint();
     }
 
     const speed = 580;

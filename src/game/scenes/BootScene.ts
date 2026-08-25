@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { PlaceholderTextures } from './helpers/PlaceholderTextures';
 
 export class BootScene extends Phaser.Scene {
   constructor() {
@@ -84,6 +85,32 @@ export class BootScene extends Phaser.Scene {
       this.load.image(`vfx_spit_proj_${i}`, `/assets/sprites/vypolzok/vfx/spit_proj/spit_proj_${i}.webp`);
     }
 
+    // Markovka (Beda) Assets & UI
+    this.load.image('portrait_markovka', '/assets/sprites/markovka/HUD/portrait_markovka.webp');
+    this.load.image('markovka_portrait', '/assets/sprites/markovka/HUD/portrait_markovka.webp');
+    this.load.image('hud_face_smug_markovka', '/assets/sprites/markovka/HUD/hud_face_smug.webp');
+    this.load.image('hud_face_bored_markovka', '/assets/sprites/markovka/HUD/hud_face_bored.webp');
+    this.load.image('hud_face_injured_markovka', '/assets/sprites/markovka/HUD/hud_face_injured.webp');
+
+    // Markovka Character Sprites
+    for (let i = 1; i <= 4; i++) {
+      this.load.image(`markovka_idle_${i}`, `/assets/sprites/markovka/idle/idle_${i}.webp`);
+      this.load.image(`markovka_run_${i}`, `/assets/sprites/markovka/run/run_${i}.webp`);
+      this.load.image(`markovka_attack_${i}`, `/assets/sprites/markovka/attack/attack_${i}.webp`);
+      this.load.image(`markovka_hurt_${i}`, `/assets/sprites/markovka/hurt/hurt_${i}.webp`);
+    }
+    for (let i = 1; i <= 5; i++) {
+      this.load.image(`markovka_dead_${i}`, `/assets/sprites/markovka/dead/dead_${i}.webp`);
+    }
+
+    // Markovka Weapon & VFX
+    for (let i = 1; i <= 4; i++) {
+      this.load.image(`vfx_carrot_fly_${i}`, `/assets/sprites/markovka/weapon/vfx_carrot_fly/vfx_carrot_fly_${i}.webp`);
+      this.load.image(`vfx_carrot_splat_${i}`, `/assets/sprites/markovka/weapon/vfx_carrot_splat/vfx_carrot_splat_${i}.webp`);
+    }
+    this.load.image('tex_carrot_proj', '/assets/sprites/markovka/weapon/vfx_carrot_fly/vfx_carrot_fly_1.webp');
+    this.load.image('tex_carrot_proj_crit', '/assets/sprites/markovka/weapon/vfx_carrot_fly/vfx_carrot_fly_4.webp');
+
     // Default primary projectile texture
     this.load.image('tex_homing_dagger', '/assets/sprites/vypolzok/vfx/spit_proj/spit_proj_1.webp');
     this.load.image('tex_acid_pool', '/assets/sprites/vypolzok/vfx/acid_pool/acid_pool_1.webp');
@@ -111,8 +138,9 @@ export class BootScene extends Phaser.Scene {
   }
 
   create(): void {
-    this.createPlaceholderTextures();
+    PlaceholderTextures.generate(this);
     this.createVypolzokAnimations();
+    this.createMarkovkaAnimations();
     this.scene.start('MenuScene');
   }
 
@@ -266,188 +294,96 @@ export class BootScene extends Phaser.Scene {
     });
   }
 
-  private createPlaceholderTextures(): void {
-    // 1. Hero: Worm (Pink with cartoon eyes and bandana)
-    const wormGfx = this.make.graphics({ x: 0, y: 0 });
-    wormGfx.fillStyle(0xf472b6, 1);
-    wormGfx.fillCircle(18, 18, 16);
-    wormGfx.lineStyle(3, 0x831843, 1);
-    wormGfx.strokeCircle(18, 18, 16);
-    wormGfx.fillStyle(0x0284c7, 1);
-    wormGfx.fillRect(4, 4, 28, 8);
-    wormGfx.fillStyle(0xffffff, 1);
-    wormGfx.fillCircle(22, 14, 5);
-    wormGfx.fillCircle(22, 22, 5);
-    wormGfx.fillStyle(0x0f172a, 1);
-    wormGfx.fillCircle(24, 14, 2.5);
-    wormGfx.fillCircle(24, 22, 2.5);
-    wormGfx.generateTexture('tex_worm_hero', 36, 36);
-    wormGfx.destroy();
+  private createMarkovkaAnimations(): void {
+    // 1. Idle (holding bat on shoulder, chewing, bouncing)
+    this.anims.create({
+      key: 'markovka_anim_idle',
+      frames: [
+        { key: 'markovka_idle_1' },
+        { key: 'markovka_idle_2' },
+        { key: 'markovka_idle_3' },
+        { key: 'markovka_idle_4' },
+      ],
+      frameRate: 6,
+      repeat: -1,
+    });
 
-    // 2. Fodder Bat (Летучая мышь) - Small purple flying critter
-    const fodderGfx = this.make.graphics({ x: 0, y: 0 });
-    fodderGfx.fillStyle(0xa855f7, 1);
-    fodderGfx.fillCircle(12, 12, 8);
-    fodderGfx.lineStyle(2, 0x581c87, 1);
-    fodderGfx.strokeCircle(12, 12, 8);
-    // Wings
-    fodderGfx.fillStyle(0xc084fc, 0.9);
-    fodderGfx.fillTriangle(4, 12, 0, 4, 10, 8);
-    fodderGfx.fillTriangle(20, 12, 24, 4, 14, 8);
-    fodderGfx.fillStyle(0xfef08a, 1);
-    fodderGfx.fillCircle(14, 10, 2);
-    fodderGfx.fillCircle(14, 14, 2);
-    fodderGfx.generateTexture('tex_fodder', 24, 24);
-    fodderGfx.destroy();
+    // 2. Run (fast punk sprint, mohawk trails)
+    this.anims.create({
+      key: 'markovka_anim_run',
+      frames: [
+        { key: 'markovka_run_1' },
+        { key: 'markovka_run_2' },
+        { key: 'markovka_run_3' },
+        { key: 'markovka_run_4' },
+      ],
+      frameRate: 10,
+      repeat: -1,
+    });
 
-    // 3. Crawler (Ползун) - Orange swarmer beetle
-    const crawlerGfx = this.make.graphics({ x: 0, y: 0 });
-    crawlerGfx.fillStyle(0xd97706, 1);
-    crawlerGfx.fillCircle(16, 16, 14);
-    crawlerGfx.lineStyle(2, 0x78350f, 1);
-    crawlerGfx.strokeCircle(16, 16, 14);
-    crawlerGfx.fillStyle(0xfef08a, 1);
-    crawlerGfx.fillCircle(16, 16, 4);
-    crawlerGfx.generateTexture('tex_crawler', 32, 32);
-    crawlerGfx.destroy();
+    // 3. Attack (savage bat swing)
+    this.anims.create({
+      key: 'markovka_anim_attack',
+      frames: [
+        { key: 'markovka_attack_1' },
+        { key: 'markovka_attack_2' },
+        { key: 'markovka_attack_3' },
+        { key: 'markovka_attack_4' },
+      ],
+      frameRate: 14,
+      repeat: 0,
+    });
 
-    // 4. Sprinter (Спринтер) - Bright neon lime/orange fast runner
-    const sprinterGfx = this.make.graphics({ x: 0, y: 0 });
-    sprinterGfx.fillStyle(0xf97316, 1);
-    sprinterGfx.fillTriangle(24, 12, 4, 4, 4, 20);
-    sprinterGfx.lineStyle(2, 0x7c2d12, 1);
-    sprinterGfx.strokeTriangle(24, 12, 4, 4, 4, 20);
-    sprinterGfx.fillStyle(0xffffff, 1);
-    sprinterGfx.fillCircle(12, 12, 3);
-    sprinterGfx.generateTexture('tex_sprinter', 26, 24);
-    sprinterGfx.destroy();
+    // 4. Hurt (shock face, stars, squished)
+    this.anims.create({
+      key: 'markovka_anim_hurt',
+      frames: [
+        { key: 'markovka_hurt_1' },
+        { key: 'markovka_hurt_2' },
+        { key: 'markovka_hurt_3' },
+        { key: 'markovka_hurt_4' },
+      ],
+      frameRate: 12,
+      repeat: 0,
+    });
 
-    // 5. Armored Slug / Tank (Броневик) - Heavy metallic grey/green slug
-    const tankGfx = this.make.graphics({ x: 0, y: 0 });
-    tankGfx.fillStyle(0x475569, 1);
-    tankGfx.fillCircle(24, 24, 22);
-    tankGfx.lineStyle(4, 0x1e293b, 1);
-    tankGfx.strokeCircle(24, 24, 22);
-    tankGfx.fillStyle(0x64748b, 1);
-    tankGfx.fillCircle(24, 24, 14);
-    tankGfx.fillStyle(0xef4444, 1);
-    tankGfx.fillCircle(30, 24, 4);
-    tankGfx.generateTexture('tex_tank', 48, 48);
-    tankGfx.destroy();
+    // 5. Dead (splat into orange puddle with boot & bat)
+    this.anims.create({
+      key: 'markovka_anim_dead',
+      frames: [
+        { key: 'markovka_dead_1' },
+        { key: 'markovka_dead_2' },
+        { key: 'markovka_dead_3' },
+        { key: 'markovka_dead_4' },
+        { key: 'markovka_dead_5' },
+      ],
+      frameRate: 8,
+      repeat: 0,
+    });
 
-    // 6. Exploder (Разрывник) - Pulsing dark red explosive bulb
-    const exploderGfx = this.make.graphics({ x: 0, y: 0 });
-    exploderGfx.fillStyle(0xdc2626, 1);
-    exploderGfx.fillCircle(16, 16, 14);
-    exploderGfx.lineStyle(3, 0x450a0a, 1);
-    exploderGfx.strokeCircle(16, 16, 14);
-    exploderGfx.fillStyle(0xfbbf24, 1);
-    exploderGfx.fillCircle(16, 16, 6);
-    exploderGfx.generateTexture('tex_exploder', 32, 32);
-    exploderGfx.destroy();
+    // 6. VFX: Flying Carrot Flight
+    this.anims.create({
+      key: 'vfx_anim_carrot_fly',
+      frames: [
+        { key: 'vfx_carrot_fly_1' },
+        { key: 'vfx_carrot_fly_2' },
+        { key: 'vfx_carrot_fly_3' },
+      ],
+      frameRate: 12,
+      repeat: -1,
+    });
 
-    // 7. Mini-Boss Elite (Элитный Мутант) - 60x60 glowing red mutant
-    const miniBossGfx = this.make.graphics({ x: 0, y: 0 });
-    miniBossGfx.fillStyle(0xb91c1c, 1);
-    miniBossGfx.fillCircle(30, 30, 28);
-    miniBossGfx.lineStyle(4, 0xfacc15, 1); // Gold elite border
-    miniBossGfx.strokeCircle(30, 30, 28);
-    miniBossGfx.fillStyle(0x7f1d1d, 1);
-    miniBossGfx.fillCircle(30, 30, 14);
-    miniBossGfx.fillStyle(0xfef08a, 1);
-    miniBossGfx.fillCircle(38, 24, 5);
-    miniBossGfx.fillCircle(38, 36, 5);
-    miniBossGfx.generateTexture('tex_miniboss', 60, 60);
-    miniBossGfx.destroy();
-
-    // 8. Boss: Kurgan (Курган) - Massive 76x76 armored mound
-    const bossGfx = this.make.graphics({ x: 0, y: 0 });
-    bossGfx.fillStyle(0x312e81, 1);
-    bossGfx.fillCircle(38, 38, 36);
-    bossGfx.lineStyle(4, 0x4338ca, 1);
-    bossGfx.strokeCircle(38, 38, 36);
-    bossGfx.fillStyle(0xef4444, 1);
-    bossGfx.fillCircle(38, 38, 16);
-    bossGfx.fillStyle(0xfde047, 1);
-    bossGfx.fillCircle(44, 30, 6);
-    bossGfx.fillCircle(44, 46, 6);
-    bossGfx.generateTexture('tex_boss_kurgan', 76, 76);
-    bossGfx.destroy();
-
-    // 9. Slime Spit Projectile (Neon lime green)
-    const slimeGfx = this.make.graphics({ x: 0, y: 0 });
-    slimeGfx.fillStyle(0x22c55e, 1);
-    slimeGfx.fillCircle(8, 8, 7);
-    slimeGfx.lineStyle(2, 0xffffff, 0.9);
-    slimeGfx.strokeCircle(8, 8, 7);
-    slimeGfx.generateTexture('tex_slime_spit', 16, 16);
-    slimeGfx.destroy();
-
-    // 10. Acid Pool (Toxic green puddle)
-    const acidPoolGfx = this.make.graphics({ x: 0, y: 0 });
-    acidPoolGfx.fillStyle(0x84cc16, 0.6);
-    acidPoolGfx.fillCircle(32, 32, 30);
-    acidPoolGfx.lineStyle(3, 0x4ade80, 0.9);
-    acidPoolGfx.strokeCircle(32, 32, 30);
-    acidPoolGfx.generateTexture('tex_acid_pool', 64, 64);
-    acidPoolGfx.destroy();
-
-    // 11. XP Gem (Electric green cartoon crystal with black stroke)
-    const gemGfx = this.make.graphics({ x: 0, y: 0 });
-    gemGfx.fillStyle(0x4ade80, 1);
-    gemGfx.fillCircle(8, 8, 6);
-    gemGfx.lineStyle(2, 0x14532d, 1);
-    gemGfx.strokeCircle(8, 8, 6);
-    gemGfx.fillStyle(0xffffff, 1);
-    gemGfx.fillCircle(6, 6, 2);
-    gemGfx.generateTexture('tex_gem', 16, 16);
-    gemGfx.destroy();
-
-
-    // 16. Wireless Homing Dagger (Cyan glowing sharp projectile)
-    const daggerGfx = this.make.graphics({ x: 0, y: 0 });
-    daggerGfx.fillStyle(0x38bdf8, 1);
-    daggerGfx.fillTriangle(20, 7, 0, 0, 0, 14);
-    daggerGfx.lineStyle(1.5, 0xffffff, 1);
-    daggerGfx.strokeTriangle(20, 7, 0, 0, 0, 14);
-    daggerGfx.fillStyle(0xffffff, 1);
-    daggerGfx.fillCircle(6, 7, 3);
-    daggerGfx.generateTexture('tex_homing_dagger', 22, 16);
-    daggerGfx.destroy();
-
-    // 17. GOO Drop (Bright toxic green blob with yellow shine and gold outline)
-    const gooGfx = this.make.graphics({ x: 0, y: 0 });
-    gooGfx.fillStyle(0x84cc16, 1);
-    gooGfx.fillCircle(10, 10, 8);
-    gooGfx.lineStyle(2, 0xfacc15, 1); // Gold rim
-    gooGfx.strokeCircle(10, 10, 8);
-    gooGfx.fillStyle(0xfef08a, 1); // Shiny highlight
-    gooGfx.fillCircle(7, 7, 3);
-    gooGfx.fillStyle(0x22c55e, 0.8);
-    gooGfx.fillCircle(11, 11, 4);
-    gooGfx.generateTexture('tex_goo_drop', 20, 20);
-    gooGfx.destroy();
-
-    // 18. Carrot Projectile (Sharp orange carrot with comic outline)
-    const carrotGfx = this.make.graphics({ x: 0, y: 0 });
-    carrotGfx.fillStyle(0xf97316, 1);
-    carrotGfx.fillTriangle(24, 7, 0, 1, 0, 13);
-    carrotGfx.lineStyle(2, 0x7c2d12, 1);
-    carrotGfx.strokeTriangle(24, 7, 0, 1, 0, 13);
-    carrotGfx.fillStyle(0x22c55e, 1);
-    carrotGfx.fillRect(0, 4, 4, 6);
-    carrotGfx.generateTexture('tex_carrot_proj', 26, 16);
-    carrotGfx.destroy();
-
-    // 19. Eggplant Ball (Purple round rolling ball)
-    const eggGfx = this.make.graphics({ x: 0, y: 0 });
-    eggGfx.fillStyle(0x9333ea, 1);
-    eggGfx.fillCircle(16, 16, 14);
-    eggGfx.lineStyle(2, 0x581c87, 1);
-    eggGfx.strokeCircle(16, 16, 14);
-    eggGfx.fillStyle(0x22c55e, 1);
-    eggGfx.fillTriangle(16, 2, 12, 8, 20, 8);
-    eggGfx.generateTexture('tex_eggplant_ball', 32, 32);
-    eggGfx.destroy();
+    // 7. VFX: Carrot Impact Splat
+    this.anims.create({
+      key: 'vfx_anim_carrot_splat',
+      frames: [
+        { key: 'vfx_carrot_splat_1' },
+        { key: 'vfx_carrot_splat_2' },
+        { key: 'vfx_carrot_splat_3' },
+        { key: 'vfx_carrot_splat_4' },
+      ],
+      frameRate: 14,
+      repeat: 0,
+    });
   }
 }

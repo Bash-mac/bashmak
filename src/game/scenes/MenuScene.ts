@@ -4,10 +4,12 @@ import { SaveManager } from '../core/SaveManager';
 import { getHeroById } from '../data/heroes';
 import { AudioManager } from '../audio/AudioManager';
 import { GrimoireModal } from './ui/GrimoireModal';
+import { HeroSelectModal } from './ui/HeroSelectModal';
 
 export class MenuScene extends Phaser.Scene {
   private platform = createPlatformAdapter();
   private grimoireModal!: GrimoireModal;
+  private heroSelectModal!: HeroSelectModal;
   private selectedHeroText?: Phaser.GameObjects.Text;
 
   constructor() {
@@ -43,9 +45,26 @@ export class MenuScene extends Phaser.Scene {
     });
 
     // Inside uiContainer, (0, 0) is the center of the 1280x720 canvas
-    // Logo (Top Left)
-    const logo = this.add.image(-380, -255, 'menu_logo');
+    // Logo (Top Left with secret dev 3-tap trigger)
+    const logo = this.add.image(-380, -255, 'menu_logo').setInteractive({ useHandCursor: true });
     logo.setScale(0.62);
+
+    let logoClicks = 0;
+    let logoTimer: any = null;
+    logo.on('pointerdown', () => {
+      this.platform.vibrate(20);
+      logoClicks++;
+      clearTimeout(logoTimer);
+      logoTimer = setTimeout(() => { logoClicks = 0; }, 1400);
+
+      if (logoClicks >= 3) {
+        logoClicks = 0;
+        (window as any).__DEV_HEROES__ = true;
+        try { localStorage.setItem('dev_heroes_unlocked', 'true'); } catch (e) {}
+        this.platform.vibrate(80);
+        this.openHeroSelect();
+      }
+    });
 
     this.tweens.add({
       targets: logo,
@@ -123,8 +142,13 @@ export class MenuScene extends Phaser.Scene {
       });
     });
 
-    // 4. Grimoire Modal
+    // 4. Modals
     this.grimoireModal = new GrimoireModal(this);
+    this.heroSelectModal = new HeroSelectModal(this, (hero) => {
+      if (this.selectedHeroText) {
+        this.selectedHeroText.setText(`[ ${hero.name.toUpperCase()} ]`);
+      }
+    });
 
     const currentHero = getHeroById(SaveManager.getInstance().getSelectedHeroId());
 
@@ -297,20 +321,7 @@ export class MenuScene extends Phaser.Scene {
 
   private openHeroSelect(): void {
     this.platform.vibrate(30);
-    if (this.selectedHeroText) {
-      this.selectedHeroText.setText('[ 🪱 ВЫПОЛЗОК (ЕДИНСТВЕННЫЙ) ]');
-      this.tweens.add({
-        targets: this.selectedHeroText,
-        scaleX: 1.25,
-        scaleY: 1.25,
-        color: '#facc15',
-        duration: 150,
-        yoyo: true,
-        onComplete: () => {
-          this.selectedHeroText?.setText('[ 🪱 ВЫПОЛЗОК ]');
-        },
-      });
-    }
+    this.heroSelectModal.show();
   }
 
   private openUpgrades(): void {

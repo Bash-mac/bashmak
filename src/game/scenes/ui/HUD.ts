@@ -35,7 +35,16 @@ export class HUD {
     this.avatarFrame.fillStyle(0x090d16, 0.85);
     this.avatarFrame.fillCircle(46, 46, 34);
 
-    this.avatarImage = scene.add.image(46, 46, 'hud_face_smug').setDisplaySize(68, 68);
+    const maskGfx = scene.make.graphics({ x: 0, y: 0 });
+    maskGfx.fillStyle(0xffffff, 1);
+    maskGfx.fillCircle(46, 46, 34);
+    const mask = maskGfx.createGeometryMask();
+
+    const heroId = scene.registry.get('selectedHeroId') || 'hero_worm';
+    const initAvatarKey = heroId === 'hero_markovka' ? 'hud_face_smug_markovka' : 'hud_face_smug';
+    this.avatarImage = scene.add.image(46, 46, scene.textures.exists(initAvatarKey) ? initAvatarKey : 'face_smug');
+    this.avatarImage.setDisplaySize(68, 68);
+    this.avatarImage.setMask(mask);
 
     // HP Bar
     this.hpBarBackground = scene.add.graphics();
@@ -113,7 +122,7 @@ export class HUD {
       }),
       bus.on('player:levelUp', (data) => {
         this.levelText.setText(`LVL ${data.newLevel}`);
-        this.avatarImage.setTexture('face_victorious');
+        this.avatarImage.setTexture('face_victorious').setDisplaySize(68, 68);
       })
     );
   }
@@ -138,18 +147,31 @@ export class HUD {
     this.hpText.setText(`HP: ${Math.ceil(current)}/${max}`);
 
     // Update Expression Avatar based on Health and Hero
-    const isWorm = (this.scene.registry.get('selectedHeroId') || 'hero_worm') === 'hero_worm';
-    const smugKey = isWorm ? 'hud_face_smug' : 'face_smug';
-    const boredKey = isWorm ? 'hud_face_bored' : 'face_bored';
-    const injuredKey = isWorm ? 'hud_face_injured' : 'face_injured';
+    const heroId = this.scene.registry.get('selectedHeroId') || 'hero_worm';
+    let smugKey = 'face_smug';
+    let boredKey = 'face_bored';
+    let injuredKey = 'face_injured';
 
-    if (ratio > 0.65) {
-      this.avatarImage.setTexture(this.scene.textures.exists(smugKey) ? smugKey : 'face_smug');
-    } else if (ratio >= 0.30) {
-      this.avatarImage.setTexture(this.scene.textures.exists(boredKey) ? boredKey : 'face_bored');
-    } else {
-      this.avatarImage.setTexture(this.scene.textures.exists(injuredKey) ? injuredKey : 'face_injured');
+    if (heroId === 'hero_markovka') {
+      smugKey = 'hud_face_smug_markovka';
+      boredKey = 'hud_face_bored_markovka';
+      injuredKey = 'hud_face_injured_markovka';
+    } else if (heroId === 'hero_worm') {
+      smugKey = 'hud_face_smug';
+      boredKey = 'hud_face_bored';
+      injuredKey = 'hud_face_injured';
     }
+
+    let targetKey = smugKey;
+    if (ratio > 0.65) {
+      targetKey = this.scene.textures.exists(smugKey) ? smugKey : 'face_smug';
+    } else if (ratio >= 0.30) {
+      targetKey = this.scene.textures.exists(boredKey) ? boredKey : 'face_bored';
+    } else {
+      targetKey = this.scene.textures.exists(injuredKey) ? injuredKey : 'face_injured';
+    }
+
+    this.avatarImage.setTexture(targetKey).setDisplaySize(68, 68);
   }
 
   updateXp(current: number, nextLevelXp: number): void {
