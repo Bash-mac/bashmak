@@ -8,6 +8,7 @@ export const BASHMAK_HERO: HeroDefinition = {
   lore: 'Легендарный армейский ботинок 45-го размера, оживленный радиоактивным мутагеном. Ненавидит грязь, обожает топтать.',
   textureKey: 'pose_idle',
   portraitKey: 'face_smug',
+  posterKey: 'hero_card_bashmak',
   stats: {
     maxHp: 180,
     speed: 170,

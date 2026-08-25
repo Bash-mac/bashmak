@@ -24,7 +24,7 @@ export class GameState {
   public playerModifiers: PlayerModifiers = this.createDefaultModifiers();
 
   // Current selected hero
-  public currentHeroId = 'hero_worm';
+  public currentHeroId = 'hero_vypolzok';
 
   // Pending level ups waiting for modal choice
   public pendingLevelUps = 0;

@@ -1,7 +1,6 @@
 import Phaser from 'phaser';
 import type { PlayerModifiers } from '../data/definitions';
 import { SaveManager } from '../core/SaveManager';
-import { WORM_HERO } from '../data/heroes';
 import { ObjectPool } from '../pools/ObjectPool';
 import type { DamageNumberPool } from '../combat/DamageNumberPool';
 
@@ -186,7 +185,14 @@ export class LootSystem {
     }
   }
 
-  public update(deltaSeconds: number, playerX: number, playerY: number, mods: PlayerModifiers, playerLevel: number): void {
+  public update(
+    deltaSeconds: number,
+    playerX: number,
+    playerY: number,
+    mods: PlayerModifiers,
+    playerLevel: number,
+    playerSpeed = 200
+  ): void {
     const levelBonus = 1 + (playerLevel - 1) * 0.02;
     const tomeBonus = mods.tomeMagnet > 0 ? 1 + mods.tomeMagnet * 0.4 : 1.0;
     const magnetRadius = (95 + mods.extraRange) * levelBonus * tomeBonus;
@@ -198,7 +204,7 @@ export class LootSystem {
       const dist = Phaser.Math.Distance.Between(playerX, playerY, gem.x, gem.y);
       if (dist <= magnetRadius) {
         let speed = (gem.getData('speed') as number) || 0;
-        speed += (WORM_HERO.stats.speed + 420) * deltaSeconds;
+        speed += (playerSpeed + 420) * deltaSeconds;
         gem.setData('speed', speed);
         const angle = Phaser.Math.Angle.Between(gem.x, gem.y, playerX, playerY);
         gem.setVelocity(Math.cos(angle) * speed, Math.sin(angle) * speed);
@@ -212,7 +218,7 @@ export class LootSystem {
       const dist = Phaser.Math.Distance.Between(playerX, playerY, drop.x, drop.y);
       if (dist <= magnetRadius) {
         let speed = (drop.getData('speed') as number) || 0;
-        speed += (WORM_HERO.stats.speed + 420) * deltaSeconds;
+        speed += (playerSpeed + 420) * deltaSeconds;
         drop.setData('speed', speed);
         const angle = Phaser.Math.Angle.Between(drop.x, drop.y, playerX, playerY);
         drop.setVelocity(Math.cos(angle) * speed, Math.sin(angle) * speed);

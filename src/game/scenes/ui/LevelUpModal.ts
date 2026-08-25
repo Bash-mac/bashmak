@@ -25,34 +25,35 @@ export class LevelUpModal {
     this.clear();
     this.isVisible = true;
     const { width, height } = this.scene.cameras.main;
-    const isPortrait = width < 760 || width < height;
 
     // 1. Semi-transparent dark overlay (Depth: 10000)
     const overlay = this.scene.add
-      .rectangle(width / 2, height / 2, width, height, 0x090d16, 0.88)
+      .rectangle(width / 2, height / 2, width, height, 0x050811, 0.92)
       .setScrollFactor(0)
       .setDepth(10000)
-      .setInteractive(); // Blocks game clicks beneath
+      .setInteractive();
     this.elements.push(overlay);
 
     // 2. Title Banner (Depth: 10001)
-    const titleY = isPortrait ? Math.max(30, height * 0.05) : Math.max(45, height * 0.1);
-    const subtitleY = titleY + (isPortrait ? 28 : 42);
+    const titleY = Math.max(30, height * 0.08);
+    const subtitleY = titleY + 32;
 
     const title = this.scene.add
       .text(width / 2, titleY, 'LEVEL UP!', {
-        fontSize: isPortrait ? '28px' : '42px',
+        fontSize: width < 700 ? '28px' : '40px',
         fontStyle: 'bold',
         color: '#4ade80',
         fontFamily: 'monospace',
+        stroke: '#064e3b',
+        strokeThickness: 5,
       })
       .setOrigin(0.5)
       .setScrollFactor(0)
       .setDepth(10001);
 
     const subtitle = this.scene.add
-      .text(width / 2, subtitleY, 'Выбери развитие билда червяка:', {
-        fontSize: isPortrait ? '13px' : '17px',
+      .text(width / 2, subtitleY, 'Выбери развитие мутации:', {
+        fontSize: width < 700 ? '12px' : '15px',
         color: '#cbd5e1',
         fontFamily: 'monospace',
       })
@@ -70,48 +71,29 @@ export class LevelUpModal {
     const options = gameState.getEligibleUpgrades(ALL_UPGRADES, neededNormalCount);
     const totalCards = (readyEvo ? 1 : 0) + options.length;
 
+    // 4. Single Horizontal Row Layout (Landscape 16:9)
+    const availableWidth = width - 48;
+    const spacing = Math.min(22, Math.max(10, (availableWidth - totalCards * 280) / Math.max(1, totalCards - 1)));
+    const cardWidth = Math.min(280, Math.floor((availableWidth - (totalCards - 1) * spacing) / totalCards));
+    const cardHeight = Math.min(460, Math.floor(height - subtitleY - 45));
+
+    const totalW = totalCards * cardWidth + (totalCards - 1) * spacing;
+    const startX = (width - totalW) / 2 + cardWidth / 2;
+    const cardY = subtitleY + 18 + cardHeight / 2;
+
     let currentIdx = 0;
 
-    if (isPortrait) {
-      const topOffset = subtitleY + 20;
-      const bottomMargin = 15;
-      const availableH = height - topOffset - bottomMargin;
-      const spacing = 10;
-      const cardHeight = Math.min(135, Math.floor((availableH - (totalCards - 1) * spacing) / totalCards));
-      const cardWidth = Math.min(width - 32, 420);
-      const startY = topOffset + cardHeight / 2;
-
-      if (readyEvo) {
-        const cardY = startY + currentIdx * (cardHeight + spacing);
-        this.createEvolutionCard(readyEvo, width / 2, cardY, cardWidth, cardHeight, true);
-        currentIdx++;
-      }
-
-      options.forEach((opt) => {
-        const cardY = startY + currentIdx * (cardHeight + spacing);
-        this.createCard(opt.upgrade, opt.levelToApply, width / 2, cardY, cardWidth, cardHeight, true);
-        currentIdx++;
-      });
-    } else {
-      const cardWidth = Math.min(320, (width - 60) / Math.max(1, totalCards) - 15);
-      const cardHeight = Math.min(380, height - subtitleY - 50);
-      const spacing = 20;
-      const totalW = totalCards * cardWidth + (totalCards - 1) * spacing;
-      const startX = (width - totalW) / 2 + cardWidth / 2;
-      const cardY = subtitleY + 25 + cardHeight / 2;
-
-      if (readyEvo) {
-        const cardX = startX + currentIdx * (cardWidth + spacing);
-        this.createEvolutionCard(readyEvo, cardX, cardY, cardWidth, cardHeight, false);
-        currentIdx++;
-      }
-
-      options.forEach((opt) => {
-        const cardX = startX + currentIdx * (cardWidth + spacing);
-        this.createCard(opt.upgrade, opt.levelToApply, cardX, cardY, cardWidth, cardHeight, false);
-        currentIdx++;
-      });
+    if (readyEvo) {
+      const cardX = startX + currentIdx * (cardWidth + spacing);
+      this.createEvolutionCard(readyEvo, cardX, cardY, cardWidth, cardHeight);
+      currentIdx++;
     }
+
+    options.forEach((opt) => {
+      const cardX = startX + currentIdx * (cardWidth + spacing);
+      this.createCard(opt.upgrade, opt.levelToApply, cardX, cardY, cardWidth, cardHeight);
+      currentIdx++;
+    });
   }
 
   private createEvolutionCard(
@@ -119,87 +101,103 @@ export class LevelUpModal {
     x: number,
     y: number,
     w: number,
-    h: number,
-    isCompact = false
+    h: number
   ): void {
-    const borderColor = 0xfacc15;
-    const bgColor = 0x581c87;
+    const cardContainer = this.scene.add.container(x, y).setDepth(10002).setScrollFactor(0);
 
+    // 1. Dark Backdrop ONLY within central cutout (never sticks out of frame)
+    const cutoutW = w * 0.74;
+    const cutoutH = h * 0.74;
     const bg = this.scene.add
-      .rectangle(x, y, w, h, bgColor, 0.98)
-      .setScrollFactor(0)
-      .setDepth(10002)
-      .setStrokeStyle(isCompact ? 2 : 4, borderColor)
-      .setInteractive({ useHandCursor: true });
+      .rectangle(0, 0, cutoutW, cutoutH, 0x1e0e38, 0.96);
 
+    // 2. Gold Frame Image (512x768)
+    const frame = this.scene.add.image(0, 0, 'card_frame_gold');
+    frame.setDisplaySize(w, h);
+
+    // 3. Category Badge (Under top plate)
     const badgeLabel = this.scene.add
-      .text(x, isCompact ? y - h / 2 + 14 : y - h / 2 + 32, '👑 СУПЕР-ЭВОЛЮЦИЯ', {
-        fontSize: isCompact ? '11px' : '15px',
+      .text(0, -h * 0.23, '👑 СУПЕР-ЭВОЛЮЦИЯ', {
+        fontSize: w < 240 ? '11px' : '13px',
         fontStyle: 'bold',
         color: '#facc15',
         fontFamily: 'monospace',
+        stroke: '#451a03',
+        strokeThickness: 3,
       })
-      .setOrigin(0.5)
-      .setScrollFactor(0)
-      .setDepth(10003);
+      .setOrigin(0.5, 0.5);
 
+    // 4. Square Icon (Prominent and centered in upper window)
+    const iconKey = evo.iconKey || 'icon_evo_acid_tsunami';
+    const iconSize = Math.min(92, Math.floor(w * 0.36));
+    const iconY = -h * 0.08;
+    const icon = this.scene.add.image(0, iconY, iconKey);
+    icon.setDisplaySize(iconSize, iconSize);
+
+    // 5. Title
+    const titleY = iconY + iconSize / 2 + 16;
     const nameText = this.scene.add
-      .text(x, isCompact ? y - h / 2 + 34 : y - h / 2 + 75, evo.comicTitle, {
-        fontSize: isCompact ? '16px' : '20px',
+      .text(0, titleY, evo.comicTitle, {
+        fontSize: w < 240 ? '15px' : '17px',
         fontStyle: 'bold',
         color: '#fef08a',
         fontFamily: 'monospace',
         align: 'center',
-        wordWrap: { width: w - 30 },
+        wordWrap: { width: cutoutW - 16 },
+        stroke: '#451a03',
+        strokeThickness: 3,
       })
-      .setOrigin(0.5)
-      .setScrollFactor(0)
-      .setDepth(10003);
+      .setOrigin(0.5, 0.5);
 
+    // 6. Description
+    const descY = titleY + 16;
     const descText = this.scene.add
-      .text(x, isCompact ? y + 4 : y + 10, evo.description, {
-        fontSize: isCompact ? '12px' : '14px',
+      .text(0, descY, evo.description, {
+        fontSize: w < 240 ? '10px' : '12px',
         color: '#f3e8ff',
         fontFamily: 'monospace',
         align: 'center',
-        wordWrap: { width: w - 35 },
-        lineSpacing: isCompact ? 2 : 5,
+        wordWrap: { width: cutoutW - 16 },
+        lineSpacing: 3,
       })
-      .setOrigin(0.5)
-      .setScrollFactor(0)
-      .setDepth(10003);
+      .setOrigin(0.5, 0);
 
-    const btnH = isCompact ? 26 : 44;
-    const selectBtn = this.scene.add
-      .rectangle(x, y + h / 2 - (isCompact ? 18 : 40), w - (isCompact ? 40 : 50), btnH, 0xfacc15, 0.95)
-      .setScrollFactor(0)
-      .setDepth(10003);
+    // 7. 3D Comic Action Button (Resting over bottom plate)
+    const btnW = Math.min(w - 48, 175);
+    const btnH = Math.min(46, Math.floor(btnW * 0.38));
+    const btnY = h * 0.355;
 
-    const selectText = this.scene.add
-      .text(x, y + h / 2 - (isCompact ? 18 : 40), 'МУТИРОВАТЬ!', {
-        fontSize: isCompact ? '12px' : '16px',
+    const btnImage = this.scene.add.image(0, btnY, 'btn_comic_gold');
+    btnImage.setDisplaySize(btnW, btnH);
+
+    const btnText = this.scene.add
+      .text(0, btnY, 'МУТИРОВАТЬ!', {
+        fontSize: w < 240 ? '12px' : '14px',
         fontStyle: 'bold',
         color: '#0f172a',
         fontFamily: 'monospace',
       })
-      .setOrigin(0.5)
+      .setOrigin(0.5, 0.5);
+
+    cardContainer.add([
+      bg,
+      frame,
+      badgeLabel,
+      icon,
+      nameText,
+      descText,
+      btnImage,
+      btnText,
+    ]);
+
+    // Top-Level HitArea (guaranteed click handling across all cameras)
+    const hitArea = this.scene.add
+      .rectangle(x, y, w, h, 0x000000, 0.001)
       .setScrollFactor(0)
-      .setDepth(10004);
+      .setDepth(10005)
+      .setInteractive({ useHandCursor: true });
 
-    this.elements.push(bg, badgeLabel, nameText, descText, selectBtn, selectText);
-
-    // Pulsing gold glow
-    this.scene.tweens.add({
-      targets: bg,
-      scaleX: 1.02,
-      scaleY: 1.02,
-      duration: 500,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut',
-    });
-
-    bg.on('pointerdown', () => {
+    const selectUpgrade = () => {
       this.platform.vibrate(60);
       AudioManager.getInstance().playLevelUp();
       evo.apply(GameState.getInstance());
@@ -213,7 +211,31 @@ export class LevelUpModal {
         },
         1
       );
+    };
+
+    hitArea.on('pointerover', () => {
+      this.scene.tweens.add({
+        targets: cardContainer,
+        scaleX: 1.03,
+        scaleY: 1.03,
+        duration: 100,
+        ease: 'Quad.easeOut',
+      });
     });
+
+    hitArea.on('pointerout', () => {
+      this.scene.tweens.add({
+        targets: cardContainer,
+        scaleX: 1.0,
+        scaleY: 1.0,
+        duration: 100,
+        ease: 'Quad.easeOut',
+      });
+    });
+
+    hitArea.on('pointerdown', selectUpgrade);
+
+    this.elements.push(cardContainer, hitArea);
   }
 
   private createCard(
@@ -222,110 +244,147 @@ export class LevelUpModal {
     x: number,
     y: number,
     w: number,
-    h: number,
-    isCompact = false
+    h: number
   ): void {
+    const cardContainer = this.scene.add.container(x, y).setDepth(10002).setScrollFactor(0);
+
     const isConsumable = upgrade.isConsumable;
-    const isEvo = levelToApply >= 3 && !isConsumable;
-    const borderColor = isEvo ? 0xfacc15 : isConsumable ? 0x60a5fa : 0x4ade80;
-    const bgColor = isEvo ? 0x422006 : isConsumable ? 0x1e3a8a : 0x14532d;
+    const isWeapon = upgrade.category === 'weapon';
 
-    // Card Background Box (Depth: 10002)
+    // 1. Dark Backdrop ONLY within central cutout (never sticks out of frame)
+    const cutoutW = w * 0.74;
+    const cutoutH = h * 0.74;
     const bg = this.scene.add
-      .rectangle(x, y, w, h, bgColor, 0.95)
-      .setScrollFactor(0)
-      .setDepth(10002)
-      .setStrokeStyle(isCompact ? 2 : 3, borderColor)
-      .setInteractive({ useHandCursor: true });
+      .rectangle(0, 0, cutoutW, cutoutH, 0x070b14, 0.96);
 
-    // Level Header / Badge (Depth: 10003)
-    let badgeText = upgrade.category === 'weapon' ? '⚔️ ОРУЖИЕ' : upgrade.category === 'tome' ? '📜 ФОЛИАНТ' : 'НОВАЯ МУТАЦИЯ';
-    if (isConsumable) {
-      badgeText = '🧪 РАСХОДНИК';
-    } else if (levelToApply > 1) {
-      const catPrefix = upgrade.category === 'weapon' ? '⚔️ ОРУЖИЕ' : upgrade.category === 'tome' ? '📜 ФОЛИАНТ' : '';
-      badgeText = `${catPrefix} LVL ${levelToApply - 1} → ${levelToApply}`;
+    // 2. Frame Image (512x768)
+    const frameTex = isConsumable ? 'card_frame_consumable' : 'card_frame_standard';
+    const frame = this.scene.add.image(0, 0, frameTex);
+    frame.setDisplaySize(w, h);
+
+    // 3. Category / Level Badge (Under top plate)
+    let badgeText = isWeapon ? '⚔️ ОРУЖИЕ' : isConsumable ? '🧪 РАСХОДНИК' : '📜 ФОЛИАНТ';
+    if (!isConsumable && levelToApply > 1) {
+      badgeText = `${badgeText}  LVL ${levelToApply - 1} → ${levelToApply}`;
     }
 
+    const badgeColor = isWeapon ? '#4ade80' : isConsumable ? '#60a5fa' : '#facc15';
     const badgeLabel = this.scene.add
-      .text(x, isCompact ? y - h / 2 + 14 : y - h / 2 + 25, badgeText, {
-        fontSize: isCompact ? '11px' : '13px',
+      .text(0, -h * 0.23, badgeText, {
+        fontSize: w < 240 ? '10px' : '12px',
         fontStyle: 'bold',
-        color: isEvo ? '#fef08a' : isConsumable ? '#93c5fd' : '#86efac',
+        color: badgeColor,
         fontFamily: 'monospace',
+        stroke: '#050811',
+        strokeThickness: 3,
       })
-      .setOrigin(0.5)
-      .setScrollFactor(0)
-      .setDepth(10003);
+      .setOrigin(0.5, 0.5);
 
-    // Title
+    // 4. Square Icon (Prominent and centered in upper window)
+    const iconKey = upgrade.iconKey || 'icon_weapon_slime_spit';
+    const iconSize = Math.min(92, Math.floor(w * 0.36));
+    const iconY = -h * 0.08;
+    const icon = this.scene.add.image(0, iconY, iconKey);
+    icon.setDisplaySize(iconSize, iconSize);
+
+    // 5. Title
+    const titleY = iconY + iconSize / 2 + 16;
     const nameText = this.scene.add
-      .text(x, isCompact ? y - h / 2 + 34 : y - h / 2 + 70, upgrade.name, {
-        fontSize: isCompact ? '16px' : '20px',
+      .text(0, titleY, upgrade.name, {
+        fontSize: w < 240 ? '15px' : '18px',
         fontStyle: 'bold',
         color: '#ffffff',
         fontFamily: 'monospace',
         align: 'center',
-        wordWrap: { width: w - 30 },
+        wordWrap: { width: cutoutW - 16 },
+        stroke: '#050811',
+        strokeThickness: 3,
       })
-      .setOrigin(0.5)
-      .setScrollFactor(0)
-      .setDepth(10003);
+      .setOrigin(0.5, 0.5);
 
-    // Level description
+    // 6. Level Description
     const levelConfig = upgrade.levels.find((l) => l.level === levelToApply) || upgrade.levels[0];
+    const descY = titleY + 16;
     const descText = this.scene.add
-      .text(x, isCompact ? y + 4 : y + 15, levelConfig?.description || '', {
-        fontSize: isCompact ? '12px' : '15px',
-        color: '#e2e8f0',
+      .text(0, descY, levelConfig?.description || '', {
+        fontSize: w < 240 ? '10px' : '12px',
+        color: '#cbd5e1',
         fontFamily: 'monospace',
         align: 'center',
-        wordWrap: { width: w - 35 },
-        lineSpacing: isCompact ? 2 : 6,
+        wordWrap: { width: cutoutW - 16 },
+        lineSpacing: 3,
       })
-      .setOrigin(0.5)
-      .setScrollFactor(0)
-      .setDepth(10003);
+      .setOrigin(0.5, 0);
 
-    // Choose Button at bottom
-    const btnH = isCompact ? 26 : 44;
-    const selectBtn = this.scene.add
-      .rectangle(x, y + h / 2 - (isCompact ? 18 : 40), w - (isCompact ? 40 : 50), btnH, borderColor, 0.9)
-      .setScrollFactor(0)
-      .setDepth(10003);
+    // 7. 3D Comic Action Button (Resting over bottom plate)
+    const btnW = Math.min(w - 48, 175);
+    const btnH = Math.min(46, Math.floor(btnW * 0.38));
+    const btnY = h * 0.355;
 
-    const selectText = this.scene.add
-      .text(x, y + h / 2 - (isCompact ? 18 : 40), 'ВЫБРАТЬ', {
-        fontSize: isCompact ? '12px' : '16px',
+    const btnImage = this.scene.add.image(0, btnY, 'btn_comic_green');
+    btnImage.setDisplaySize(btnW, btnH);
+
+    const btnText = this.scene.add
+      .text(0, btnY, 'ВЫБРАТЬ', {
+        fontSize: w < 240 ? '12px' : '14px',
         fontStyle: 'bold',
-        color: '#0f172a',
+        color: '#ffffff',
         fontFamily: 'monospace',
+        stroke: '#064e3b',
+        strokeThickness: 3,
       })
-      .setOrigin(0.5)
+      .setOrigin(0.5, 0.5);
+
+    cardContainer.add([
+      bg,
+      frame,
+      badgeLabel,
+      icon,
+      nameText,
+      descText,
+      btnImage,
+      btnText,
+    ]);
+
+    // Top-Level HitArea (guaranteed click handling across all cameras)
+    const hitArea = this.scene.add
+      .rectangle(x, y, w, h, 0x000000, 0.001)
       .setScrollFactor(0)
-      .setDepth(10004);
+      .setDepth(10005)
+      .setInteractive({ useHandCursor: true });
 
-    const cardElements = [bg, badgeLabel, nameText, descText, selectBtn, selectText];
-    this.elements.push(...cardElements);
-
-    // Click/Hover Handlers
-    bg.on('pointerover', () => {
-      bg.setFillStyle(isEvo ? 0x713f12 : isConsumable ? 0x1e40af : 0x166534, 1);
-      bg.setScale(1.02);
-      selectBtn.setScale(1.02);
-    });
-
-    bg.on('pointerout', () => {
-      bg.setFillStyle(bgColor, 0.95);
-      bg.setScale(1.0);
-      selectBtn.setScale(1.0);
-    });
-
-    bg.on('pointerdown', () => {
+    const selectUpgrade = () => {
       this.platform.vibrate(40);
+      AudioManager.getInstance().playClick();
       this.hide();
       this.onUpgradeSelected(upgrade, levelToApply);
+    };
+
+    hitArea.on('pointerover', () => {
+      btnImage.setTexture('btn_comic_green_hover');
+      this.scene.tweens.add({
+        targets: cardContainer,
+        scaleX: 1.03,
+        scaleY: 1.03,
+        duration: 100,
+        ease: 'Quad.easeOut',
+      });
     });
+
+    hitArea.on('pointerout', () => {
+      btnImage.setTexture('btn_comic_green');
+      this.scene.tweens.add({
+        targets: cardContainer,
+        scaleX: 1.0,
+        scaleY: 1.0,
+        duration: 100,
+        ease: 'Quad.easeOut',
+      });
+    });
+
+    hitArea.on('pointerdown', selectUpgrade);
+
+    this.elements.push(cardContainer, hitArea);
   }
 
   hide(): void {
@@ -344,3 +403,4 @@ export class LevelUpModal {
     this.clear();
   }
 }
+

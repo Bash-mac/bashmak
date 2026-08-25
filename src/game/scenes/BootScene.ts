@@ -45,9 +45,8 @@ export class BootScene extends Phaser.Scene {
     this.load.image('face_furious', '/assets/sprites/expressions/face_furious.png');
     this.load.image('face_victorious', '/assets/sprites/expressions/face_victorious.png');
 
-    // Vypolzok (Tony) New 90s Gross-Out Assets & UI
+    // Vypolzok Assets & UI
     this.load.image('vypolzok_portrait', '/assets/sprites/vypolzok/ui/portrait_vypolzok.webp');
-    this.load.image('tony_portrait', '/assets/sprites/vypolzok/ui/portrait_vypolzok.webp');
     this.load.image('hud_face_smug', '/assets/sprites/vypolzok/ui/hud_face_smug.webp');
     this.load.image('hud_face_bored', '/assets/sprites/vypolzok/ui/hud_face_bored.webp');
     this.load.image('hud_face_injured', '/assets/sprites/vypolzok/ui/hud_face_injured.webp');
@@ -57,21 +56,13 @@ export class BootScene extends Phaser.Scene {
     // Vypolzok Character Sprites
     for (let i = 1; i <= 4; i++) {
       this.load.image(`vypolzok_idle_${i}`, `/assets/sprites/vypolzok/idle/idle_${i}.webp`);
-      this.load.image(`tony_idle_${i}`, `/assets/sprites/vypolzok/idle/idle_${i}.webp`);
       this.load.image(`vypolzok_spit_${i}`, `/assets/sprites/vypolzok/spit/spit_${i}.webp`);
-      this.load.image(`tony_spit_${i}`, `/assets/sprites/vypolzok/spit/spit_${i}.webp`);
       this.load.image(`vypolzok_hurt_${i}`, `/assets/sprites/vypolzok/hurt/hurt_${i}.webp`);
-      this.load.image(`tony_hurt_${i}`, `/assets/sprites/vypolzok/hurt/hurt_${i}.webp`);
     }
     for (let i = 1; i <= 5; i++) {
       this.load.image(`vypolzok_run_${i}`, `/assets/sprites/vypolzok/run/run_${i}.webp`);
       this.load.image(`vypolzok_dead_${i}`, `/assets/sprites/vypolzok/dead/dead_${i}.webp`);
-      this.load.image(`tony_dead_${i}`, `/assets/sprites/vypolzok/dead/dead_${i}.webp`);
     }
-    // Backward compatibility aliases for run
-    this.load.image('tony_run_1', '/assets/sprites/vypolzok/run/run_1.webp');
-    this.load.image('tony_run_2', '/assets/sprites/vypolzok/run/run_2.webp');
-    this.load.image('tony_run_3', '/assets/sprites/vypolzok/run/run_3.webp');
 
     // VFX Sprites
     for (let i = 1; i <= 4; i++) {
@@ -135,6 +126,53 @@ export class BootScene extends Phaser.Scene {
     this.load.image('prop_grate', '/assets/sprites/map/props/prop_grate.webp');
     this.load.image('prop_valve', '/assets/sprites/map/props/prop_valve.webp');
     this.load.image('prop_slime_source', '/assets/sprites/map/props/prop_slime_source.webp');
+
+    // --- 90s Gross-Out HD UI System Assets ---
+    // 1. Hero Selection Posters (512x768)
+    this.load.image('hero_card_worm', '/assets/ui/posters/hero_card_worm.webp');
+    this.load.image('hero_card_bashmak', '/assets/ui/posters/hero_card_bashmak.webp');
+    this.load.image('hero_card_markovka', '/assets/ui/posters/hero_card_markovka.webp');
+    this.load.image('hero_card_baklazhan', '/assets/ui/posters/hero_card_baklazhan.webp');
+
+    // 2. Card Frames (512x768)
+    this.load.image('card_frame_standard', '/assets/ui/frames/card_frame_standard.webp');
+    this.load.image('card_frame_gold', '/assets/ui/frames/card_frame_gold.webp');
+    this.load.image('card_frame_consumable', '/assets/ui/frames/card_frame_consumable.webp');
+
+    // 3. Action Buttons (512x202)
+    this.load.image('btn_comic_green', '/assets/ui/buttons/btn_comic_green.webp');
+    this.load.image('btn_comic_green_hover', '/assets/ui/buttons/btn_comic_green_hover.webp');
+    this.load.image('btn_comic_gold', '/assets/ui/buttons/btn_comic_gold.webp');
+    this.load.image('btn_comic_red', '/assets/ui/buttons/btn_comic_red.webp');
+    this.load.image('btn_comic_dark', '/assets/ui/buttons/btn_comic_dark.webp');
+
+    // 4. HUD Overlays
+    this.load.image('hud_avatar_badge_frame', '/assets/ui/hud/hud_avatar_badge_frame.webp');
+    this.load.image('hud_bar_frame', '/assets/ui/hud/hud_bar_frame.webp');
+    this.load.image('hud_bar_fill_hp', '/assets/ui/hud/hud_bar_fill_hp.webp');
+    this.load.image('hud_bar_fill_xp', '/assets/ui/hud/hud_bar_fill_xp.webp');
+    this.load.image('hud_slot_frame', '/assets/ui/hud/hud_slot_frame.webp');
+
+    // 5. Square Icons (256x256) - Weapons, Tomes, Evolutions
+    this.load.image('icon_weapon_slime_spit', '/assets/ui/icons/icon_weapon_slime_spit.webp');
+    this.load.image('icon_weapon_carrot_barrage', '/assets/ui/icons/icon_weapon_carrot_barrage.webp');
+    this.load.image('icon_weapon_lace_whip', '/assets/ui/icons/icon_weapon_lace_whip.webp');
+    this.load.image('icon_weapon_mega_boot', '/assets/ui/icons/icon_weapon_mega_boot.webp');
+    this.load.image('icon_weapon_manhole_drop', '/assets/ui/icons/icon_weapon_manhole_drop.webp');
+    this.load.image('icon_weapon_eggplant_roll', '/assets/ui/icons/icon_weapon_eggplant_roll.webp');
+    this.load.image('icon_weapon_acid_trail', '/assets/ui/icons/icon_weapon_acid_trail.webp');
+    this.load.image('icon_weapon_orbiting_flies', '/assets/ui/icons/icon_weapon_orbiting_flies.webp');
+
+    this.load.image('icon_tome_mutant_heart', '/assets/ui/icons/icon_tome_mutant_heart.webp');
+    this.load.image('icon_tome_speed_sneakers', '/assets/ui/icons/icon_tome_speed_sneakers.webp');
+    this.load.image('icon_tome_toxic_rage', '/assets/ui/icons/icon_tome_toxic_rage.webp');
+    this.load.image('icon_tome_magnet_tooth', '/assets/ui/icons/icon_tome_magnet_tooth.webp');
+    this.load.image('icon_tome_rusty_armor', '/assets/ui/icons/icon_tome_rusty_armor.webp');
+
+    this.load.image('icon_evo_acid_tsunami', '/assets/ui/icons/icon_evo_acid_tsunami.webp');
+    this.load.image('icon_evo_typhoon_flail', '/assets/ui/icons/icon_evo_typhoon_flail.webp');
+    this.load.image('icon_evo_gatling_carrot', '/assets/ui/icons/icon_evo_gatling_carrot.webp');
+    this.load.image('icon_evo_planetary_cataclysm', '/assets/ui/icons/icon_evo_planetary_cataclysm.webp');
   }
 
   create(): void {
@@ -160,12 +198,6 @@ export class BootScene extends Phaser.Scene {
       frameRate: 6,
       repeat: -1,
     });
-    this.anims.create({
-      key: 'tony_anim_idle',
-      frames: idleFrames,
-      frameRate: 6,
-      repeat: -1,
-    });
 
     // 2. Run (slimy drag racing squash & stretch)
     const runFrames = [
@@ -177,12 +209,6 @@ export class BootScene extends Phaser.Scene {
     ];
     this.anims.create({
       key: 'vypolzok_anim_run',
-      frames: runFrames,
-      frameRate: 10,
-      repeat: -1,
-    });
-    this.anims.create({
-      key: 'tony_anim_run',
       frames: runFrames,
       frameRate: 10,
       repeat: -1,
@@ -201,12 +227,6 @@ export class BootScene extends Phaser.Scene {
       frameRate: 14,
       repeat: 0,
     });
-    this.anims.create({
-      key: 'tony_anim_spit',
-      frames: spitFrames,
-      frameRate: 14,
-      repeat: 0,
-    });
 
     // 4. Hurt (bulging eyes, dislocated jaw)
     const hurtFrames = [
@@ -217,12 +237,6 @@ export class BootScene extends Phaser.Scene {
     ];
     this.anims.create({
       key: 'vypolzok_anim_hurt',
-      frames: hurtFrames,
-      frameRate: 12,
-      repeat: 0,
-    });
-    this.anims.create({
-      key: 'tony_anim_hurt',
       frames: hurtFrames,
       frameRate: 12,
       repeat: 0,
@@ -238,12 +252,6 @@ export class BootScene extends Phaser.Scene {
     ];
     this.anims.create({
       key: 'vypolzok_anim_dead',
-      frames: deadFrames,
-      frameRate: 8,
-      repeat: 0,
-    });
-    this.anims.create({
-      key: 'tony_anim_dead',
       frames: deadFrames,
       frameRate: 8,
       repeat: 0,

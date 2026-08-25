@@ -38,6 +38,27 @@ function checkFile(filePath) {
       errors.push(`❌ [WEAPON] Weapon file '${relPath}' must implement IWeapon interface.`);
     }
   }
+
+  // 5. Zero-Allocation in update(): No GameObject creation or removeAll(true) inside update methods
+  if (relPath.startsWith('src/game/') && (relPath.includes('scenes/') || relPath.includes('combat/') || relPath.includes('traits/') || relPath.includes('ui/'))) {
+    // Check for removeAll(true) anywhere in update or HUD methods
+    if (relPath.includes('HUD.ts') && content.includes('removeAll(true)')) {
+      errors.push(`❌ [PERF/GC] 'removeAll(true)' is forbidden in '${relPath}'. Pre-allocate UI elements!`);
+    }
+
+    // Check for scene.add inside update methods
+    const methodRegex = /(?:override\s+)?(?:public\s+|private\s+)?(?:update[A-Za-z0-9_]*)\s*\([^)]*\)[^{]*\{([\s\S]*?)(?=\n\s*(?:override\s+|public\s+|private\s+|protected\s+|\/\/\/|\}))/g;
+    let match;
+    while ((match = methodRegex.exec(content)) !== null) {
+      const body = match[1];
+      if (/(\.add\.(?:text|graphics|sprite|image|container)\()/.test(body) && !relPath.includes('MapGenerator') && !relPath.includes('HeroFactory') && !relPath.includes('EnemyFactory')) {
+        errors.push(`❌ [PERF/GC] Direct GameObject allocation detected inside update loop in '${relPath}'. Use ObjectPool or pre-allocate in constructor!`);
+      }
+      if (/removeAll\(\s*true\s*\)/.test(body)) {
+        errors.push(`❌ [PERF/GC] 'removeAll(true)' inside update method in '${relPath}'. Use cached text/graphics!`);
+      }
+    }
+  }
 }
 
 function scanDir(dir) {

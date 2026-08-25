@@ -12,6 +12,7 @@ export const BAKLAZHAN_HERO: HeroDefinition = {
   lore: 'Мутировавший баклажан из заброшенного парника. Круглый, тяжёлый, неостановимый.',
   textureKey: 'pose_heavy_prep',
   portraitKey: 'face_furious',
+  posterKey: 'hero_card_baklazhan',
   stats: {
     maxHp: 150,
     speed: 200,

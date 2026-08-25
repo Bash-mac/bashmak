@@ -43,8 +43,9 @@ export class SlimeSpitWeapon implements IWeapon {
     // Visual spit animation on player sprite
     const playerSprite = ctx.player.sprite;
     if (playerSprite && playerSprite.active && !playerSprite.getData('isHurt')) {
-      const animKey = ctx.scene.anims.exists('vypolzok_anim_spit') ? 'vypolzok_anim_spit' : 'tony_anim_spit';
-      playerSprite.play(animKey, true);
+      if (ctx.scene.anims.exists('vypolzok_anim_spit')) {
+        playerSprite.play('vypolzok_anim_spit', true);
+      }
       playerSprite.setData('isAttacking', true);
       ctx.scene.time.delayedCall(260, () => {
         if (playerSprite.active && !playerSprite.getData('isHurt') && ctx.player.isAlive) {

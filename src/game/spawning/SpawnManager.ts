@@ -18,6 +18,7 @@ export interface EnemyScaling {
 export class SpawnManager {
   private getPlayerPosition: () => { x: number; y: number; vx: number; vy: number };
   private spawnCallback: (definition: EnemyDefinition, x: number, y: number, scaling: EnemyScaling) => void;
+  private getActiveEnemyCount?: () => number;
   private getViewportExtents?: () => { halfW: number; halfH: number };
 
   private spawnTimer = 0;
@@ -28,11 +29,13 @@ export class SpawnManager {
   constructor(
     getPlayerPosition: () => { x: number; y: number; vx: number; vy: number },
     spawnCallback: (definition: EnemyDefinition, x: number, y: number, scaling: EnemyScaling) => void,
-    getViewportExtents?: () => { halfW: number; halfH: number }
+    getViewportExtents?: () => { halfW: number; halfH: number },
+    getActiveEnemyCount?: () => number
   ) {
     this.getPlayerPosition = getPlayerPosition;
     this.spawnCallback = spawnCallback;
     this.getViewportExtents = getViewportExtents;
+    this.getActiveEnemyCount = getActiveEnemyCount;
   }
 
   update(deltaMs: number, runTimeSeconds: number): void {
@@ -95,14 +98,15 @@ export class SpawnManager {
       spawnInterval = 180;
     }
 
+    const activeCount = this.getActiveEnemyCount?.() ?? this.currentActiveCount;
     // If population is healthy, check interval
-    if (this.currentActiveCount >= targetPopulation) return;
+    if (activeCount >= targetPopulation) return;
 
     this.spawnTimer += deltaMs;
     // Replenish deficit smoothly
     if (this.spawnTimer >= spawnInterval) {
       this.spawnTimer = 0;
-      const deficit = targetPopulation - this.currentActiveCount;
+      const deficit = targetPopulation - activeCount;
       const batchSize = Math.min(maxBatchSize, deficit);
 
       for (let i = 0; i < batchSize; i++) {

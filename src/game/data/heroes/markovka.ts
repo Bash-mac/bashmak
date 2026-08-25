@@ -12,6 +12,7 @@ export const MARKOVKA_HERO: HeroDefinition = {
   lore: 'Генно-модифицированная морковка из заброшенной лаборатории. Скорость — её броня.',
   textureKey: 'markovka_idle_1',
   portraitKey: 'portrait_markovka',
+  posterKey: 'hero_card_markovka',
   stats: {
     maxHp: 75,
     speed: 250,

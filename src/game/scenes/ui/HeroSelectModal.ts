@@ -3,6 +3,7 @@ import { ALL_HEROES } from '../../data/heroes';
 import type { HeroDefinition } from '../../data/definitions';
 import { SaveManager } from '../../core/SaveManager';
 import { createPlatformAdapter } from '../../../platform';
+import { AudioManager } from '../../audio/AudioManager';
 
 export class HeroSelectModal {
   private scene: Phaser.Scene;
@@ -25,27 +26,30 @@ export class HeroSelectModal {
 
     // 1. Dark Backdrop Overlay
     const overlay = this.scene.add
-      .rectangle(width / 2, height / 2, width, height, 0x090d16, 0.92)
+      .rectangle(width / 2, height / 2, width, height, 0x050811, 0.94)
       .setScrollFactor(0)
       .setDepth(10000)
       .setInteractive();
     this.elements.push(overlay);
 
-    // 2. Title & Comic Subtitle
+    // 2. Title & Subtitle Banner
+    const titleY = Math.max(30, height * 0.07);
     const title = this.scene.add
-      .text(width / 2, 45, 'HERO SELECTION', {
-        fontSize: '34px',
+      .text(width / 2, titleY, 'ВЫБОР МУТАНТА', {
+        fontSize: width < 700 ? '24px' : '34px',
         fontStyle: 'bold',
         color: '#4ade80',
         fontFamily: 'monospace',
+        stroke: '#064e3b',
+        strokeThickness: 5,
       })
       .setOrigin(0.5)
       .setScrollFactor(0)
       .setDepth(10001);
 
     const subtitle = this.scene.add
-      .text(width / 2, 85, 'Выбери своего мутанта для забега:', {
-        fontSize: '16px',
+      .text(width / 2, titleY + 30, 'Выбери своего героя канализации:', {
+        fontSize: width < 700 ? '11px' : '14px',
         color: '#94a3b8',
         fontFamily: 'monospace',
       })
@@ -55,11 +59,13 @@ export class HeroSelectModal {
 
     // Close Button (Top Right)
     const closeBtn = this.scene.add
-      .text(width - 40, 40, '✕', {
-        fontSize: '28px',
+      .text(width - 36, titleY, '✕', {
+        fontSize: '30px',
         fontStyle: 'bold',
-        color: '#f87171',
+        color: '#ef4444',
         fontFamily: 'monospace',
+        stroke: '#450a0a',
+        strokeThickness: 4,
       })
       .setOrigin(0.5)
       .setScrollFactor(0)
@@ -68,45 +74,28 @@ export class HeroSelectModal {
 
     closeBtn.on('pointerdown', () => {
       this.platform.vibrate(20);
+      AudioManager.getInstance().playClick();
       this.hide();
     });
 
     this.elements.push(title, subtitle, closeBtn);
 
-    // 3. Render Hero Cards (2x2 grid in portrait, 4 in a row in landscape)
-    const isPortrait = width < 850 || width < height;
+    // 3. Render 4 Hero Cards in a Single Horizontal Row (Landscape)
+    const totalHeroes = ALL_HEROES.length;
+    const availableWidth = width - 48;
+    const spacing = Math.min(18, Math.max(8, (availableWidth - totalHeroes * 260) / (totalHeroes - 1)));
+    const cardWidth = Math.min(270, Math.floor((availableWidth - (totalHeroes - 1) * spacing) / totalHeroes));
+    const cardHeight = Math.min(540, Math.floor(height - titleY - 60));
 
-    if (isPortrait) {
-      const cardWidth = Math.min((width - 40) / 2, 185);
-      const cardHeight = Math.min((height - 120) / 2, 270);
-      const gapX = 12;
-      const gapY = 12;
-      const totalGridW = 2 * cardWidth + gapX;
-      const startX = (width - totalGridW) / 2 + cardWidth / 2;
-      const startY = 100 + cardHeight / 2;
+    const totalRowW = totalHeroes * cardWidth + (totalHeroes - 1) * spacing;
+    const startX = (width - totalRowW) / 2 + cardWidth / 2;
+    const centerY = titleY + 45 + cardHeight / 2;
 
-      ALL_HEROES.forEach((hero, index) => {
-        const col = index % 2;
-        const row = Math.floor(index / 2);
-        const cardX = startX + col * (cardWidth + gapX);
-        const cardY = startY + row * (cardHeight + gapY);
-        const isSelected = hero.id === currentSelectedId;
-        this.createHeroCard(hero, cardX, cardY, cardWidth, cardHeight, isSelected, true);
-      });
-    } else {
-      const cardWidth = Math.min(240, (width - 60) / ALL_HEROES.length - 15);
-      const cardHeight = Math.min(440, height - 120);
-      const gap = 16;
-      const totalRowWidth = ALL_HEROES.length * cardWidth + (ALL_HEROES.length - 1) * gap;
-      const startX = (width - totalRowWidth) / 2 + cardWidth / 2;
-      const centerY = height / 2 + 30;
-
-      ALL_HEROES.forEach((hero, index) => {
-        const cardX = startX + index * (cardWidth + gap);
-        const isSelected = hero.id === currentSelectedId;
-        this.createHeroCard(hero, cardX, centerY, cardWidth, cardHeight, isSelected, false);
-      });
-    }
+    ALL_HEROES.forEach((hero, index) => {
+      const cardX = startX + index * (cardWidth + spacing);
+      const isSelected = hero.id === currentSelectedId;
+      this.createHeroCard(hero, cardX, centerY, cardWidth, cardHeight, isSelected);
+    });
   }
 
   private createHeroCard(
@@ -115,8 +104,7 @@ export class HeroSelectModal {
     y: number,
     w: number,
     h: number,
-    isSelected: boolean,
-    isCompact = false
+    isSelected: boolean
   ): void {
     const cardContainer = this.scene.add.container(x, y).setDepth(10002).setScrollFactor(0);
 
@@ -128,134 +116,149 @@ export class HeroSelectModal {
       window.location.search.includes('dev=1')
     );
 
-    const isUnlocked = hero.id === 'hero_worm' || (hero.id === 'hero_markovka' && isDev);
+    const isUnlocked = hero.id === 'hero_vypolzok' || hero.id === 'hero_worm' || (hero.id === 'hero_markovka' && isDev);
 
-    // Background Panel
+    // 1. Outer Card Box with Comic Border
     const cardBg = this.scene.add.graphics();
-    const bgColor = isSelected ? 0x14532d : (isUnlocked ? 0x1e293b : 0x0f172a);
-    const borderColor = isSelected ? 0x4ade80 : (isUnlocked ? 0x475569 : 0x334155);
-    const borderWidth = isSelected ? 3 : 1.5;
+    const bgColor = isSelected ? 0x064e3b : (isUnlocked ? 0x0f172a : 0x090d16);
+    const borderColor = isSelected ? 0x4ade80 : (isUnlocked ? 0x475569 : 0x1e293b);
+    const borderWidth = isSelected ? 3.5 : 2;
 
     cardBg.fillStyle(bgColor, 0.95);
     cardBg.lineStyle(borderWidth, borderColor, 1);
-    cardBg.fillRoundedRect(-w / 2, -h / 2, w, h, 12);
-    cardBg.strokeRoundedRect(-w / 2, -h / 2, w, h, 12);
+    cardBg.fillRoundedRect(-w / 2, -h / 2, w, h, 10);
+    cardBg.strokeRoundedRect(-w / 2, -h / 2, w, h, 10);
 
-    // Selected Badge
-    let selectedBadge: Phaser.GameObjects.Text | null = null;
-    if (isSelected) {
-      selectedBadge = this.scene.add
-        .text(0, -h / 2 + 18, '★ ACTIVE ★', {
-          fontSize: '12px',
-          fontStyle: 'bold',
-          color: '#4ade80',
-          fontFamily: 'monospace',
-        })
-        .setOrigin(0.5);
-    } else if (!isUnlocked) {
-      selectedBadge = this.scene.add
-        .text(0, -h / 2 + 18, '🔒 СКОРО', {
-          fontSize: '11px',
-          fontStyle: 'bold',
-          color: '#94a3b8',
-          fontFamily: 'monospace',
-        })
-        .setOrigin(0.5);
-    }
+    // 2. Poster Art (512x768 master scaled to fit upper 58% of the card)
+    const posterH = Math.floor(h * 0.58);
+    const posterW = w - 10;
+    const posterY = -h / 2 + 5 + posterH / 2;
 
-    // Hero Portrait / Sprite
-    const portraitKey = hero.portraitKey || hero.textureKey || 'tony_portrait';
-    const portrait = this.scene.add.image(0, isCompact ? -h / 2 + 45 : -h / 2 + 75, portraitKey);
-    portrait.setDisplaySize(isCompact ? 48 : 70, isCompact ? 48 : 70);
+    const posterKey = hero.posterKey || 'hero_card_worm';
+    const posterImage = this.scene.add.image(0, posterY, posterKey);
+    posterImage.setDisplaySize(posterW, posterH);
+
+    // Mask for rounded corners on poster
+    const posterMaskGfx = this.scene.make.graphics({ x: 0, y: 0 });
+    posterMaskGfx.fillStyle(0xffffff, 1);
+    posterMaskGfx.fillRoundedRect(x - posterW / 2, y + posterY - posterH / 2, posterW, posterH, 6);
+    posterImage.setMask(posterMaskGfx.createGeometryMask());
+
     if (!isUnlocked) {
-      portrait.setAlpha(0.35);
+      posterImage.setTint(0x334155);
     }
 
-    // Hero Name & Comic Tag
-    const nameText = this.scene.add
-      .text(0, isCompact ? -h / 2 + 78 : -h / 2 + 125, hero.name, {
-        fontSize: isCompact ? '14px' : '18px',
-        fontStyle: 'bold',
-        color: isSelected ? '#4ade80' : (isUnlocked ? '#ffffff' : '#64748b'),
-        fontFamily: 'monospace',
-      })
-      .setOrigin(0.5);
-
-    const titleText = this.scene.add
-      .text(0, isCompact ? -h / 2 + 94 : -h / 2 + 145, hero.comicTitle || '', {
-        fontSize: isCompact ? '9px' : '11px',
-        color: isUnlocked ? '#facc15' : '#475569',
-        fontFamily: 'monospace',
-      })
-      .setOrigin(0.5);
-
-    // Stats Grid
-    const statsY = isCompact ? -h / 2 + 110 : -h / 2 + 180;
-    const statsLines = isCompact
-      ? [`HP:${hero.stats.maxHp} SPD:${hero.stats.speed}`, `DMG:${hero.stats.damage} DEF:${hero.stats.armor ?? 0}`]
-      : [
-          `HP: ${hero.stats.maxHp}  |  SPD: ${hero.stats.speed}`,
-          `DMG: ${hero.stats.damage}  |  ARMOR: ${hero.stats.armor ?? 0}`,
-          `ATK SPD: ${hero.stats.attackSpeed ?? 1.0}×`,
-        ];
-
+    // 3. Stats Strip (Under poster)
+    const infoY = posterY + posterH / 2 + 16;
+    const statsStr = `HP: ${hero.stats.maxHp}   SPD: ${hero.stats.speed}   DMG: ${hero.stats.damage}`;
     const statsText = this.scene.add
-      .text(0, statsY, statsLines.join('\n'), {
-        fontSize: isCompact ? '10px' : '12px',
+      .text(0, infoY, statsStr, {
+        fontSize: w < 240 ? '10px' : '12px',
+        fontStyle: 'bold',
+        color: isUnlocked ? '#f8fafc' : '#64748b',
+        fontFamily: 'monospace',
+      })
+      .setOrigin(0.5);
+
+    // 4. Trait Block
+    const traitY = infoY + 22;
+    const traitHeader = this.scene.add
+      .text(0, traitY, `⚡ ${hero.trait?.name || 'Трейт'}:`, {
+        fontSize: w < 240 ? '10px' : '12px',
+        fontStyle: 'bold',
+        color: isUnlocked ? '#38bdf8' : '#475569',
+        fontFamily: 'monospace',
+      })
+      .setOrigin(0.5);
+
+    const traitDesc = this.scene.add
+      .text(0, traitY + 16, hero.trait?.description || '', {
+        fontSize: w < 240 ? '9px' : '10px',
         color: isUnlocked ? '#cbd5e1' : '#475569',
         fontFamily: 'monospace',
         align: 'center',
-        lineSpacing: isCompact ? 2 : 4,
-      })
-      .setOrigin(0.5, 0);
-
-    // Trait Section
-    const traitY = isCompact ? -h / 2 + 150 : -h / 2 + 255;
-    const traitHeader = this.scene.add
-      .text(0, traitY, `⚡ ${hero.trait?.name || 'Трейт'}:`, {
-        fontSize: isCompact ? '10px' : '12px',
-        fontStyle: 'bold',
-        color: isUnlocked ? '#38bdf8' : '#334155',
-        fontFamily: 'monospace',
-      })
-      .setOrigin(0.5, 0);
-
-    const traitDesc = this.scene.add
-      .text(0, traitY + (isCompact ? 13 : 18), hero.trait?.description || '', {
-        fontSize: isCompact ? '9px' : '11px',
-        color: isUnlocked ? '#94a3b8' : '#334155',
-        fontFamily: 'monospace',
-        align: 'center',
-        wordWrap: { width: w - (isCompact ? 16 : 24) },
+        wordWrap: { width: w - 16 },
         lineSpacing: 1,
       })
       .setOrigin(0.5, 0);
 
-    // Select Button
-    const btnH = isCompact ? 26 : 36;
-    const btnY = h / 2 - (isCompact ? 20 : 35);
-    const btnBg = this.scene.add.graphics();
-    const btnColor = isSelected ? 0x22c55e : (isUnlocked ? 0x3b82f6 : 0x1e293b);
-    btnBg.fillStyle(btnColor, 1);
-    btnBg.fillRoundedRect(-w / 2 + (isCompact ? 12 : 20), btnY - btnH / 2, w - (isCompact ? 24 : 40), btnH, 6);
+    // 5. 3D Comic Action Button
+    const btnW = Math.min(w - 24, 200);
+    const btnH = Math.min(48, Math.floor(btnW * 0.38));
+    const btnY = h / 2 - btnH / 2 - 8;
+
+    const btnTex = isSelected
+      ? 'btn_comic_green'
+      : isUnlocked
+      ? 'btn_comic_green'
+      : 'btn_comic_dark';
+
+    const btnImage = this.scene.add.image(0, btnY, btnTex);
+    btnImage.setDisplaySize(btnW, btnH);
 
     const btnLabel = isSelected ? 'ВЫБРАН' : (isUnlocked ? 'ВЫБРАТЬ' : 'ЗАКРЫТО');
+    const btnTextColor = isSelected ? '#fef08a' : (isUnlocked ? '#ffffff' : '#64748b');
+
     const btnText = this.scene.add
       .text(0, btnY, btnLabel, {
-        fontSize: isCompact ? '11px' : '14px',
+        fontSize: w < 240 ? '12px' : '14px',
         fontStyle: 'bold',
-        color: isUnlocked ? '#ffffff' : '#64748b',
+        color: btnTextColor,
         fontFamily: 'monospace',
+        stroke: isUnlocked ? '#064e3b' : '#0f172a',
+        strokeThickness: 3,
       })
       .setOrigin(0.5);
 
-    // Make whole card or button interactive
-    const hitArea = this.scene.add
-      .rectangle(0, 0, w, h, 0x000000, 0)
-      .setInteractive({ useHandCursor: isUnlocked });
+    // Active Selection Top Badge
+    let activeBadge: Phaser.GameObjects.Text | null = null;
+    if (isSelected) {
+      activeBadge = this.scene.add
+        .text(0, -h / 2 + 14, '★ ACTIVE ★', {
+          fontSize: '11px',
+          fontStyle: 'bold',
+          color: '#facc15',
+          fontFamily: 'monospace',
+          stroke: '#451a03',
+          strokeThickness: 3,
+        })
+        .setOrigin(0.5);
+    } else if (!isUnlocked) {
+      activeBadge = this.scene.add
+        .text(0, -h / 2 + 14, '🔒 СКОРО', {
+          fontSize: '11px',
+          fontStyle: 'bold',
+          color: '#94a3b8',
+          fontFamily: 'monospace',
+          stroke: '#0f172a',
+          strokeThickness: 2,
+        })
+        .setOrigin(0.5);
+    }
+
+    const containerItems = [
+      cardBg,
+      posterImage,
+      statsText,
+      traitHeader,
+      traitDesc,
+      btnImage,
+      btnText,
+    ];
+    if (activeBadge) containerItems.push(activeBadge);
+
+    cardContainer.add(containerItems);
+    this.elements.push(cardContainer, posterMaskGfx);
 
     if (isUnlocked) {
+      const hitArea = this.scene.add
+        .rectangle(x, y, w, h, 0x000000, 0.001)
+        .setScrollFactor(0)
+        .setDepth(10005)
+        .setInteractive({ useHandCursor: true });
+
       hitArea.on('pointerover', () => {
+        btnImage.setTexture('btn_comic_green_hover');
         this.scene.tweens.add({
           targets: cardContainer,
           scaleX: 1.03,
@@ -266,6 +269,7 @@ export class HeroSelectModal {
       });
 
       hitArea.on('pointerout', () => {
+        btnImage.setTexture(btnTex);
         this.scene.tweens.add({
           targets: cardContainer,
           scaleX: 1.0,
@@ -277,30 +281,14 @@ export class HeroSelectModal {
 
       hitArea.on('pointerdown', () => {
         this.platform.vibrate(35);
+        AudioManager.getInstance().playClick();
         SaveManager.getInstance().setSelectedHeroId(hero.id);
         this.onHeroSelected(hero);
-        this.show(); // Refresh view with new active state
+        this.show(); // Re-render view
       });
-    }
 
-    const elementsToAdd = [
-      cardBg,
-      portrait,
-      nameText,
-      titleText,
-      statsText,
-      traitHeader,
-      traitDesc,
-      btnBg,
-      btnText,
-      hitArea,
-    ];
-    if (selectedBadge) {
-      elementsToAdd.push(selectedBadge);
+      this.elements.push(hitArea);
     }
-
-    cardContainer.add(elementsToAdd);
-    this.elements.push(cardContainer);
   }
 
   hide(): void {
@@ -313,3 +301,4 @@ export class HeroSelectModal {
     this.elements = [];
   }
 }
+

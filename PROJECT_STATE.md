@@ -66,7 +66,7 @@
 ---
 
 ## 📌 ТЕКУЩИЙ ЭТАП: [ЭТАП 6 — Финальный арт мобов, героев и Texture Atlas]
-- [x] Покадровые анимации, HUD-портреты и VFX для **Морковки (Beda)** (`idle`, `run`, `attack`, `hurt`, `dead`, `vfx_anim_carrot_fly`, `vfx_anim_carrot_splat`).
+- [x] Покадровые анимации, HUD-портреты и VFX для **Морковки (Markovka)** (`idle`, `run`, `attack`, `hurt`, `dead`, `vfx_anim_carrot_fly`, `vfx_anim_carrot_splat`).
 - [ ] Покадровые анимации для Башмака и Баклажана.
 - [ ] Замена процедурных кружков врагов (`PlaceholderTextures.ts`) на покадровые спрайты (3–4 кадра на моба).
 - [ ] Упаковка игровых спрайтов в единый Texture Atlas для минимизации Draw Calls.

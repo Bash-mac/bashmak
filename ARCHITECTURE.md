@@ -53,9 +53,9 @@ src/
 │   │       ├── LaceWhipWeapon.ts
 │   │       ├── CarrotBarrageWeapon.ts
 │   │       ├── EggplantRollWeapon.ts
-│   │       ├── HomingDaggersWeapon.ts
+│   │       ├── OrbitingFliesWeapon.ts
 │   │       ├── MegaBootWeapon.ts
-│   │       ├── LightningZapWeapon.ts
+│   │       ├── ManholeDropWeapon.ts
 │   │       └── AcidTrailWeapon.ts
 │   ├── audio/          # Звуковой движок (Web Audio API procedural synth)
 │   │   └── AudioManager.ts
@@ -76,7 +76,6 @@ src/
 │       ├── MenuScene.ts
 │       ├── GameScene.ts
 │       ├── UpgradesScene.ts
-│       ├── ResultScene.ts
 │       └── ui/
 │           ├── HUD.ts
 │           ├── LevelUpModal.ts
@@ -127,9 +126,15 @@ src/
 
 ## 3. Руководство по расширению
 
+### 4 Канонических Героя игры:
+- **`Vypolzok`** (`src/game/data/heroes/vypolzok.ts`, id: `hero_vypolzok`) — Слизеплюй & Слизистый след.
+- **`Baklazhan`** (`src/game/data/heroes/baklazhan.ts`, id: `hero_baklazhan`) — Фиолетовый шар & Разбег.
+- **`Bashmak`** (`src/game/data/heroes/bashmak.ts`, id: `hero_bashmak`) — Шнуровой кнут & Тяжёлая поступь.
+- **`Markovka`** (`src/game/data/heroes/markovka.ts`, id: `hero_markovka`) — Морковный град & Жажда скорости.
+
 ### Как добавить нового героя:
-1. Откройте `src/game/data/heroes.ts`.
-2. Создайте объект `HeroDefinition`:
+1. Создайте файл `src/game/data/heroes/<имя>.ts`.
+2. Экспортируйте объект `HeroDefinition`:
    ```typescript
    export const TANK_HERO: HeroDefinition = {
      id: 'hero_tank',
@@ -140,7 +145,7 @@ src/
      startingWeaponId: 'weapon_hammer',
    };
    ```
-3. Зарегистрируйте его в `HEROES_REGISTRY`. Никаких правок в `GameScene` или `CombatSystem` не требуется.
+3. Зарегистрируйте его в `HEROES_REGISTRY` в `src/game/data/heroes/index.ts`. Никаких правок в `GameScene` или `CombatSystem` не требуется.
 
 ### Как добавить нового врага:
 1. Откройте `src/game/data/enemies.ts`.

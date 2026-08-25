@@ -5,6 +5,9 @@
 export class AudioManager {
   private static instance: AudioManager;
   private ctx: AudioContext | null = null;
+  private masterGain: GainNode | null = null;
+  private sfxGain: GainNode | null = null;
+  private bgmGain: GainNode | null = null;
   private isMuted = false;
   private sfxVolume = 0.8;
   private bgmVolume = 0.5;
@@ -37,6 +40,17 @@ export class AudioManager {
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
       if (AudioContextClass) {
         this.ctx = new AudioContextClass();
+        this.masterGain = this.ctx.createGain();
+        this.masterGain.gain.value = 1.0;
+        this.masterGain.connect(this.ctx.destination);
+
+        this.sfxGain = this.ctx.createGain();
+        this.sfxGain.gain.value = this.sfxVolume;
+        this.sfxGain.connect(this.masterGain);
+
+        this.bgmGain = this.ctx.createGain();
+        this.bgmGain.gain.value = this.bgmVolume;
+        this.bgmGain.connect(this.masterGain);
       }
     }
     if (this.ctx && this.ctx.state === 'suspended') {
@@ -47,6 +61,34 @@ export class AudioManager {
   private ensureContext(): boolean {
     this.init();
     return this.ctx !== null && this.ctx.state === 'running';
+  }
+
+  private getSfxDestination(): AudioNode {
+    return this.sfxGain ?? this.ctx!.destination;
+  }
+
+  private getBgmDestination(): AudioNode {
+    return this.bgmGain ?? this.ctx!.destination;
+  }
+
+  public setMasterVolume(vol: number): void {
+    if (!this.ctx || !this.masterGain) return;
+    const clamped = Math.max(0, Math.min(1, vol));
+    this.masterGain.gain.setValueAtTime(clamped, this.ctx.currentTime);
+  }
+
+  public setSfxVolume(vol: number): void {
+    this.sfxVolume = Math.max(0, Math.min(1, vol));
+    if (this.ctx && this.sfxGain) {
+      this.sfxGain.gain.setValueAtTime(this.sfxVolume, this.ctx.currentTime);
+    }
+  }
+
+  public setBgmVolume(vol: number): void {
+    this.bgmVolume = Math.max(0, Math.min(1, vol));
+    if (this.ctx && this.bgmGain) {
+      this.bgmGain.gain.setValueAtTime(this.bgmVolume, this.ctx.currentTime);
+    }
   }
 
   // =========================================================================
@@ -81,11 +123,11 @@ export class AudioManager {
     osc.frequency.setValueAtTime(freq, now);
     osc.frequency.exponentialRampToValueAtTime(freq * 1.15, now + 0.08);
 
-    gain.gain.setValueAtTime(this.sfxVolume * 0.45, now);
+    gain.gain.setValueAtTime(0.45, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
 
     osc.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(this.getSfxDestination());
 
     osc.start(now);
     osc.stop(now + 0.13);
@@ -106,11 +148,11 @@ export class AudioManager {
     osc.frequency.setValueAtTime(240, now);
     osc.frequency.exponentialRampToValueAtTime(780, now + 0.09);
 
-    gain.gain.setValueAtTime(this.sfxVolume * 0.55, now);
+    gain.gain.setValueAtTime(0.55, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
 
     osc.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(this.getSfxDestination());
 
     osc.start(now);
     osc.stop(now + 0.15);
@@ -131,11 +173,11 @@ export class AudioManager {
     osc.frequency.setValueAtTime(520 + Math.random() * 80, now);
     osc.frequency.exponentialRampToValueAtTime(120, now + 0.12);
 
-    gain.gain.setValueAtTime(this.sfxVolume * 0.35, now);
+    gain.gain.setValueAtTime(0.35, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.13);
 
     osc.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(this.getSfxDestination());
 
     osc.start(now);
     osc.stop(now + 0.14);
@@ -156,11 +198,11 @@ export class AudioManager {
     osc.frequency.setValueAtTime(220, now);
     osc.frequency.exponentialRampToValueAtTime(60, now + 0.08);
 
-    gain.gain.setValueAtTime(this.sfxVolume * 0.4, now);
+    gain.gain.setValueAtTime(0.4, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
 
     osc.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(this.getSfxDestination());
 
     osc.start(now);
     osc.stop(now + 0.1);
@@ -181,11 +223,11 @@ export class AudioManager {
     osc.frequency.setValueAtTime(140, now);
     osc.frequency.exponentialRampToValueAtTime(32, now + 0.22);
 
-    gain.gain.setValueAtTime(this.sfxVolume * 0.9, now);
+    gain.gain.setValueAtTime(0.9, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
 
     osc.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(this.getSfxDestination());
 
     osc.start(now);
     osc.stop(now + 0.26);
@@ -207,11 +249,11 @@ export class AudioManager {
     osc.frequency.setValueAtTime(340, now + 0.04);
     osc.frequency.setValueAtTime(820, now + 0.08);
 
-    gain.gain.setValueAtTime(this.sfxVolume * 0.35, now);
+    gain.gain.setValueAtTime(0.35, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
 
     osc.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(this.getSfxDestination());
 
     osc.start(now);
     osc.stop(now + 0.13);
@@ -232,11 +274,11 @@ export class AudioManager {
     osc.frequency.setValueAtTime(300, now);
     osc.frequency.exponentialRampToValueAtTime(70, now + 0.15);
 
-    gain.gain.setValueAtTime(this.sfxVolume * 0.65, now);
+    gain.gain.setValueAtTime(0.65, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
 
     osc.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(this.getSfxDestination());
 
     osc.start(now);
     osc.stop(now + 0.17);
@@ -256,10 +298,10 @@ export class AudioManager {
     slideOsc.type = 'sawtooth';
     slideOsc.frequency.setValueAtTime(440, now);
     slideOsc.frequency.exponentialRampToValueAtTime(60, now + 0.45);
-    slideGain.gain.setValueAtTime(this.sfxVolume * 0.7, now);
+    slideGain.gain.setValueAtTime(0.7, now);
     slideGain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
     slideOsc.connect(slideGain);
-    slideGain.connect(ctx.destination);
+    slideGain.connect(this.getSfxDestination());
     slideOsc.start(now);
     slideOsc.stop(now + 0.52);
 
@@ -270,10 +312,10 @@ export class AudioManager {
     thudOsc.frequency.setValueAtTime(150, now + 0.35);
     thudOsc.frequency.exponentialRampToValueAtTime(30, now + 0.8);
     thudGain.gain.setValueAtTime(0, now);
-    thudGain.gain.setValueAtTime(this.sfxVolume * 0.9, now + 0.35);
+    thudGain.gain.setValueAtTime(0.9, now + 0.35);
     thudGain.gain.exponentialRampToValueAtTime(0.001, now + 0.85);
     thudOsc.connect(thudGain);
-    thudGain.connect(ctx.destination);
+    thudGain.connect(this.getSfxDestination());
     thudOsc.start(now + 0.35);
     thudOsc.stop(now + 0.88);
   }
@@ -295,11 +337,11 @@ export class AudioManager {
       osc.type = i === notes.length - 1 ? 'triangle' : 'sine';
       osc.frequency.setValueAtTime(freq, start);
 
-      gain.gain.setValueAtTime(this.sfxVolume * 0.5, start);
+      gain.gain.setValueAtTime(0.5, start);
       gain.gain.exponentialRampToValueAtTime(0.001, start + 0.28);
 
       osc.connect(gain);
-      gain.connect(ctx.destination);
+      gain.connect(this.getSfxDestination());
 
       osc.start(start);
       osc.stop(start + 0.3);
@@ -321,11 +363,11 @@ export class AudioManager {
     osc.frequency.setValueAtTime(110, now);
     osc.frequency.exponentialRampToValueAtTime(25, now + 0.35);
 
-    gain.gain.setValueAtTime(this.sfxVolume * 0.85, now);
+    gain.gain.setValueAtTime(0.85, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
 
     osc.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(this.getSfxDestination());
 
     osc.start(now);
     osc.stop(now + 0.42);
@@ -346,11 +388,11 @@ export class AudioManager {
     osc.frequency.setValueAtTime(650, now);
     osc.frequency.exponentialRampToValueAtTime(300, now + 0.04);
 
-    gain.gain.setValueAtTime(this.sfxVolume * 0.4, now);
+    gain.gain.setValueAtTime(0.4, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
 
     osc.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(this.getSfxDestination());
 
     osc.start(now);
     osc.stop(now + 0.06);
@@ -398,10 +440,10 @@ export class AudioManager {
       osc.type = 'sawtooth';
       osc.frequency.setValueAtTime(noteFreq, time);
       osc.frequency.exponentialRampToValueAtTime(noteFreq * 0.95, time + 0.12);
-      gain.gain.setValueAtTime(this.bgmVolume * 0.22, time);
+      gain.gain.setValueAtTime(0.22, time);
       gain.gain.exponentialRampToValueAtTime(0.001, time + 0.14);
       osc.connect(gain);
-      gain.connect(ctx.destination);
+      gain.connect(this.getBgmDestination());
       osc.start(time);
       osc.stop(time + 0.15); // browser GCs node immediately after stop
     }
@@ -413,10 +455,10 @@ export class AudioManager {
       kickOsc.type = 'sine';
       kickOsc.frequency.setValueAtTime(110, time);
       kickOsc.frequency.exponentialRampToValueAtTime(35, time + 0.08);
-      kickGain.gain.setValueAtTime(this.bgmVolume * 0.35, time);
+      kickGain.gain.setValueAtTime(0.35, time);
       kickGain.gain.exponentialRampToValueAtTime(0.001, time + 0.09);
       kickOsc.connect(kickGain);
-      kickGain.connect(ctx.destination);
+      kickGain.connect(this.getBgmDestination());
       kickOsc.start(time);
       kickOsc.stop(time + 0.1);
     } else if (step % 8 === 4) {
@@ -425,10 +467,10 @@ export class AudioManager {
       snareOsc.type = 'triangle';
       snareOsc.frequency.setValueAtTime(320, time);
       snareOsc.frequency.exponentialRampToValueAtTime(120, time + 0.05);
-      snareGain.gain.setValueAtTime(this.bgmVolume * 0.25, time);
+      snareGain.gain.setValueAtTime(0.25, time);
       snareGain.gain.exponentialRampToValueAtTime(0.001, time + 0.06);
       snareOsc.connect(snareGain);
-      snareGain.connect(ctx.destination);
+      snareGain.connect(this.getBgmDestination());
       snareOsc.start(time);
       snareOsc.stop(time + 0.07);
     }
@@ -444,6 +486,9 @@ export class AudioManager {
 
   public toggleMute(): boolean {
     this.isMuted = !this.isMuted;
+    if (this.masterGain && this.ctx) {
+      this.masterGain.gain.setValueAtTime(this.isMuted ? 0 : 1, this.ctx.currentTime);
+    }
     if (this.isMuted) {
       this.stopBgm();
     } else {

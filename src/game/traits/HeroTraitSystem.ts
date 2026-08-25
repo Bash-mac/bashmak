@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import type { Entity } from '../entities/Entity';
 import type { GameState } from '../core/GameState';
 import type { LootSystem } from '../loot/LootSystem';
+import { ObjectPool } from '../pools/ObjectPool';
 
 export interface TraitContext {
   scene: Phaser.Scene;
@@ -14,6 +15,7 @@ export interface TraitContext {
 export class HeroTraitSystem {
   private slimeTrailSegments: Array<{ sprite: Phaser.GameObjects.Sprite; x: number; y: number; timeLeftMs: number }> = [];
   private slimeDropTimerMs = 0;
+  private trailPool?: ObjectPool<Phaser.GameObjects.Sprite>;
 
   public update(delta: number, isMoving: boolean, ctx: TraitContext, heroId: string): void {
     const mods = ctx.gameState.playerModifiers;
@@ -79,13 +81,34 @@ export class HeroTraitSystem {
     }
   }
 
+  private getTrailPool(scene: Phaser.Scene): ObjectPool<Phaser.GameObjects.Sprite> {
+    if (!this.trailPool) {
+      this.trailPool = new ObjectPool<Phaser.GameObjects.Sprite>(scene, {
+        create: () => {
+          return scene.add.sprite(0, 0, 'vfx_slime_trail_1').setDepth(2);
+        },
+        onRelease: (sprite) => {
+          sprite.setAlpha(0.8);
+          sprite.setScale(0.85);
+        },
+        maxSize: 50,
+      });
+      this.trailPool.prewarm(20);
+    }
+    return this.trailPool;
+  }
+
   private handleSlimeTrail(delta: number, isMoving: boolean, ctx: TraitContext): void {
+    const pool = this.getTrailPool(ctx.scene);
+
     if (isMoving) {
       this.slimeDropTimerMs += delta;
       if (this.slimeDropTimerMs >= 130) {
         this.slimeDropTimerMs = 0;
         const trailKey = `vfx_slime_trail_${Phaser.Math.Between(1, 5)}`;
-        const sprite = ctx.scene.add.sprite(ctx.player.x, ctx.player.y + 12, trailKey);
+        const sprite = pool.get();
+        sprite.setTexture(ctx.scene.textures.exists(trailKey) ? trailKey : 'vfx_slime_trail_1');
+        sprite.setPosition(ctx.player.x, ctx.player.y + 12);
         sprite.setScale(0.85);
         sprite.setAlpha(0.8);
         sprite.setDepth(2);
@@ -99,7 +122,9 @@ export class HeroTraitSystem {
 
         if (this.slimeTrailSegments.length > 35) {
           const oldest = this.slimeTrailSegments.shift();
-          oldest?.sprite.destroy();
+          if (oldest?.sprite) {
+            pool.release(oldest.sprite);
+          }
         }
       }
     }
@@ -113,7 +138,7 @@ export class HeroTraitSystem {
       seg.timeLeftMs -= delta;
 
       if (seg.timeLeftMs <= 0) {
-        seg.sprite.destroy();
+        pool.release(seg.sprite);
         this.slimeTrailSegments.splice(i, 1);
         continue;
       }
@@ -133,14 +158,14 @@ export class HeroTraitSystem {
   }
 
   public clear(): void {
-    try {
-      this.slimeTrailSegments.forEach((s) => {
-        if (s.sprite?.active) {
-          s.sprite.destroy();
+    if (this.trailPool) {
+      for (const seg of this.slimeTrailSegments) {
+        if (seg.sprite?.active) {
+          this.trailPool.release(seg.sprite);
         }
-      });
-    } catch {
-      // Ignore
+      }
+      this.trailPool.clear();
+      this.trailPool = undefined;
     }
     this.slimeTrailSegments = [];
     this.slimeDropTimerMs = 0;

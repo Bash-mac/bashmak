@@ -1,0 +1,37 @@
+import type { HeroDefinition } from '../definitions';
+
+export const VYPOLZOK_HERO: HeroDefinition = {
+  id: 'hero_vypolzok',
+  name: 'Выползок',
+  comicTitle: 'THE SLIME SPITTER',
+  description: 'Юркий кайтер. Плюётся слизью, замедляя врагов, и ускоряется на собственных слизистых дорожках.',
+  lore: 'Бывший дождевой червяк, упавший в чан с токсичными отходами канализации. Теперь полон ярости и липкой слизи.',
+  textureKey: 'vypolzok_idle_1',
+  portraitKey: 'vypolzok_portrait',
+  posterKey: 'hero_card_worm',
+  stats: {
+    maxHp: 100,
+    speed: 230,
+    damage: 10,
+    armor: 0,
+    attackSpeed: 1.3,
+  },
+  attackIntervalMs: 770,
+  attackRange: 300,
+  projectileSpeed: 520,
+  projectileSize: 10,
+  startingWeaponId: 'weapon_slime_spit',
+  trait: {
+    id: 'trait_slime_trail',
+    name: 'Слизистый след',
+    comicTag: 'SLIME HIGHWAY',
+    description: 'При беге оставляет дорожку слизи. Выползок на ней ускоряется на +20%, а враги вязнут (-25% к скорости).',
+    apply: (modifiers) => {
+      modifiers.hasSlimeTrail = true;
+      modifiers.hpRegenPerSec += 0.3;
+    },
+  },
+};
+
+// Backward-compatibility alias
+export const WORM_HERO = VYPOLZOK_HERO;

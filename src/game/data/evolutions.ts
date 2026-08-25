@@ -24,6 +24,7 @@ export const EVOLUTION_RECIPES: EvolutionRecipe[] = [
     baseWeaponName: 'Слизеплюй (Lv.5)',
     requiredTomeId: 'tome_magnet',
     requiredTomeName: '«Липкая Жвачка» (Lv.5)',
+    iconKey: 'icon_evo_acid_tsunami',
     apply: (gameState: GameState) => {
       const mod = gameState.playerModifiers;
       mod.isAcidTsunamiEvolved = true;
@@ -47,6 +48,7 @@ export const EVOLUTION_RECIPES: EvolutionRecipe[] = [
     baseWeaponName: 'Шнуровой Кнут (Lv.5)',
     requiredTomeId: 'tome_quantity',
     requiredTomeName: '«Двойной Зоб» (Lv.5)',
+    iconKey: 'icon_evo_typhoon_flail',
     apply: (gameState: GameState) => {
       const mod = gameState.playerModifiers;
       mod.isTyphoonFlailEvolved = true;
@@ -68,6 +70,7 @@ export const EVOLUTION_RECIPES: EvolutionRecipe[] = [
     baseWeaponName: 'Морковный Град (Lv.5)',
     requiredTomeId: 'tome_speed',
     requiredTomeName: '«Турбо-Кеды» (Lv.5)',
+    iconKey: 'icon_evo_gatling_carrot',
     apply: (gameState: GameState) => {
       const mod = gameState.playerModifiers;
       mod.isGatlingCarrotEvolved = true;
@@ -90,6 +93,7 @@ export const EVOLUTION_RECIPES: EvolutionRecipe[] = [
     baseWeaponName: 'Фиолетовый Шар (Lv.5)',
     requiredTomeId: 'tome_crit_size',
     requiredTomeName: '«Слизь-Кола» (Lv.5)',
+    iconKey: 'icon_evo_planetary_cataclysm',
     apply: (gameState: GameState) => {
       const mod = gameState.playerModifiers;
       mod.isPlanetaryRollEvolved = true;

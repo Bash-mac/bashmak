@@ -17,6 +17,7 @@ export interface HeroDefinition {
   lore?: string;
   textureKey: string;
   portraitKey?: string;
+  posterKey?: string;
   stats: StatsData;
   startingWeaponId: string;
   trait?: HeroTrait;

@@ -39,8 +39,8 @@ export class SaveManager {
     return {
       goo: 0,
       powerUps: {},
-      unlockedHeroIds: ['hero_worm'],
-      selectedHeroId: 'hero_worm',
+      unlockedHeroIds: ['hero_vypolzok'],
+      selectedHeroId: 'hero_vypolzok',
       stats: {
         totalRuns: 0,
         totalKills: 0,
@@ -57,9 +57,19 @@ export class SaveManager {
       const raw = localStorage.getItem(SAVE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
+        let selected = parsed.selectedHeroId || 'hero_vypolzok';
+        if (selected === 'hero_worm') selected = 'hero_vypolzok';
+
+        let unlocked = parsed.unlockedHeroIds || ['hero_vypolzok'];
+        if (unlocked.includes('hero_worm') && !unlocked.includes('hero_vypolzok')) {
+          unlocked = unlocked.map((id: string) => (id === 'hero_worm' ? 'hero_vypolzok' : id));
+        }
+
         return {
           ...this.getDefaultData(),
           ...parsed,
+          selectedHeroId: selected,
+          unlockedHeroIds: unlocked,
           powerUps: parsed.powerUps || {},
           stats: {
             ...this.getDefaultData().stats,
@@ -102,30 +112,33 @@ export class SaveManager {
   }
 
   public getSelectedHeroId(): string {
-    return this.data.selectedHeroId || 'hero_worm';
+    const id = this.data.selectedHeroId || 'hero_vypolzok';
+    return id === 'hero_worm' ? 'hero_vypolzok' : id;
   }
 
   public setSelectedHeroId(id: string): void {
-    this.data.selectedHeroId = id;
+    this.data.selectedHeroId = id === 'hero_worm' ? 'hero_vypolzok' : id;
     this.save();
   }
 
   public isHeroUnlocked(id: string): boolean {
-    return this.data.unlockedHeroIds?.includes(id) ?? false;
+    const canonical = id === 'hero_worm' ? 'hero_vypolzok' : id;
+    return this.data.unlockedHeroIds?.includes(canonical) ?? false;
   }
 
   public unlockHero(id: string): void {
+    const canonical = id === 'hero_worm' ? 'hero_vypolzok' : id;
     if (!this.data.unlockedHeroIds) {
-      this.data.unlockedHeroIds = ['hero_worm'];
+      this.data.unlockedHeroIds = ['hero_vypolzok'];
     }
-    if (!this.data.unlockedHeroIds.includes(id)) {
-      this.data.unlockedHeroIds.push(id);
+    if (!this.data.unlockedHeroIds.includes(canonical)) {
+      this.data.unlockedHeroIds.push(canonical);
       this.save();
     }
   }
 
   public getUnlockedHeroIds(): string[] {
-    return this.data.unlockedHeroIds || ['hero_worm'];
+    return this.data.unlockedHeroIds || ['hero_vypolzok'];
   }
 
   public getPowerUpLevel(id: string): number {

@@ -36,7 +36,7 @@ export class HeroFactory {
 
     if (heroId === 'hero_markovka' && scene.anims.exists('markovka_anim_idle')) {
       sprite.play('markovka_anim_idle');
-    } else if ((textureKey.startsWith('vypolzok') || textureKey.startsWith('tony')) && scene.anims.exists('vypolzok_anim_idle')) {
+    } else if (textureKey.startsWith('vypolzok') && scene.anims.exists('vypolzok_anim_idle')) {
       sprite.play('vypolzok_anim_idle');
     }
 

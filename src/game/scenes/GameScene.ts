@@ -109,7 +109,8 @@ export class GameScene extends Phaser.Scene {
         this.enemiesMap.set(id, enemy);
         this.eventBus.emit('enemy:spawned', { id, x, y });
       },
-      () => ({ halfW: this.cameras.main.width / (2 * this.cameras.main.zoom), halfH: this.cameras.main.height / (2 * this.cameras.main.zoom) })
+      () => ({ halfW: this.cameras.main.width / (2 * this.cameras.main.zoom), halfH: this.cameras.main.height / (2 * this.cameras.main.zoom) }),
+      () => this.enemiesMap.size
     );
 
     if (this.playerEntity.sprite) {
@@ -301,7 +302,7 @@ export class GameScene extends Phaser.Scene {
       }
     }
 
-    this.heroTraitSystem.update(delta, isMoving, this.getTraitCtx(), this.currentHero?.id || 'hero_worm');
+    this.heroTraitSystem.update(delta, isMoving, this.getTraitCtx(), this.currentHero?.id || 'hero_vypolzok');
 
     this.enemyAISystem.update(delta, {
       scene: this, player: this.playerEntity, enemiesMap: this.enemiesMap, spawnManager: this.spawnManager,
@@ -317,7 +318,14 @@ export class GameScene extends Phaser.Scene {
       spawnAcidPool: (x, y, r, dmg, dur, isP) => this.hazardSystem.spawnAcidPool(this, x, y, r, dmg, dur, isP),
     });
 
-    this.lootSystem.update(deltaSeconds, this.playerEntity.x, this.playerEntity.y, this.gameState.playerModifiers, this.gameState.level);
+    this.lootSystem.update(
+      deltaSeconds,
+      this.playerEntity.x,
+      this.playerEntity.y,
+      this.gameState.playerModifiers,
+      this.gameState.level,
+      this.playerEntity.effectiveSpeed
+    );
     this.spawnManager.update(delta, this.gameState.runTime);
     this.hazardSystem.update(delta, this.getHazardCtx());
   }

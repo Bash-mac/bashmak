@@ -10,6 +10,7 @@ export const WORM_UPGRADES: UpgradeDefinition[] = [
     id: 'wpn_slime_spit',
     name: 'Слизеплюй',
     category: 'weapon',
+    iconKey: 'icon_weapon_slime_spit',
     exclusiveHeroId: 'hero_worm',
     maxLevel: 5,
     levels: [
@@ -64,6 +65,7 @@ export const WORM_UPGRADES: UpgradeDefinition[] = [
     id: 'wpn_lace_whip',
     name: 'Шнуровой Кнут',
     category: 'weapon',
+    iconKey: 'icon_weapon_lace_whip',
     exclusiveHeroId: 'hero_bashmak',
     maxLevel: 5,
     levels: [
@@ -114,6 +116,7 @@ export const WORM_UPGRADES: UpgradeDefinition[] = [
     id: 'wpn_carrot_barrage',
     name: 'Морковный Град',
     category: 'weapon',
+    iconKey: 'icon_weapon_carrot_barrage',
     exclusiveHeroId: 'hero_markovka',
     maxLevel: 5,
     levels: [
@@ -163,6 +166,7 @@ export const WORM_UPGRADES: UpgradeDefinition[] = [
     id: 'wpn_eggplant_roll',
     name: 'Фиолетовый Шар',
     category: 'weapon',
+    iconKey: 'icon_weapon_eggplant_roll',
     exclusiveHeroId: 'hero_baklazhan',
     maxLevel: 5,
     levels: [
@@ -216,6 +220,7 @@ export const WORM_UPGRADES: UpgradeDefinition[] = [
     id: 'wpn_homing_daggers',
     name: 'Орбитальные Мухи',
     category: 'weapon',
+    iconKey: 'icon_weapon_orbiting_flies',
     maxLevel: 5,
     levels: [
       {
@@ -268,6 +273,7 @@ export const WORM_UPGRADES: UpgradeDefinition[] = [
     id: 'wpn_mega_boot',
     name: 'Тяжёлый Башмак',
     category: 'weapon',
+    iconKey: 'icon_weapon_mega_boot',
     maxLevel: 5,
     levels: [
       {
@@ -313,6 +319,7 @@ export const WORM_UPGRADES: UpgradeDefinition[] = [
     id: 'wpn_lightning_zap',
     name: 'Чугунный Люк',
     category: 'weapon',
+    iconKey: 'icon_weapon_manhole_drop',
     maxLevel: 5,
     levels: [
       {
@@ -364,6 +371,7 @@ export const WORM_UPGRADES: UpgradeDefinition[] = [
     id: 'wpn_acid_trail',
     name: 'Дырявый Носок',
     category: 'weapon',
+    iconKey: 'icon_weapon_acid_trail',
     maxLevel: 5,
     levels: [
       {
@@ -421,6 +429,7 @@ export const WORM_UPGRADES: UpgradeDefinition[] = [
     id: 'tome_quantity',
     name: '«Двойной Зоб»',
     category: 'tome',
+    iconKey: 'icon_tome_rusty_armor',
     maxLevel: 5,
     levels: [
       {
@@ -477,6 +486,7 @@ export const WORM_UPGRADES: UpgradeDefinition[] = [
     id: 'tome_speed',
     name: '«Турбо-Кеды»',
     category: 'tome',
+    iconKey: 'icon_tome_speed_sneakers',
     maxLevel: 5,
     levels: [
       {
@@ -529,6 +539,7 @@ export const WORM_UPGRADES: UpgradeDefinition[] = [
     id: 'tome_magnet',
     name: '«Липкая Жвачка»',
     category: 'tome',
+    iconKey: 'icon_tome_magnet_tooth',
     maxLevel: 5,
     levels: [
       {
@@ -579,6 +590,7 @@ export const WORM_UPGRADES: UpgradeDefinition[] = [
     id: 'tome_crit_size',
     name: '«Слизь-Кола»',
     category: 'tome',
+    iconKey: 'icon_tome_toxic_rage',
     maxLevel: 5,
     levels: [
       {
@@ -638,6 +650,7 @@ export const WORM_UPGRADES: UpgradeDefinition[] = [
     id: 'tome_vitality',
     name: '«Майка-Алкоголичка»',
     category: 'tome',
+    iconKey: 'icon_tome_mutant_heart',
     maxLevel: 5,
     levels: [
       {
@@ -688,6 +701,8 @@ export const CONSUMABLE_UPGRADES: UpgradeDefinition[] = [
   {
     id: 'consumable_heal',
     name: 'Аптечка-слизь',
+    category: 'consumable',
+    iconKey: 'icon_tome_mutant_heart',
     isConsumable: true,
     maxLevel: 999,
     levels: [
@@ -703,6 +718,8 @@ export const CONSUMABLE_UPGRADES: UpgradeDefinition[] = [
   {
     id: 'consumable_bomb',
     name: 'Бомба-волна',
+    category: 'consumable',
+    iconKey: 'icon_weapon_manhole_drop',
     isConsumable: true,
     maxLevel: 999,
     levels: [
@@ -718,6 +735,8 @@ export const CONSUMABLE_UPGRADES: UpgradeDefinition[] = [
   {
     id: 'consumable_score',
     name: 'Мешок слизи',
+    category: 'consumable',
+    iconKey: 'icon_tome_magnet_tooth',
     isConsumable: true,
     maxLevel: 999,
     levels: [
