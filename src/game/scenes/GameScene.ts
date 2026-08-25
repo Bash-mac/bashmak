@@ -94,12 +94,22 @@ export class GameScene extends Phaser.Scene {
     this.hud = new HUD(this);
     this.gameOverModal = new GameOverModal(this);
 
-    this.levelUpModal = new LevelUpModal(this, (upgrade, levelToApply) => {
-      this.gameState.applyUpgrade(upgrade, this.playerEntity.stats, this.playerEntity.health, levelToApply);
-      if (this.gameState.pendingLevelUps > 0) this.levelUpModal.show();
-      else { this.isGamePaused = false; this.physics.resume(); this.inputManager.setEnabled(true); }
-      this.hud.updateHp(this.playerEntity.health.currentHp, this.playerEntity.stats.maxHp);
-    });
+    this.levelUpModal = new LevelUpModal(
+      this,
+      (upgrade, levelToApply) => {
+        this.gameState.applyUpgrade(upgrade, this.playerEntity.stats, this.playerEntity.health, levelToApply);
+        if (this.gameState.pendingLevelUps > 0) this.levelUpModal.show();
+        else { this.isGamePaused = false; this.physics.resume(); this.inputManager.setEnabled(true); }
+        this.hud.updateHp(this.playerEntity.health.currentHp, this.playerEntity.stats.maxHp);
+      },
+      () => {
+        if (this.gameState.pendingLevelUps > 0) {
+          this.gameState.pendingLevelUps--;
+        }
+        if (this.gameState.pendingLevelUps > 0) this.levelUpModal.show();
+        else { this.isGamePaused = false; this.physics.resume(); this.inputManager.setEnabled(true); }
+      }
+    );
 
     this.spawnManager = new SpawnManager(
       () => ({ x: this.playerEntity.x, y: this.playerEntity.y, vx: this.playerEntity.sprite?.body?.velocity.x ?? 0, vy: this.playerEntity.sprite?.body?.velocity.y ?? 0 }),
@@ -335,6 +345,7 @@ export class GameScene extends Phaser.Scene {
     this.unbindEvents = [];
     this.audio.stopBgm();
     this.hud?.destroy();
+    this.levelUpModal?.destroy();
     this.gameOverModal?.clear();
     this.inputManager.destroy();
     this.lootSystem.clear();

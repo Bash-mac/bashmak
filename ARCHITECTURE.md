@@ -162,10 +162,11 @@ src/
    ```
 3. Добавьте его в пул волн `SpawnManager`.
 
-### Где будут Weapons / Abilities / Upgrades:
-- Контракты уже объявлены в `src/game/data/definitions.ts` (`WeaponDefinition`, `UpgradeDefinition`).
-- Реализации оружия и апгрейдов добавляются в `src/game/data/weapons.ts` и `src/game/data/upgrades.ts` как наборы модификаторов статов (`apply: (stats) => void`).
-- Любое новое оружие со снарядами спавнит пули **только через `ctx.projectilePool`**, а не через `scene.physics.add.sprite().destroy()`.
+### Где находятся Weapons / Abilities / Upgrades:
+- Контракты объявлены в `src/game/data/definitions.ts` (`WeaponDefinition`, `UpgradeDefinition`).
+- Реализации оружия находятся в `src/game/combat/weapons/` (1 файл = 1 класс, реализующий интерфейс `IWeapon`).
+- Базовые данные и параметры прокачки объявляются в `src/game/data/weapons/` и `src/game/data/upgrades.ts`.
+- Любое новое оружие со снарядами спавнит пули **только через `ctx.projectilePool`**, а всплывающий урон через `ctx.damageNumbers`.
 
 ---
 
@@ -176,4 +177,5 @@ src/
 3. **Запрещено** хардкодить типы врагов через `if (enemy.type === '...')` внутри сцен — используйте свойства `EnemyDefinition` и компоненты.
 4. **Запрещено** хранить персистентное состояние игры внутри Phaser GameObjects.
 5. **Запрещено** спавнить и уничтожать снаряды, лут или сплэши через `scene.add.sprite().destroy()` — использовать строго `ProjectilePool`, `LootSystem`, `DamageNumberPool` и `VfxPool`.
+6. **Запрещено** создавать GameObjects (`scene.add.*`), уничтожать контейнеры через `removeAll(true)` или аллоцировать новые объекты внутри методов `update()` — соблюдать Zero-Allocation в тике.
 

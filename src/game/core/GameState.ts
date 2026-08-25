@@ -29,6 +29,10 @@ export class GameState {
   // Pending level ups waiting for modal choice
   public pendingLevelUps = 0;
 
+  // Reroll & Skip Limits per Run
+  public rerollsRemaining = 2;
+  public skipsRemaining = 2;
+
   private constructor() {}
 
   static getInstance(): GameState {
@@ -204,6 +208,8 @@ export class GameState {
     this.selectedUpgrades = [];
     this.playerModifiers = this.createDefaultModifiers();
     this.pendingLevelUps = 0;
+    this.rerollsRemaining = 2;
+    this.skipsRemaining = 2;
   }
 
   /**

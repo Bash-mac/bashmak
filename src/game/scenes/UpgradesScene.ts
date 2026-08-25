@@ -116,6 +116,10 @@ export class UpgradesScene extends Phaser.Scene {
       isDragging = false;
     });
 
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.input.removeAllListeners();
+    });
+
     // 4. Bottom Footer (Action Buttons)
     const footerY = height - 42;
 

@@ -9,16 +9,19 @@ import { AudioManager } from '../../audio/AudioManager';
 export class LevelUpModal {
   private scene: Phaser.Scene;
   private onUpgradeSelected: (upgrade: UpgradeDefinition, levelToApply: number) => void;
+  private onSkip?: () => void;
   private platform = createPlatformAdapter();
   private elements: Phaser.GameObjects.GameObject[] = [];
   public isVisible = false;
 
   constructor(
     scene: Phaser.Scene,
-    onUpgradeSelected: (upgrade: UpgradeDefinition, levelToApply: number) => void
+    onUpgradeSelected: (upgrade: UpgradeDefinition, levelToApply: number) => void,
+    onSkip?: () => void
   ) {
     this.scene = scene;
     this.onUpgradeSelected = onUpgradeSelected;
+    this.onSkip = onSkip;
   }
 
   show(): void {
@@ -75,11 +78,11 @@ export class LevelUpModal {
     const availableWidth = width - 48;
     const spacing = Math.min(22, Math.max(10, (availableWidth - totalCards * 280) / Math.max(1, totalCards - 1)));
     const cardWidth = Math.min(280, Math.floor((availableWidth - (totalCards - 1) * spacing) / totalCards));
-    const cardHeight = Math.min(460, Math.floor(height - subtitleY - 45));
+    const cardHeight = Math.min(430, Math.floor(height - subtitleY - 65));
 
     const totalW = totalCards * cardWidth + (totalCards - 1) * spacing;
     const startX = (width - totalW) / 2 + cardWidth / 2;
-    const cardY = subtitleY + 18 + cardHeight / 2;
+    const cardY = subtitleY + 14 + cardHeight / 2;
 
     let currentIdx = 0;
 
@@ -94,6 +97,81 @@ export class LevelUpModal {
       this.createCard(opt.upgrade, opt.levelToApply, cardX, cardY, cardWidth, cardHeight);
       currentIdx++;
     });
+
+    // 5. Bottom Action Bar: REROLL & SKIP
+    const btnBarY = height - 26;
+    const btnW = Math.min(180, Math.floor(width * 0.22));
+    const btnH = 34;
+    const btnGap = 20;
+
+    // Reroll Button
+    const rerollX = width / 2 - btnW / 2 - btnGap / 2;
+    const canReroll = gameState.rerollsRemaining > 0;
+    const rerollBg = this.scene.add
+      .rectangle(rerollX, btnBarY, btnW, btnH, canReroll ? 0x78350f : 0x1e293b, 0.95)
+      .setStrokeStyle(1.5, canReroll ? 0xfacc15 : 0x475569)
+      .setScrollFactor(0)
+      .setDepth(10005);
+
+    const rerollText = this.scene.add
+      .text(rerollX, btnBarY, `🎲 РЕРОЛЛ (${gameState.rerollsRemaining})`, {
+        fontSize: width < 700 ? '12px' : '13px',
+        fontStyle: 'bold',
+        color: canReroll ? '#fde047' : '#64748b',
+        fontFamily: 'monospace',
+      })
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(10006);
+
+    if (canReroll) {
+      rerollBg.setInteractive({ useHandCursor: true });
+      rerollBg.on('pointerover', () => rerollBg.setScale(1.04));
+      rerollBg.on('pointerout', () => rerollBg.setScale(1.0));
+      rerollBg.on('pointerdown', () => {
+        this.platform.vibrate(30);
+        AudioManager.getInstance().playClick();
+        gameState.rerollsRemaining--;
+        this.show();
+      });
+    }
+
+    // Skip Button
+    const skipX = width / 2 + btnW / 2 + btnGap / 2;
+    const canSkip = gameState.skipsRemaining > 0;
+    const skipBg = this.scene.add
+      .rectangle(skipX, btnBarY, btnW, btnH, canSkip ? 0x1e3a8a : 0x1e293b, 0.95)
+      .setStrokeStyle(1.5, canSkip ? 0x60a5fa : 0x475569)
+      .setScrollFactor(0)
+      .setDepth(10005);
+
+    const skipText = this.scene.add
+      .text(skipX, btnBarY, `⏭ ПРОПУСК (${gameState.skipsRemaining})`, {
+        fontSize: width < 700 ? '12px' : '13px',
+        fontStyle: 'bold',
+        color: canSkip ? '#93c5fd' : '#64748b',
+        fontFamily: 'monospace',
+      })
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(10006);
+
+    if (canSkip) {
+      skipBg.setInteractive({ useHandCursor: true });
+      skipBg.on('pointerover', () => skipBg.setScale(1.04));
+      skipBg.on('pointerout', () => skipBg.setScale(1.0));
+      skipBg.on('pointerdown', () => {
+        this.platform.vibrate(30);
+        AudioManager.getInstance().playClick();
+        gameState.skipsRemaining--;
+        this.hide();
+        if (this.onSkip) {
+          this.onSkip();
+        }
+      });
+    }
+
+    this.elements.push(rerollBg, rerollText, skipBg, skipText);
   }
 
   private createEvolutionCard(

@@ -11,7 +11,7 @@ export const WORM_UPGRADES: UpgradeDefinition[] = [
     name: 'Слизеплюй',
     category: 'weapon',
     iconKey: 'icon_weapon_slime_spit',
-    exclusiveHeroId: 'hero_worm',
+    exclusiveHeroId: 'hero_vypolzok',
     maxLevel: 5,
     levels: [
       {
