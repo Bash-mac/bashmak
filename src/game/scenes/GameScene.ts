@@ -154,9 +154,10 @@ export class GameScene extends Phaser.Scene {
     this.unbindEvents.push(
       this.eventBus.on('enemy:died', (data) => {
         const enemy = this.enemiesMap.get(data.id);
-        if (enemy && !enemy.isExploding) {
+        if (enemy) {
           if (enemy.definition?.archetype === 'exploder') {
             this.hazardSystem.detonateExploder(enemy, this.getHazardCtx());
+            if (this.currentHero?.id === 'hero_markovka') this.heroTraitSystem.onEnemyKilledByMarkovka(this.getTraitCtx());
           } else {
             this.lootSystem.spawnGem(data.x, data.y, data.xpValue, this.playerEntity.x, this.playerEntity.y);
             if (enemy.definition?.archetype === 'boss') this.lootSystem.spawnGoo(data.x, data.y, 25);

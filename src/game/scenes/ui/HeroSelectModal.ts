@@ -32,11 +32,25 @@ export class HeroSelectModal {
       .setInteractive();
     this.elements.push(overlay);
 
-    // 2. Title & Subtitle Banner
-    const titleY = Math.max(30, height * 0.07);
+    // 2. Title & Subtitle Banner (Resting on a massive Sewer Pipe / Iron Plank)
+    const titleY = Math.max(32, height * 0.075);
+    const bannerW = Math.min(width - 48, 760);
+    const bannerH = 56;
+
+    const bannerGfx = this.scene.add.graphics().setDepth(10000).setScrollFactor(0);
+    bannerGfx.fillStyle(0x070b13, 0.95);
+    bannerGfx.lineStyle(2, 0x1e293b, 1);
+    bannerGfx.fillRoundedRect(width / 2 - bannerW / 2, titleY - bannerH / 2 + 10, bannerW, bannerH, 10);
+    bannerGfx.strokeRoundedRect(width / 2 - bannerW / 2, titleY - bannerH / 2 + 10, bannerW, bannerH, 10);
+
+    // Pipe rivet bolts on sides
+    bannerGfx.fillStyle(0x334155, 1);
+    bannerGfx.fillCircle(width / 2 - bannerW / 2 + 14, titleY + 10, 4);
+    bannerGfx.fillCircle(width / 2 + bannerW / 2 - 14, titleY + 10, 4);
+
     const title = this.scene.add
-      .text(width / 2, titleY, 'ВЫБОР МУТАНТА', {
-        fontSize: width < 700 ? '26px' : '34px',
+      .text(width / 2, titleY - 2, 'ВЫБОР МУТАНТА', {
+        fontSize: width < 700 ? '24px' : '32px',
         color: '#4ade80',
         fontFamily: 'Boingster',
         stroke: '#064e3b',
@@ -47,8 +61,8 @@ export class HeroSelectModal {
       .setDepth(10001);
 
     const subtitle = this.scene.add
-      .text(width / 2, titleY + 30, 'Выбери своего героя канализации:', {
-        fontSize: width < 700 ? '12px' : '14px',
+      .text(width / 2, titleY + 23, 'Выбери своего героя канализации:', {
+        fontSize: width < 700 ? '11px' : '13px',
         color: '#94a3b8',
         fontFamily: 'NarisovanniySANS',
       })
@@ -76,7 +90,7 @@ export class HeroSelectModal {
       this.hide();
     });
 
-    this.elements.push(title, subtitle, closeBtn);
+    this.elements.push(bannerGfx, title, subtitle, closeBtn);
 
     // 3. Render 4 Hero Cards in a Single Horizontal Row (Landscape)
     const totalHeroes = ALL_HEROES.length;
@@ -104,7 +118,7 @@ export class HeroSelectModal {
 
     const totalRowW = totalHeroes * cardWidth + (totalHeroes - 1) * spacing;
     const startX = (width - totalRowW) / 2 + cardWidth / 2;
-    const centerY = titleY + 40 + cardHeight / 2;
+    const centerY = titleY + 44 + cardHeight / 2;
 
     ALL_HEROES.forEach((hero, index) => {
       const cardX = startX + index * (cardWidth + spacing);
@@ -138,22 +152,37 @@ export class HeroSelectModal {
 
     const isUnlocked = hero.id === 'hero_vypolzok' || hero.id === 'hero_worm' || (hero.id === 'hero_markovka' && isDev);
 
-    // 1. Outer Card Box with Dark Comic Theme & Active Neon Glow
+    // 1. Outer Card Box with Multi-layer Glow & Corner Accents
     const cardBg = this.scene.add.graphics();
     const bgColor = 0x060911; // Solid dark background
-    const borderColor = isSelected ? 0x22c55e : (isUnlocked ? 0x334155 : 0x1e293b);
-    const borderWidth = isSelected ? 3.5 : 1.5;
 
-    // Glow for selected
     if (isSelected) {
-      cardBg.lineStyle(6 * scale, 0x22c55e, 0.25);
+      // 3-layer soft green slime glow
+      cardBg.lineStyle(14 * scale, 0x22c55e, 0.08);
+      cardBg.strokeRoundedRect(-w / 2 - 4, -h / 2 - 4, w + 8, h + 8, 12);
+      cardBg.lineStyle(8 * scale, 0x22c55e, 0.18);
       cardBg.strokeRoundedRect(-w / 2 - 2, -h / 2 - 2, w + 4, h + 4, 10);
+      cardBg.lineStyle(3 * scale, 0x4ade80, 1.0);
+      cardBg.strokeRoundedRect(-w / 2, -h / 2, w, h, 8);
+
+      // Slime/metallic corner accents
+      cardBg.fillStyle(0x4ade80, 1);
+      const cSize = 7 * scale;
+      cardBg.fillRect(-w / 2, -h / 2, cSize, 2.5);
+      cardBg.fillRect(-w / 2, -h / 2, 2.5, cSize);
+      cardBg.fillRect(w / 2 - cSize, -h / 2, cSize, 2.5);
+      cardBg.fillRect(w / 2 - 2.5, -h / 2, 2.5, cSize);
+      cardBg.fillRect(-w / 2, h / 2 - 2.5, cSize, 2.5);
+      cardBg.fillRect(-w / 2, h / 2 - cSize, 2.5, cSize);
+      cardBg.fillRect(w / 2 - cSize, h / 2 - 2.5, cSize, 2.5);
+      cardBg.fillRect(w / 2 - 2.5, h / 2 - cSize, 2.5, cSize);
+    } else {
+      cardBg.lineStyle(isUnlocked ? 1.8 : 1.2, isUnlocked ? 0x334155 : 0x1e293b, 1);
+      cardBg.strokeRoundedRect(-w / 2, -h / 2, w, h, 8);
     }
 
     cardBg.fillStyle(bgColor, 0.98);
-    cardBg.lineStyle(borderWidth, borderColor, 1);
     cardBg.fillRoundedRect(-w / 2, -h / 2, w, h, 8);
-    cardBg.strokeRoundedRect(-w / 2, -h / 2, w, h, 8);
 
     // 2. Poster Art (Positioned tightly at top)
     const posterW = w - 10;
@@ -173,7 +202,7 @@ export class HeroSelectModal {
       posterImage.setTint(0x334155);
     }
 
-    // 3. Stats Panel (3 Columns with Dividers)
+    // 3. Stats Panel (3 Columns with Dividers & +30% Larger Numbers)
     const statsPanelW = w - 14;
     const statsPanelY = posterY + posterH / 2 + 5 + statsPanelH / 2;
 
@@ -196,12 +225,12 @@ export class HeroSelectModal {
     const col2X = 0;
     const col3X = statsPanelW / 3;
     const statsValY = statsPanelY - Math.round(9 * scale);
-    const statsLblY = statsPanelY + Math.round(10 * scale);
+    const statsLblY = statsPanelY + Math.round(11 * scale);
 
-    const statColor = isUnlocked ? '#f8fafc' : '#64748b';
-    const labelColor = isUnlocked ? '#94a3b8' : '#475569';
-    const statFontSize = Math.round(13 * scale) + 'px';
-    const labelFontSize = Math.round(10 * scale) + 'px';
+    const statColor = isUnlocked ? '#ffffff' : '#64748b';
+    const labelColor = isUnlocked ? '#e2e8f0' : '#475569';
+    const statFontSize = Math.round(16 * scale) + 'px'; // +25-30% larger
+    const labelFontSize = Math.round(10.5 * scale) + 'px';
 
     // Col 1: HP
     const hpVal = this.scene.add
@@ -251,7 +280,7 @@ export class HeroSelectModal {
       })
       .setOrigin(0.5);
 
-    // 4. Trait Card with Slime Icon Box
+    // 4. Trait Card with Unified Iron Plate Icon Box
     const traitPanelW = w - 14;
     const traitPanelY = statsPanelY + statsPanelH / 2 + 5 + traitPanelH / 2;
 
@@ -261,13 +290,13 @@ export class HeroSelectModal {
     traitGfx.fillRoundedRect(-traitPanelW / 2, traitPanelY - traitPanelH / 2, traitPanelW, traitPanelH, 6);
     traitGfx.strokeRoundedRect(-traitPanelW / 2, traitPanelY - traitPanelH / 2, traitPanelW, traitPanelH, 6);
 
-    // Slime Icon Badge on the left
+    // Unified Iron Box for all 4 trait icons
     const iconBoxSize = Math.round(44 * scale);
     const iconBoxX = -traitPanelW / 2 + 6 + iconBoxSize / 2;
     const iconBoxY = traitPanelY;
 
-    traitGfx.fillStyle(isUnlocked ? 0x052e16 : 0x0f172a, 0.9);
-    traitGfx.lineStyle(1, isUnlocked ? 0x15803d : 0x1e293b, 1);
+    traitGfx.fillStyle(isUnlocked ? 0x052e16 : 0x070b13, 0.95);
+    traitGfx.lineStyle(1.5, isUnlocked ? 0x15803d : 0x1e293b, 1);
     traitGfx.fillRoundedRect(iconBoxX - iconBoxSize / 2, iconBoxY - iconBoxSize / 2, iconBoxSize, iconBoxSize, 6);
     traitGfx.strokeRoundedRect(iconBoxX - iconBoxSize / 2, iconBoxY - iconBoxSize / 2, iconBoxSize, iconBoxSize, 6);
 
@@ -309,18 +338,49 @@ export class HeroSelectModal {
       })
       .setOrigin(0, 0);
 
-    // 5. 3D Comic Action Button (Positioned tightly at the bottom)
+    // 5. 3D Comic Action Button (Clean Status vs Action CTA Logic)
     const btnW = Math.min(w - 20, Math.round(195 * scale));
     const btnY = traitPanelY + traitPanelH / 2 + 6 + btnH / 2;
 
     const btnTex = isSelected
-      ? 'btn_comic_gold'
+      ? 'btn_frame_dark' // Calm dark-emerald status plate for selected
       : isUnlocked
-      ? 'btn_comic_green'
-      : 'btn_comic_dark';
+      ? 'btn_frame_green' // Juicy primary CTA for available heroes
+      : 'btn_frame_dark';
 
     const btnImage = this.scene.add.image(0, btnY, btnTex);
     btnImage.setDisplaySize(btnW, btnH);
+    if (isSelected) {
+      btnImage.setTint(0x1e3a29); // Subtle emerald sheen
+    }
+
+    const btnLabelStr = isSelected
+      ? '✓ АКТИВЕН'
+      : isUnlocked
+      ? 'ВЫБРАТЬ'
+      : 'ЗАКРЫТО';
+
+    const btnLabelColor = isSelected
+      ? '#86efac'
+      : isUnlocked
+      ? '#ffffff'
+      : '#64748b';
+
+    const btnLabelStroke = isSelected
+      ? '#064e3b'
+      : isUnlocked
+      ? '#064e3b'
+      : '#0f172a';
+
+    const btnLabel = this.scene.add
+      .text(0, btnY, btnLabelStr, {
+        fontSize: Math.round(15 * scale) + 'px',
+        color: btnLabelColor,
+        fontFamily: 'Gagalin',
+        stroke: btnLabelStroke,
+        strokeThickness: Math.round(3.5 * scale),
+      })
+      .setOrigin(0.5);
 
     // Active Selection Top Badge
     let activeBadge: Phaser.GameObjects.Text | null = null;
@@ -361,6 +421,7 @@ export class HeroSelectModal {
       traitHeader,
       traitDesc,
       btnImage,
+      btnLabel,
     ];
     if (activeBadge) containerItems.push(activeBadge);
 
@@ -376,7 +437,8 @@ export class HeroSelectModal {
 
       hitArea.on('pointerover', () => {
         if (!isSelected) {
-          btnImage.setTexture('btn_comic_green_hover');
+          btnImage.setTint(0xe2fbe8);
+          btnLabel.setScale(1.06);
         }
         this.scene.tweens.add({
           targets: cardContainer,
@@ -388,7 +450,8 @@ export class HeroSelectModal {
       });
 
       hitArea.on('pointerout', () => {
-        btnImage.setTexture(btnTex);
+        btnImage.clearTint();
+        btnLabel.setScale(1.0);
         this.scene.tweens.add({
           targets: cardContainer,
           scaleX: 1.0,

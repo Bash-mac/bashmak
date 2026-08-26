@@ -141,7 +141,11 @@ export class BootScene extends Phaser.Scene {
     this.load.image('card_frame_gold', '/assets/ui/frames/card_frame_gold.webp');
     this.load.image('card_frame_consumable', '/assets/ui/frames/card_frame_consumable.webp');
 
-    // 3. Action Buttons (512x202)
+    // 3. Action Buttons (512x202) - Blank Frames for Multi-language Localization
+    this.load.image('btn_frame_green', '/assets/ui/buttons/btn_frame_green.webp');
+    this.load.image('btn_frame_gold', '/assets/ui/buttons/btn_frame_gold.webp');
+    this.load.image('btn_frame_red', '/assets/ui/buttons/btn_frame_red.webp');
+    this.load.image('btn_frame_dark', '/assets/ui/buttons/btn_frame_dark.webp');
     this.load.image('btn_comic_green', '/assets/ui/buttons/btn_comic_green.webp');
     this.load.image('btn_comic_green_hover', '/assets/ui/buttons/btn_comic_green_hover.webp');
     this.load.image('btn_comic_gold', '/assets/ui/buttons/btn_comic_gold.webp');

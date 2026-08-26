@@ -129,7 +129,7 @@ export class HazardSystem {
     scene: Phaser.Scene,
     onExplode: (e: Entity) => void
   ): void {
-    if (exploder.isExploding) return;
+    if (exploder.isExploding || !exploder.isAlive || !exploder.sprite?.active) return;
     exploder.isExploding = true;
     exploder.stats.speed = 0;
     if (exploder.sprite?.body) {
@@ -146,7 +146,9 @@ export class HazardSystem {
         repeat: 3,
         duration: 120,
         onComplete: () => {
-          onExplode(exploder);
+          if (exploder.sprite?.active) {
+            onExplode(exploder);
+          }
         },
       });
     } else {
@@ -155,13 +157,31 @@ export class HazardSystem {
   }
 
   public detonateExploder(exploder: Entity, ctx: HazardContext): void {
+    if (!exploder || (!exploder.isAlive && !exploder.sprite?.active)) return;
     const x = exploder.x;
     const y = exploder.y;
     const blastRadius = exploder.definition?.explosionRadius || 80;
     const blastDmg = exploder.definition?.explosionDamage || 22;
 
+    // 1. Clean up entity & sprite immediately so it never lingers or moves as a zombie
+    exploder.health.currentHp = 0;
+    ctx.enemiesMap.delete(exploder.id);
+    if (exploder.sprite) {
+      ctx.scene.tweens.killTweensOf(exploder.sprite);
+      exploder.destroy();
+    }
+
+    // 2. Drop loot (XP gems + chance of goo)
+    const xpValue = exploder.definition?.xpReward || 4;
+    ctx.lootSystem.spawnGem(x, y, xpValue, ctx.player.x, ctx.player.y);
+    if (Math.random() < 0.16) {
+      ctx.lootSystem.spawnGoo(x, y, 1);
+    }
+
+    // 3. Spawn residual acid hazard pool
     this.spawnAcidPool(ctx.scene, x, y, blastRadius, 6, 3500, false);
 
+    // 4. Explosion visual blast effect
     const blastGfx = ctx.scene.add.graphics();
     blastGfx.setPosition(x, y);
     blastGfx.lineStyle(3, 0xef4444, 1);
@@ -178,6 +198,7 @@ export class HazardSystem {
       onComplete: () => blastGfx.destroy(),
     });
 
+    // 5. Blast damage to player (with knockback) and neighboring enemies
     const distToPlayer = Phaser.Math.Distance.Between(ctx.player.x, ctx.player.y, x, y);
     if (distToPlayer <= blastRadius) {
       ctx.applyDamageToPlayer(blastDmg);

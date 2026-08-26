@@ -331,7 +331,7 @@ export class LevelUpModal {
     frame.setDisplaySize(w, h);
 
     // 3. Category / Level Badge (Under top plate)
-    let badgeText = isWeapon ? '⚔️ ОРУЖИЕ' : isConsumable ? '🧪 РАСХОДНИК' : '📜 ФОЛИАНТ';
+    let badgeText = isWeapon ? '⚔️ ОРУЖИЕ' : isConsumable ? '🧪 РАСХОДНИК' : '🧪 ЖИЖА';
     if (!isConsumable && levelToApply > 1) {
       badgeText = `${badgeText}  LVL ${levelToApply - 1} → ${levelToApply}`;
     }
