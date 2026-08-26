@@ -16,7 +16,21 @@ export class GameApplication {
     // 1. Initialize Platform Adapter (Browser or Telegram)
     await this.platform.initialize();
 
-    // 2. Initialize Phaser Game instance
+    // 2. Ensure web fonts are fully loaded for Canvas rendering
+    if (typeof document !== 'undefined' && document.fonts) {
+      try {
+        await Promise.all([
+          document.fonts.load('16px "Boingster"', 'ВЫБОР МУТАНТА'),
+          document.fonts.load('16px "NarisovanniySANS"', 'Слизистый след'),
+          document.fonts.load('16px "Gagalin"', 'ВЫБРАТЬ SELECT'),
+          document.fonts.ready,
+        ]);
+      } catch (e) {
+        console.warn('[GameApplication] Fonts load timeout or fallback:', e);
+      }
+    }
+
+    // 3. Initialize Phaser Game instance
     this.game = new Phaser.Game(GameConfig);
 
     // Auto-adapt canvas on dynamic orientation change or window resize

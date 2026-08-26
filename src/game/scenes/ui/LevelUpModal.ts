@@ -242,20 +242,11 @@ export class LevelUpModal {
 
     // 7. 3D Comic Action Button (Resting over bottom plate)
     const btnW = Math.min(w - 48, 175);
-    const btnH = Math.min(46, Math.floor(btnW * 0.38));
+    const btnH = Math.round(btnW * (202 / 512));
     const btnY = h * 0.355;
 
     const btnImage = this.scene.add.image(0, btnY, 'btn_comic_gold');
     btnImage.setDisplaySize(btnW, btnH);
-
-    const btnText = this.scene.add
-      .text(0, btnY, 'МУТИРОВАТЬ!', {
-        fontSize: w < 240 ? '12px' : '14px',
-        fontStyle: 'bold',
-        color: '#0f172a',
-        fontFamily: 'monospace',
-      })
-      .setOrigin(0.5, 0.5);
 
     cardContainer.add([
       bg,
@@ -265,7 +256,6 @@ export class LevelUpModal {
       nameText,
       descText,
       btnImage,
-      btnText,
     ]);
 
     // Top-Level HitArea (guaranteed click handling across all cameras)
@@ -396,22 +386,11 @@ export class LevelUpModal {
 
     // 7. 3D Comic Action Button (Resting over bottom plate)
     const btnW = Math.min(w - 48, 175);
-    const btnH = Math.min(46, Math.floor(btnW * 0.38));
+    const btnH = Math.round(btnW * (202 / 512));
     const btnY = h * 0.355;
 
     const btnImage = this.scene.add.image(0, btnY, 'btn_comic_green');
     btnImage.setDisplaySize(btnW, btnH);
-
-    const btnText = this.scene.add
-      .text(0, btnY, 'ВЫБРАТЬ', {
-        fontSize: w < 240 ? '12px' : '14px',
-        fontStyle: 'bold',
-        color: '#ffffff',
-        fontFamily: 'monospace',
-        stroke: '#064e3b',
-        strokeThickness: 3,
-      })
-      .setOrigin(0.5, 0.5);
 
     cardContainer.add([
       bg,
@@ -421,7 +400,6 @@ export class LevelUpModal {
       nameText,
       descText,
       btnImage,
-      btnText,
     ]);
 
     // Top-Level HitArea (guaranteed click handling across all cameras)

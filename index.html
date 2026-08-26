@@ -19,6 +19,10 @@
         screen.orientation.lock('landscape').catch(() => {});
       }
     </script>
+    <!-- Google Fonts: Underdog & Balsamiq Sans with Cyrillic support -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Balsamiq+Sans:wght@700&family=Underdog&display=swap" rel="stylesheet" />
     <!-- Telegram Mini App SDK (безопасно подключается в head, если не в Telegram — не мешает) -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
   </head>
@@ -48,6 +52,12 @@
           75% { transform: rotate(-90deg); }
         }
       </style>
+    </div>
+    <!-- Font Preload Trigger for Phaser Canvas (Forces browser to fetch local font files before Canvas renders) -->
+    <div style="position: absolute; left: -9999px; top: -9999px; opacity: 0; pointer-events: none;" aria-hidden="true">
+      <span style="font-family: 'Boingster';">ВЫБОР МУТАНТА 0123456789</span>
+      <span style="font-family: 'NarisovanniySANS';">Слизистый след 0123456789</span>
+      <span style="font-family: 'Gagalin';">ВЫБРАТЬ SELECT 0123456789</span>
     </div>
     <div id="game-container"></div>
     <script type="module" src="/src/main.ts"></script>

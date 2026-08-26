@@ -86,9 +86,11 @@ export class BootScene extends Phaser.Scene {
     // Markovka Character Sprites
     for (let i = 1; i <= 4; i++) {
       this.load.image(`markovka_idle_${i}`, `/assets/sprites/markovka/idle/idle_${i}.webp`);
-      this.load.image(`markovka_run_${i}`, `/assets/sprites/markovka/run/run_${i}.webp`);
       this.load.image(`markovka_attack_${i}`, `/assets/sprites/markovka/attack/attack_${i}.webp`);
       this.load.image(`markovka_hurt_${i}`, `/assets/sprites/markovka/hurt/hurt_${i}.webp`);
+    }
+    for (let i = 1; i <= 18; i++) {
+      this.load.image(`markovka_run_${i}`, `/assets/sprites/markovka/run/run_${i}.webp`);
     }
     for (let i = 1; i <= 5; i++) {
       this.load.image(`markovka_dead_${i}`, `/assets/sprites/markovka/dead/dead_${i}.webp`);
@@ -316,16 +318,11 @@ export class BootScene extends Phaser.Scene {
       repeat: -1,
     });
 
-    // 2. Run (fast punk sprint, mohawk trails)
+    // 2. Run (3/4 punk swagger stride)
     this.anims.create({
       key: 'markovka_anim_run',
-      frames: [
-        { key: 'markovka_run_1' },
-        { key: 'markovka_run_2' },
-        { key: 'markovka_run_3' },
-        { key: 'markovka_run_4' },
-      ],
-      frameRate: 10,
+      frames: Array.from({ length: 18 }, (_, i) => ({ key: `markovka_run_${i + 1}` })),
+      frameRate: 16,
       repeat: -1,
     });
 
