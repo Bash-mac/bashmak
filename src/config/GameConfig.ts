@@ -9,10 +9,10 @@ export const GameConfig: Phaser.Types.Core.GameConfig = {
   parent: 'game-container',
   backgroundColor: '#0b0e14',
   scale: {
-    mode: Phaser.Scale.RESIZE,
+    mode: Phaser.Scale.EXPAND,
     autoCenter: Phaser.Scale.CENTER_BOTH,
-    width: '100%',
-    height: '100%',
+    width: 1280,
+    height: 720,
   },
   physics: {
     default: 'arcade',
@@ -26,8 +26,7 @@ export const GameConfig: Phaser.Types.Core.GameConfig = {
     antialias: true,
     pixelArt: false,
     roundPixels: false,
-    ...((typeof window !== 'undefined' && window.devicePixelRatio) ? { resolution: Math.min(window.devicePixelRatio, 2.5) } : {}),
-  } as Phaser.Types.Core.RenderConfig,
+  },
   scene: [BootScene, MenuScene, GameScene, UpgradesScene],
   input: {
     activePointers: 3,

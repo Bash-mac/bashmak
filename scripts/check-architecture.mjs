@@ -67,10 +67,16 @@ function checkFile(filePath) {
     }
   }
 
-  // 7. Retina / High-DPI & Crisp Render Config: GameConfig must enforce resolution and roundPixels: false
+  // 7. High-DPI & Crisp Render Config: GameConfig must enforce Phaser.Scale.EXPAND with base 1280x720
   if (relPath === 'src/config/GameConfig.ts') {
-    if (!content.includes('resolution:') || !content.includes('devicePixelRatio')) {
-      errors.push(`❌ [RENDER/DPI] 'resolution: window.devicePixelRatio' is missing in '${relPath}'. Retina/High-DPI resolution is mandatory!`);
+    if (!content.includes('Phaser.Scale.EXPAND') && !content.includes('Scale.EXPAND')) {
+      errors.push(`❌ [RENDER/SCALE] 'mode: Phaser.Scale.EXPAND' is required in '${relPath}' to prevent blurry rendering on mobile.`);
+    }
+    if (content.includes('Scale.RESIZE')) {
+      errors.push(`❌ [RENDER/SCALE] 'Scale.RESIZE' is forbidden in '${relPath}'. It causes extreme downscaled blur on mobile Retina displays!`);
+    }
+    if (!content.includes('width: 1280') || !content.includes('height: 720')) {
+      errors.push(`❌ [RENDER/SCALE] Base resolution must be width: 1280, height: 720 in '${relPath}'.`);
     }
     if (content.includes('roundPixels: true')) {
       errors.push(`❌ [RENDER/DPI] 'roundPixels: true' is forbidden in '${relPath}'. Must be false to prevent blurry/distorted glyph rendering!`);
