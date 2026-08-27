@@ -24,7 +24,7 @@ export const WPN_MEGA_BOOT: UpgradeDefinition = {
     },
     {
       level: 3,
-      description: '★ ДВОЙНОЙ ТОПОТ: Падают два ботинка подряд!',
+      description: ' ДВОЙНОЙ ТОПОТ: Падают два ботинка подряд!',
       apply: (mod) => {
         mod.megaBootLevel = 3;
       },
@@ -38,7 +38,7 @@ export const WPN_MEGA_BOOT: UpgradeDefinition = {
     },
     {
       level: 5,
-      description: '★ ТИТАНИЧЕСКИЙ ШЛЕПОК: Круговой сейсмический разлом на весь экран!',
+      description: ' ТИТАНИЧЕСКИЙ ШЛЕПОК: Круговой сейсмический разлом на весь экран!',
       apply: (mod) => {
         mod.megaBootLevel = 5;
       },

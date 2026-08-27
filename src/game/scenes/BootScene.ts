@@ -174,13 +174,55 @@ export class BootScene extends Phaser.Scene {
     this.load.image('icon_evo_typhoon_flail', '/assets/ui/icons/icon_evo_typhoon_flail.webp');
     this.load.image('icon_evo_gatling_carrot', '/assets/ui/icons/icon_evo_gatling_carrot.webp');
     this.load.image('icon_evo_planetary_cataclysm', '/assets/ui/icons/icon_evo_planetary_cataclysm.webp');
+
+    // 6. Enemy Sprites & Death VFX
+    for (let i = 1; i <= 3; i++) {
+      this.load.image(`tex_fodder_run_${i}`, `/assets/sprites/enemies/fodder/fodder_${i}.webp`);
+      this.load.image(`tex_crawler_run_${i}`, `/assets/sprites/enemies/swarmer/swarmer_${i}.webp`);
+      this.load.image(`tex_tank_run_${i}`, `/assets/sprites/enemies/tank/tank_${i}.webp`);
+    }
+    for (let i = 1; i <= 4; i++) {
+      this.load.image(`tex_sprinter_run_${i}`, `/assets/sprites/enemies/sprinter/sprinter_${i}.webp`);
+      this.load.image(`tex_exploder_run_${i}`, `/assets/sprites/enemies/exploder/exploder_${i}.webp`);
+      this.load.image(`tex_miniboss_run_${i}`, `/assets/sprites/enemies/miniboss/miniboss_${i}.webp`);
+      this.load.image(`tex_boss_run_${i}`, `/assets/sprites/enemies/boss/boss_${i}.webp`);
+      this.load.image(`tex_enemy_dead_${i}`, `/assets/sprites/enemies/enemy_dead/enemy_dead_${i}.webp`);
+    }
   }
 
   create(): void {
     PlaceholderTextures.generate(this);
     this.createVypolzokAnimations();
     this.createMarkovkaAnimations();
+    this.createEnemyAnimations();
     this.scene.start('MenuScene');
+  }
+
+  private createEnemyAnimations(): void {
+    const enemies = [
+      { key: 'anim_fodder_run', prefix: 'tex_fodder_run_', count: 3, rate: 8 },
+      { key: 'anim_crawler_run', prefix: 'tex_crawler_run_', count: 3, rate: 6 },
+      { key: 'anim_sprinter_run', prefix: 'tex_sprinter_run_', count: 4, rate: 12 },
+      { key: 'anim_tank_run', prefix: 'tex_tank_run_', count: 3, rate: 6 },
+      { key: 'anim_exploder_run', prefix: 'tex_exploder_run_', count: 4, rate: 8 },
+      { key: 'anim_miniboss_run', prefix: 'tex_miniboss_run_', count: 4, rate: 8 },
+      { key: 'anim_boss_run', prefix: 'tex_boss_run_', count: 4, rate: 8 },
+    ];
+    for (const e of enemies) {
+      this.anims.create({
+        key: e.key,
+        frames: Array.from({ length: e.count }, (_, i) => ({ key: `${e.prefix}${i + 1}` })),
+        frameRate: e.rate,
+        repeat: -1,
+      });
+    }
+
+    this.anims.create({
+      key: 'vfx_anim_enemy_dead',
+      frames: Array.from({ length: 3 }, (_, i) => ({ key: `tex_enemy_dead_${i + 1}` })),
+      frameRate: 14,
+      repeat: 0,
+    });
   }
 
   private createVypolzokAnimations(): void {

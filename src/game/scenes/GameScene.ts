@@ -159,6 +159,8 @@ export class GameScene extends Phaser.Scene {
           if (enemy.definition?.archetype === 'exploder') {
             this.hazardSystem.detonateExploder(enemy, this.getHazardCtx());
           } else {
+            const deathScale = (enemy.definition?.displayScale ?? 0.3) * 1.2;
+            this.vfxPool.spawnEnemyDeath(data.x, data.y, deathScale);
             this.lootSystem.spawnGem(data.x, data.y, data.xpValue, this.playerEntity.x, this.playerEntity.y);
             if (enemy.definition?.archetype === 'boss') this.lootSystem.spawnGoo(data.x, data.y, 25);
             else if (enemy.type === 'boss' || (enemy.definition?.stats.maxHp ?? 0) >= 150) this.lootSystem.spawnGoo(data.x, data.y, 5);
@@ -250,7 +252,7 @@ export class GameScene extends Phaser.Scene {
         this.hud.updateHp(this.playerEntity.health.currentHp, this.playerEntity.stats.maxHp);
         this.playerIframeTimerMs = 1500;
         this.hazardSystem.triggerScreenWipeBlast(this, this.playerEntity.x, this.playerEntity.y, this.getHazardCtx());
-        this.lootSystem.showFloatText(this.playerEntity.x, this.playerEntity.y - 30, '💀 SECOND CHANCE!', '#facc15');
+        this.lootSystem.showFloatText(this.playerEntity.x, this.playerEntity.y - 30, ' SECOND CHANCE!', '#facc15');
         return;
       }
       this.triggerPlayerDeath();
@@ -284,7 +286,7 @@ export class GameScene extends Phaser.Scene {
       else this.tweens.add({ targets: sprite, angle: 90, scaleX: sprite.scaleX * 1.3, scaleY: sprite.scaleY * 0.6, alpha: 0.5, duration: 350, ease: 'Bounce.easeOut' });
     }
 
-    this.lootSystem.showFloatText(this.playerEntity.x, this.playerEntity.y - 30, '💀 РАЗДАВЛЕН!', '#ef4444');
+    this.lootSystem.showFloatText(this.playerEntity.x, this.playerEntity.y - 30, ' РАЗДАВЛЕН!', '#ef4444');
     this.cameras.main.stopFollow();
     this.cameras.main.shake(350, 0.02);
     this.physics.pause();

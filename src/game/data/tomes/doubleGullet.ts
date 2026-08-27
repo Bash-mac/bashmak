@@ -10,7 +10,7 @@ export const TOME_QUANTITY: UpgradeDefinition = {
   levels: [
     {
       level: 1,
-      description: '🌟 ГЛОБАЛЬНО: +1 дополнительный снаряд/объект ко ВСЕМУ оружию в арсенале.',
+      description: ' ГЛОБАЛЬНО: +1 дополнительный снаряд/объект ко ВСЕМУ оружию в арсенале.',
       apply: (mod) => {
         mod.tomeQuantity = 1;
         mod.multishotCount += 1;
@@ -19,7 +19,7 @@ export const TOME_QUANTITY: UpgradeDefinition = {
     },
     {
       level: 2,
-      description: '🌟 ГЛОБАЛЬНО: +2 дополнительных снаряда ко ВСЕМУ оружию.',
+      description: ' ГЛОБАЛЬНО: +2 дополнительных снаряда ко ВСЕМУ оружию.',
       apply: (mod) => {
         mod.tomeQuantity = 2;
         mod.multishotCount += 1;
@@ -28,7 +28,7 @@ export const TOME_QUANTITY: UpgradeDefinition = {
     },
     {
       level: 3,
-      description: '🌟 ГЛОБАЛЬНО: +3 дополнительных снаряда ко ВСЕМУ оружию.',
+      description: ' ГЛОБАЛЬНО: +3 дополнительных снаряда ко ВСЕМУ оружию.',
       apply: (mod) => {
         mod.tomeQuantity = 3;
         mod.multishotCount += 1;
@@ -37,7 +37,7 @@ export const TOME_QUANTITY: UpgradeDefinition = {
     },
     {
       level: 4,
-      description: '🌟 ГЛОБАЛЬНО: +4 дополнительных снаряда ко ВСЕМУ оружию.',
+      description: ' ГЛОБАЛЬНО: +4 дополнительных снаряда ко ВСЕМУ оружию.',
       apply: (mod) => {
         mod.tomeQuantity = 4;
         mod.multishotCount += 1;
@@ -46,7 +46,7 @@ export const TOME_QUANTITY: UpgradeDefinition = {
     },
     {
       level: 5,
-      description: '★ АБСОЛЮТНЫЙ ЗАЛП: +5 снарядов ко всем атакам + 25% урона всему арсеналу!',
+      description: ' АБСОЛЮТНЫЙ ЗАЛП: +5 снарядов ко всем атакам + 25% урона всему арсеналу!',
       apply: (mod) => {
         mod.tomeQuantity = 5;
         mod.multishotCount += 1;

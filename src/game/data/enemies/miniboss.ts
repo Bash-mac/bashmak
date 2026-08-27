@@ -1,11 +1,13 @@
-﻿import type { EnemyDefinition } from '../definitions';
+import type { EnemyDefinition } from '../definitions';
 
 export const MINI_BOSS_ELITE: EnemyDefinition = {
   id: 'enemy_miniboss',
-  name: 'Элитный Мутант',
-  textureKey: 'tex_miniboss',
+  name: 'Хрякоглот',
+  textureKey: 'tex_miniboss_run_1',
+  animKey: 'anim_miniboss_run',
   archetype: 'miniboss',
-  size: 30,
+  size: 36,
+  displayScale: 0.52,
   mass: 8,
   stats: {
     maxHp: 400,

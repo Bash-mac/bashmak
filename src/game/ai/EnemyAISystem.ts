@@ -128,7 +128,8 @@ export class EnemyAISystem {
         const vx = Math.cos(angleToPlayer) * spd + sepX;
         const vy = Math.sin(angleToPlayer) * spd + sepY;
         enemy.sprite.setVelocity(vx, vy);
-        enemy.sprite.rotation = Math.atan2(vy, vx);
+        enemy.sprite.setFlipX(vx < 0);
+        enemy.sprite.rotation = 0;
       }
     }
   }
@@ -168,7 +169,10 @@ export class EnemyAISystem {
         this.bossTelegraphGfx?.clear();
 
         const dashAngle = Phaser.Math.Angle.Between(boss.x, boss.y, ctx.player.x, ctx.player.y);
-        boss.sprite.setVelocity(Math.cos(dashAngle) * 450, Math.sin(dashAngle) * 450);
+        const dashVx = Math.cos(dashAngle) * 450;
+        boss.sprite.setVelocity(dashVx, Math.sin(dashAngle) * 450);
+        boss.sprite.setFlipX(dashVx < 0);
+        boss.sprite.rotation = 0;
 
         ctx.scene.time.delayedCall(800, () => {
           if (!boss.isAlive || !boss.sprite) return;
@@ -187,8 +191,11 @@ export class EnemyAISystem {
     if (!this.isBossDashing) {
       let spd = boss.effectiveSpeed;
       if (boss.bossPhase === 3) spd *= 0.8;
-      boss.sprite?.setVelocity(Math.cos(angle) * spd, Math.sin(angle) * spd);
-      boss.sprite!.rotation = angle;
+      const bvx = Math.cos(angle) * spd;
+      const bvy = Math.sin(angle) * spd;
+      boss.sprite?.setVelocity(bvx, bvy);
+      boss.sprite?.setFlipX(bvx < 0);
+      if (boss.sprite) boss.sprite.rotation = 0;
     }
   }
 }

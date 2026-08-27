@@ -287,7 +287,7 @@ export class MenuScene extends Phaser.Scene {
     const gooBank = SaveManager.getInstance().getGoo();
     const gooBadgeBg = this.add.rectangle(350, -310, 160, 38, 0x14532d, 0.9);
     gooBadgeBg.setStrokeStyle(2, 0x4ade80);
-    const gooBadgeText = this.add.text(350, -310, `🧪 ${gooBank}`, {
+    const gooBadgeText = this.add.text(350, -310, ` ${gooBank}`, {
       fontSize: '16px',
       fontStyle: 'bold',
       color: '#4ade80',

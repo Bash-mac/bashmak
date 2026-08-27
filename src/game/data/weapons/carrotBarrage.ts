@@ -26,7 +26,7 @@ export const WPN_CARROT_BARRAGE: UpgradeDefinition = {
     },
     {
       level: 3,
-      description: '★ МОРКОВНЫЙ ВЕЕР: Залп 3 бумерангов веером.',
+      description: ' МОРКОВНЫЙ ВЕЕР: Залп 3 бумерангов веером.',
       apply: (mod) => {
         mod.carrotBarrageLevel = 3;
       },
@@ -41,7 +41,7 @@ export const WPN_CARROT_BARRAGE: UpgradeDefinition = {
     },
     {
       level: 5,
-      description: '★ ЯРОСТНЫЙ ШКВАЛ: Залп 5 бумерангов с пилящим крит-уроном!',
+      description: ' ЯРОСТНЫЙ ШКВАЛ: Залп 5 бумерангов с пилящим крит-уроном!',
       apply: (mod) => {
         mod.carrotBarrageLevel = 5;
         mod.critChance += 0.20;

@@ -10,7 +10,7 @@ export const TOME_LIFESTEAL: UpgradeDefinition = {
   levels: [
     {
       level: 1,
-      description: '🩸 Вампиризм: +1 HP за каждого убитого врага.',
+      description: ' Вампиризм: +1 HP за каждого убитого врага.',
       apply: (mod) => {
         mod.tomeLifesteal = 1;
         mod.healOnKill += 1;
@@ -18,7 +18,7 @@ export const TOME_LIFESTEAL: UpgradeDefinition = {
     },
     {
       level: 2,
-      description: '🩸 Вампиризм: +2 HP за каждого убитого врага.',
+      description: ' Вампиризм: +2 HP за каждого убитого врага.',
       apply: (mod) => {
         mod.tomeLifesteal = 2;
         mod.healOnKill += 1;
@@ -26,7 +26,7 @@ export const TOME_LIFESTEAL: UpgradeDefinition = {
     },
     {
       level: 3,
-      description: '🩸 Вампиризм: +3 HP за каждого убитого врага.',
+      description: ' Вампиризм: +3 HP за каждого убитого врага.',
       apply: (mod) => {
         mod.tomeLifesteal = 3;
         mod.healOnKill += 1;
@@ -34,7 +34,7 @@ export const TOME_LIFESTEAL: UpgradeDefinition = {
     },
     {
       level: 4,
-      description: '🩸 Вампиризм: +4 HP за каждого убитого врага.',
+      description: ' Вампиризм: +4 HP за каждого убитого врага.',
       apply: (mod) => {
         mod.tomeLifesteal = 4;
         mod.healOnKill += 1;
@@ -42,7 +42,7 @@ export const TOME_LIFESTEAL: UpgradeDefinition = {
     },
     {
       level: 5,
-      description: '★ КРОВАВЫЙ ПИР: +6 HP за убийство врага!',
+      description: ' КРОВАВЫЙ ПИР: +6 HP за убийство врага!',
       apply: (mod) => {
         mod.tomeLifesteal = 5;
         mod.healOnKill += 2;

@@ -67,7 +67,7 @@ export class UpgradesScene extends Phaser.Scene {
     const gooBg = this.add.rectangle(gooBadgeX, gooBadgeY, 220, 36, 0x14532d, 0.9);
     gooBg.setStrokeStyle(2, 0x4ade80);
 
-    this.gooText = this.add.text(gooBadgeX, gooBadgeY, `🧪 GOO: ${this.saveManager.getGoo()}`, {
+    this.gooText = this.add.text(gooBadgeX, gooBadgeY, ` GOO: ${this.saveManager.getGoo()}`, {
       fontSize: '18px',
       fontStyle: 'bold',
       color: '#4ade80',
@@ -127,7 +127,7 @@ export class UpgradesScene extends Phaser.Scene {
     const refundBtn = this.add.rectangle(width * 0.3, footerY, width < 600 ? 140 : 200, 44, 0x7f1d1d).setInteractive({ useHandCursor: true });
     refundBtn.setStrokeStyle(2, 0xef4444);
 
-    this.add.text(width * 0.3, footerY, '🔄 100% СБРОС', {
+    this.add.text(width * 0.3, footerY, ' 100% СБРОС', {
       fontSize: width < 600 ? '12px' : '14px',
       fontStyle: 'bold',
       color: '#fecaca',
@@ -145,7 +145,7 @@ export class UpgradesScene extends Phaser.Scene {
     const backBtn = this.add.rectangle(width * 0.7, footerY, width < 600 ? 140 : 200, 44, 0x1e293b).setInteractive({ useHandCursor: true });
     backBtn.setStrokeStyle(2, 0x64748b);
 
-    this.add.text(width * 0.7, footerY, '🔙 В МЕНЮ', {
+    this.add.text(width * 0.7, footerY, ' В МЕНЮ', {
       fontSize: width < 600 ? '13px' : '15px',
       fontStyle: 'bold',
       color: '#ffffff',
@@ -238,7 +238,7 @@ export class UpgradesScene extends Phaser.Scene {
     const btnBg = this.add.rectangle(btnX, 0, btnW, btnH, isMax ? 0x334155 : (canAfford ? 0x15803d : 0x1f2937)).setInteractive({ useHandCursor: canAfford });
     btnBg.setStrokeStyle(2, isMax ? 0x475569 : (canAfford ? 0x4ade80 : 0x374151));
 
-    const btnLabel = isMax ? 'MAX' : `🧪 ${cost}`;
+    const btnLabel = isMax ? 'MAX' : ` ${cost}`;
     const btnText = this.add.text(btnX, 0, btnLabel, {
       fontSize: w < 500 ? '12px' : '15px',
       fontStyle: 'bold',
@@ -261,7 +261,7 @@ export class UpgradesScene extends Phaser.Scene {
   }
 
   private refreshUI(): void {
-    this.gooText.setText(`🧪 GOO: ${this.saveManager.getGoo()}`);
+    this.gooText.setText(` GOO: ${this.saveManager.getGoo()}`);
     this.tweens.add({
       targets: this.gooText,
       scaleX: 1.2,

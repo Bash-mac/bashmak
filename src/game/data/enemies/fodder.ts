@@ -1,11 +1,13 @@
-﻿import type { EnemyDefinition } from '../definitions';
+import type { EnemyDefinition } from '../definitions';
 
 export const FODDER_BAT: EnemyDefinition = {
   id: 'enemy_fodder',
-  name: 'Летучая Мышь',
-  textureKey: 'tex_fodder',
+  name: 'Чпококрыл',
+  textureKey: 'tex_fodder_run_1',
+  animKey: 'anim_fodder_run',
   archetype: 'fodder',
-  size: 12,
+  size: 14,
+  displayScale: 0.24,
   mass: 1,
   stats: {
     maxHp: 6,

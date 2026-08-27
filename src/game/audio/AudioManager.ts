@@ -96,7 +96,7 @@ export class AudioManager {
   }
 
   // =========================================================================
-  // --- 💎 1. XP PICKUP: Escalating Pitch (Дофаминовая слот-машина) ---
+  // ---  1. XP PICKUP: Escalating Pitch (Дофаминовая слот-машина) ---
   // =========================================================================
   public playXpPickup(): void {
     if (this.isMuted || !this.ensureContext()) return;
@@ -140,7 +140,7 @@ export class AudioManager {
   }
 
   // =========================================================================
-  // --- 🟢 2. GOO COIN PICKUP: Wet Bubbly Pop ---
+  // ---  2. GOO COIN PICKUP: Wet Bubbly Pop ---
   // =========================================================================
   public playGooPickup(): void {
     if (this.isMuted || !this.ensureContext()) return;
@@ -167,7 +167,7 @@ export class AudioManager {
   }
 
   // =========================================================================
-  // --- 💦 3. SLIME SPIT: Wet Squelch / Squirt ---
+  // ---  3. SLIME SPIT: Wet Squelch / Squirt ---
   // =========================================================================
   public playSlimeSpit(): void {
     if (this.isMuted || !this.ensureContext()) return;
@@ -194,7 +194,7 @@ export class AudioManager {
   }
 
   // =========================================================================
-  // --- 💥 4. IMPACT SPLAT: Wet Squish Hit ---
+  // ---  4. IMPACT SPLAT: Wet Squish Hit ---
   // =========================================================================
   public playImpactSplat(): void {
     if (this.isMuted || !this.ensureContext()) return;
@@ -221,7 +221,7 @@ export class AudioManager {
   }
 
   // =========================================================================
-  // --- 👟 5. BASH STOMP: Heavy Bass Thud ---
+  // ---  5. BASH STOMP: Heavy Bass Thud ---
   // =========================================================================
   public playBashStomp(): void {
     if (this.isMuted || !this.ensureContext()) return;
@@ -246,7 +246,7 @@ export class AudioManager {
   }
 
   // =========================================================================
-  // --- ⚡ 6. LIGHTNING ZAP: Electric Arc Crackle ---
+  // ---  6. LIGHTNING ZAP: Electric Arc Crackle ---
   // =========================================================================
   public playLightningZap(): void {
     if (this.isMuted || !this.ensureContext()) return;
@@ -272,7 +272,7 @@ export class AudioManager {
   }
 
   // =========================================================================
-  // --- 🩸 7. PLAYER HURT: Comic Punch Ouch ---
+  // ---  7. PLAYER HURT: Comic Punch Ouch ---
   // =========================================================================
   public playPlayerHurt(): void {
     if (this.isMuted || !this.ensureContext()) return;
@@ -297,7 +297,7 @@ export class AudioManager {
   }
 
   // =========================================================================
-  // --- 💀 7.5. PLAYER DEATH: Cartoon Defeat Whistle & Heavy Splat Bass Drop ---
+  // ---  7.5. PLAYER DEATH: Cartoon Defeat Whistle & Heavy Splat Bass Drop ---
   // =========================================================================
   public playPlayerDeath(): void {
     if (this.isMuted || !this.ensureContext()) return;
@@ -333,7 +333,7 @@ export class AudioManager {
   }
 
   // =========================================================================
-  // --- 🎺 8. LEVEL UP: 90s Victory Fanfare Arpeggio ---
+  // ---  8. LEVEL UP: 90s Victory Fanfare Arpeggio ---
   // =========================================================================
   public playLevelUp(): void {
     if (this.isMuted || !this.ensureContext()) return;
@@ -361,7 +361,7 @@ export class AudioManager {
   }
 
   // =========================================================================
-  // --- 💣 9. EXPLOSION: Deep Rumble Blast ---
+  // ---  9. EXPLOSION: Deep Rumble Blast ---
   // =========================================================================
   public playExplosion(): void {
     if (this.isMuted || !this.ensureContext()) return;
@@ -386,7 +386,7 @@ export class AudioManager {
   }
 
   // =========================================================================
-  // --- 🔘 10. UI BUTTON CLICK: Snappy Comic Pop ---
+  // ---  10. UI BUTTON CLICK: Snappy Comic Pop ---
   // =========================================================================
   public playClick(): void {
     if (this.isMuted || !this.ensureContext()) return;
@@ -411,7 +411,7 @@ export class AudioManager {
   }
 
   // =========================================================================
-  // --- 🎶 11. DYNAMIC RETRO BGM: 90s Sewer Funk Groove ---
+  // ---  11. DYNAMIC RETRO BGM: 90s Sewer Funk Groove ---
   // =========================================================================
   public startBgm(): void {
     if (this.isBgmPlaying || this.isMuted) return;

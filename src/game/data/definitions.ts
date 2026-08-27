@@ -38,6 +38,8 @@ export interface EnemyDefinition {
   archetype: EnemyArchetype;
   size: number;
   mass?: number;
+  animKey?: string;
+  displayScale?: number;
   explosionRadius?: number;
   explosionDamage?: number;
 }

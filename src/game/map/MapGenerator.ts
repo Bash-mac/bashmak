@@ -102,7 +102,7 @@ export class MapGenerator {
           shrine.setSize(shrine.width * 0.8, shrine.height * 0.8);
 
           // Floating Star / Beacon above shrine
-          const beacon = scene.add.text(sx, sy - 85, '★', {
+          const beacon = scene.add.text(sx, sy - 85, '', {
             fontSize: '26px',
             color: '#facc15',
             stroke: '#000000',

@@ -31,7 +31,7 @@ export class HeroTraitSystem {
         mods.standStillTimerMs += delta;
         if (mods.standStillTimerMs >= 1400 && !mods.standStillBonusActive) {
           mods.standStillBonusActive = true;
-          ctx.lootSystem.showFloatText(ctx.player.x, ctx.player.y - 25, '🛡️ STANDING GROUND! (+50% DMG)', '#facc15');
+          ctx.lootSystem.showFloatText(ctx.player.x, ctx.player.y - 25, '️ STANDING GROUND! (+50% DMG)', '#facc15');
         }
       } else {
         if (mods.standStillBonusActive) {
@@ -77,7 +77,7 @@ export class HeroTraitSystem {
     mods.killStreakTimerMs = 4500;
     ctx.player.applySpeedBoost(1.0 + mods.killStreakStacks * 0.03, 4500);
     if (mods.killStreakStacks === 10) {
-      ctx.lootSystem.showFloatText(ctx.player.x, ctx.player.y - 25, '🥕 MEGA CARROT READY!', '#f97316');
+      ctx.lootSystem.showFloatText(ctx.player.x, ctx.player.y - 25, ' MEGA CARROT READY!', '#f97316');
     }
   }
 

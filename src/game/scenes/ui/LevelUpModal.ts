@@ -114,7 +114,7 @@ export class LevelUpModal {
       .setDepth(10005);
 
     const rerollText = this.scene.add
-      .text(rerollX, btnBarY, `🎲 РЕРОЛЛ (${gameState.rerollsRemaining})`, {
+      .text(rerollX, btnBarY, ` РЕРОЛЛ (${gameState.rerollsRemaining})`, {
         fontSize: width < 700 ? '12px' : '13px',
         fontStyle: 'bold',
         color: canReroll ? '#fde047' : '#64748b',
@@ -195,7 +195,7 @@ export class LevelUpModal {
 
     // 3. Category Badge (Under top plate)
     const badgeLabel = this.scene.add
-      .text(0, -h * 0.23, '👑 СУПЕР-ЭВОЛЮЦИЯ', {
+      .text(0, -h * 0.23, ' СУПЕР-ЭВОЛЮЦИЯ', {
         fontSize: w < 240 ? '11px' : '13px',
         fontStyle: 'bold',
         color: '#facc15',
@@ -357,14 +357,14 @@ export class LevelUpModal {
     let badgeColor = '#4ade80';
 
     if (isConsumable) {
-      badgeText = '🧪 РАСХОДНИК';
+      badgeText = ' РАСХОДНИК';
       badgeColor = '#60a5fa';
     } else if (isNew) {
-      badgeText = isWeapon ? '⚔️ НОВОЕ ОРУЖИЕ' : '📖 НОВЫЙ ТОМ';
+      badgeText = isWeapon ? '️ НОВОЕ ОРУЖИЕ' : ' НОВАЯ ЖИЖА';
       badgeColor = isWeapon ? '#4ade80' : '#38bdf8';
     } else {
-      const typeStr = isWeapon ? '⚔️ ОРУЖИЕ' : '📖 ТОМ';
-      badgeText = `${typeStr} • УР. ${levelToApply - 1} ➔ ${levelToApply}`;
+      const typeStr = isWeapon ? '️ ОРУЖИЕ' : ' ЖИЖА';
+      badgeText = `${typeStr} • УР. ${levelToApply - 1}  ${levelToApply}`;
       badgeColor = '#facc15';
     }
 

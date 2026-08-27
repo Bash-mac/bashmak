@@ -4,6 +4,7 @@ import { ObjectPool } from '../pools/ObjectPool';
 export class VfxPool {
   private splatPool: ObjectPool<Phaser.GameObjects.Sprite>;
   private carrotSplatPool: ObjectPool<Phaser.GameObjects.Sprite>;
+  private enemyDeadPool: ObjectPool<Phaser.GameObjects.Sprite>;
   private scene: Phaser.Scene;
 
   constructor(scene: Phaser.Scene) {
@@ -35,6 +36,20 @@ export class VfxPool {
       maxSize: 60,
     });
     this.carrotSplatPool.prewarm(15);
+
+    this.enemyDeadPool = new ObjectPool<Phaser.GameObjects.Sprite>(scene, {
+      create: () => {
+        const spr = scene.add.sprite(0, 0, 'tex_enemy_dead_1').setDepth(11).setScale(0.35);
+        return spr;
+      },
+      onRelease: (spr) => {
+        spr.stop();
+        spr.setScale(0.35);
+        spr.setAlpha(1);
+      },
+      maxSize: 80,
+    });
+    this.enemyDeadPool.prewarm(25);
   }
 
   public spawnImpactSplat(x: number, y: number, scale = 0.75): void {
@@ -69,8 +84,25 @@ export class VfxPool {
     }
   }
 
+  public spawnEnemyDeath(x: number, y: number, scale = 0.35): void {
+    const spr = this.enemyDeadPool.get();
+    spr.setPosition(x, y);
+    spr.setScale(scale);
+
+    if (this.scene.anims.exists('vfx_anim_enemy_dead')) {
+      spr.play('vfx_anim_enemy_dead').once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+        this.enemyDeadPool.release(spr);
+      });
+    } else {
+      this.scene.time.delayedCall(300, () => {
+        this.enemyDeadPool.release(spr);
+      });
+    }
+  }
+
   public clear(): void {
     this.splatPool.clear();
     this.carrotSplatPool.clear();
+    this.enemyDeadPool.clear();
   }
 }

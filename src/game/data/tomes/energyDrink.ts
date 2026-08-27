@@ -10,7 +10,7 @@ export const TOME_ATTACK_SPEED: UpgradeDefinition = {
   levels: [
     {
       level: 1,
-      description: '🌟 ГЛОБАЛЬНО: Скорость всех атак +15%.',
+      description: ' ГЛОБАЛЬНО: Скорость всех атак +15%.',
       apply: (mod) => {
         mod.tomeAttackSpeed = 1;
         mod.attackSpeedBonus += 0.15;
@@ -26,7 +26,7 @@ export const TOME_ATTACK_SPEED: UpgradeDefinition = {
     },
     {
       level: 3,
-      description: '★ ПУЛЕМЁТНЫЙ СТРИМ: Скорость атак +45% + очередь из 2 быстрых залпов.',
+      description: ' ПУЛЕМЁТНЫЙ СТРИМ: Скорость атак +45% + очередь из 2 быстрых залпов.',
       apply: (mod) => {
         mod.tomeAttackSpeed = 3;
         mod.attackSpeedBonus += 0.15;
@@ -43,7 +43,7 @@ export const TOME_ATTACK_SPEED: UpgradeDefinition = {
     },
     {
       level: 5,
-      description: '★ БЕШЕНЫЙ ШКВАЛ: Скорость атак +80% + непрерывная очередь из 3 залпов!',
+      description: ' БЕШЕНЫЙ ШКВАЛ: Скорость атак +80% + непрерывная очередь из 3 залпов!',
       apply: (mod) => {
         mod.tomeAttackSpeed = 5;
         mod.attackSpeedBonus += 0.20;

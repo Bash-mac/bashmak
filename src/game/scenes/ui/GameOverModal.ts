@@ -59,9 +59,9 @@ export class GameOverModal {
 
     const statsInfo = [
       `⏱ Время: ${timeSurvived}`,
-      `💀 Врагов убито: ${state.kills}`,
-      `⭐ Уровень: ${state.level}`,
-      `🏆 Счёт: ${state.score}`,
+      ` Врагов убито: ${state.kills}`,
+      ` Уровень: ${state.level}`,
+      ` Счёт: ${state.score}`,
     ];
 
     const statsText = this.scene.add
@@ -97,7 +97,7 @@ export class GameOverModal {
       .setDepth(10003);
 
     const bankText = this.scene.add
-      .text(centerX, gooBoxY + 12, `В банке: 🧪 ${saveManager.getGoo()}`, {
+      .text(centerX, gooBoxY + 12, `В банке:  ${saveManager.getGoo()}`, {
         fontSize: '13px',
         color: '#86efac',
         fontFamily: 'monospace',
@@ -154,7 +154,7 @@ export class GameOverModal {
       .setInteractive({ useHandCursor: true });
 
     const upgText = this.scene.add
-      .text(centerX, upgBtnY, '🧪 ЛАБОРАТОРИЯ МУТАЦИЙ', {
+      .text(centerX, upgBtnY, ' ЛАБОРАТОРИЯ МУТАЦИЙ', {
         fontSize: '14px',
         fontStyle: 'bold',
         color: '#fef08a',

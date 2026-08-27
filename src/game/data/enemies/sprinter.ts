@@ -1,11 +1,13 @@
-﻿import type { EnemyDefinition } from '../definitions';
+import type { EnemyDefinition } from '../definitions';
 
 export const SPRINTER_BUG: EnemyDefinition = {
   id: 'enemy_sprinter',
-  name: 'Спринтер',
-  textureKey: 'tex_sprinter',
+  name: 'Турбо-Вошь',
+  textureKey: 'tex_sprinter_run_1',
+  animKey: 'anim_sprinter_run',
   archetype: 'sprinter',
-  size: 12,
+  size: 14,
+  displayScale: 0.24,
   mass: 1,
   stats: {
     maxHp: 10,

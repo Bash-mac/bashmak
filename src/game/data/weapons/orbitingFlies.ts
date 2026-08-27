@@ -26,7 +26,7 @@ export const WPN_HOMING_DAGGERS: UpgradeDefinition = {
     },
     {
       level: 3,
-      description: '★ ПИЛЯЩИЙ РОЙ: 4 мухи, скорость вращения увеличена на 50%.',
+      description: ' ПИЛЯЩИЙ РОЙ: 4 мухи, скорость вращения увеличена на 50%.',
       apply: (mod) => {
         mod.homingDaggersLevel = 3;
         mod.homingDaggersCount = 4;
@@ -43,7 +43,7 @@ export const WPN_HOMING_DAGGERS: UpgradeDefinition = {
     },
     {
       level: 5,
-      description: '★ РОЙ ТИТАНОВ: 7 бешеных мух, блокирующих сближение мобов!',
+      description: ' РОЙ ТИТАНОВ: 7 бешеных мух, блокирующих сближение мобов!',
       apply: (mod) => {
         mod.homingDaggersLevel = 5;
         mod.homingDaggersCount = 7;

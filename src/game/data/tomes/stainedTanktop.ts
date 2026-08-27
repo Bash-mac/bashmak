@@ -28,7 +28,7 @@ export const TOME_ARMOR: UpgradeDefinition = {
     },
     {
       level: 3,
-      description: '★ БРОНЕВАЯ ТКАНЬ: Броня +3, поглощение 15% всего урона.',
+      description: ' БРОНЕВАЯ ТКАНЬ: Броня +3, поглощение 15% всего урона.',
       apply: (mod, stats) => {
         mod.tomeArmor = 3;
         stats.modifyArmor(1);
@@ -47,7 +47,7 @@ export const TOME_ARMOR: UpgradeDefinition = {
     },
     {
       level: 5,
-      description: '★ ТИТАНОВАЯ ЗАКАЛКА: Броня +5, поглощение 25% всего входящего урона!',
+      description: ' ТИТАНОВАЯ ЗАКАЛКА: Броня +5, поглощение 25% всего входящего урона!',
       apply: (mod, stats) => {
         mod.tomeArmor = 5;
         stats.modifyArmor(1);

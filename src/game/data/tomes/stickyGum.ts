@@ -26,7 +26,7 @@ export const TOME_MAGNET: UpgradeDefinition = {
     },
     {
       level: 3,
-      description: '★ ГИПЕР-ПЫЛЕСОС: Радиус авто-магнита +200% (+2% за каждый уровень игрока).',
+      description: ' ГИПЕР-ПЫЛЕСОС: Радиус авто-магнита +200% (+2% за каждый уровень игрока).',
       apply: (mod) => {
         mod.tomeMagnet = 3;
         mod.magnetRadiusBonus += 100;
@@ -42,7 +42,7 @@ export const TOME_MAGNET: UpgradeDefinition = {
     },
     {
       level: 5,
-      description: '★ ВАКУУМНЫЙ СИНТЕЗ: Все кристаллы непрерывно летят к игроку + 50% бонус XP!',
+      description: ' ВАКУУМНЫЙ СИНТЕЗ: Все кристаллы непрерывно летят к игроку + 50% бонус XP!',
       apply: (mod) => {
         mod.tomeMagnet = 5;
         mod.magnetRadiusBonus += 300;

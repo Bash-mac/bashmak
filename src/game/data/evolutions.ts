@@ -19,7 +19,7 @@ export const EVOLUTION_RECIPES: EvolutionRecipe[] = [
   {
     id: EVOLUTION_IDS.ACID_TSUNAMI,
     name: 'Кислотный Цунами',
-    comicTitle: '★ ACID TSUNAMI ★',
+    comicTitle: ' ACID TSUNAMI ',
     description: 'Плевок выпускает огромные токсичные волны слизи на весь экран с перманентным DoT и замедлением врагов на 60%!',
     baseWeaponId: WEAPON_IDS.SLIME_SPIT,
     baseWeaponName: 'Слизеплюй (Lv.5)',
@@ -43,7 +43,7 @@ export const EVOLUTION_RECIPES: EvolutionRecipe[] = [
   {
     id: EVOLUTION_IDS.TYPHOON_FLAIL,
     name: 'Тифонный Цеп',
-    comicTitle: '★ TYPHOON FLAIL ★',
+    comicTitle: ' TYPHOON FLAIL ',
     description: '4 стальных шнурка непрерывно вращаются на 360° вокруг Башмака, затягивая мобов в воронку и расплющивая их!',
     baseWeaponId: WEAPON_IDS.LACE_WHIP,
     baseWeaponName: 'Шнуровой Кнут (Lv.5)',
@@ -65,7 +65,7 @@ export const EVOLUTION_RECIPES: EvolutionRecipe[] = [
   {
     id: EVOLUTION_IDS.GATLING_CARROT,
     name: 'Гатлинг-Морковка',
-    comicTitle: '★ GATLING CARROT ★',
+    comicTitle: ' GATLING CARROT ',
     description: 'Лазерный шквал из 20 сверхзвуковых бумерангов-пил в секунду со 100% шансом критического взрыва!',
     baseWeaponId: WEAPON_IDS.CARROT_BARRAGE,
     baseWeaponName: 'Морковный Град (Lv.5)',
@@ -88,7 +88,7 @@ export const EVOLUTION_RECIPES: EvolutionRecipe[] = [
   {
     id: EVOLUTION_IDS.PLANETARY_ROLL,
     name: 'Планетарный Катаклизм',
-    comicTitle: '★ PLANETARY ROLL ★',
+    comicTitle: ' PLANETARY ROLL ',
     description: 'Баклажан превращается в колоссальную сферу-рикошет, сминающую боссов и вызывающую сейсмические взрывы на каждом метре!',
     baseWeaponId: WEAPON_IDS.EGGPLANT_ROLL,
     baseWeaponName: 'Фиолетовый Шар (Lv.5)',

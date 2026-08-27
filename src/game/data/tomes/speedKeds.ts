@@ -10,7 +10,7 @@ export const TOME_SPEED: UpgradeDefinition = {
   levels: [
     {
       level: 1,
-      description: '🌟 ГЛОБАЛЬНО: Скорость бега персонажа +10%.',
+      description: ' ГЛОБАЛЬНО: Скорость бега персонажа +10%.',
       apply: (mod, stats) => {
         mod.tomeSpeed = 1;
         stats.modifySpeed(1.10);
@@ -26,7 +26,7 @@ export const TOME_SPEED: UpgradeDefinition = {
     },
     {
       level: 3,
-      description: '★ СПРИНТЕРСКИЙ РЫВОК: Скорость бега +15% (суммарно +40%).',
+      description: ' СПРИНТЕРСКИЙ РЫВОК: Скорость бега +15% (суммарно +40%).',
       apply: (mod, stats) => {
         mod.tomeSpeed = 3;
         stats.modifySpeed(1.15);
@@ -42,7 +42,7 @@ export const TOME_SPEED: UpgradeDefinition = {
     },
     {
       level: 5,
-      description: '★ СПРИНТЕР-ПСИХ: Скорость бега +20% (суммарно +75%) + супер-маневренность!',
+      description: ' СПРИНТЕР-ПСИХ: Скорость бега +20% (суммарно +75%) + супер-маневренность!',
       apply: (mod, stats) => {
         mod.tomeSpeed = 5;
         stats.modifySpeed(1.20);

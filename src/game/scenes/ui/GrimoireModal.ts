@@ -40,7 +40,7 @@ export class GrimoireModal {
 
     // 3. Header Title
     const title = this.scene.add
-      .text(width / 2, height / 2 - bookH / 2 + (isPortrait ? 30 : 45), '📖 ГРИМУАР МУТАЦИЙ', {
+      .text(width / 2, height / 2 - bookH / 2 + (isPortrait ? 30 : 45), ' ГРИМУАР МУТАЦИЙ', {
         fontSize: isPortrait ? '20px' : '32px',
         fontStyle: 'bold',
         color: '#facc15',
@@ -94,7 +94,7 @@ export class GrimoireModal {
         .setDepth(20003);
 
       const formulaText = this.scene.add
-        .text(width / 2 - bookW / 2 + (isPortrait ? 20 : 50), rowY - (isPortrait ? 4 : -3), `${recipe.baseWeaponName} (${weaponLvl}/5) ➕ ${recipe.requiredTomeName} (${tomeLvl}/5)`, {
+        .text(width / 2 - bookW / 2 + (isPortrait ? 20 : 50), rowY - (isPortrait ? 4 : -3), `${recipe.baseWeaponName} (${weaponLvl}/5)  ${recipe.requiredTomeName} (${tomeLvl}/5)`, {
           fontSize: isPortrait ? '10px' : '13px',
           color: '#94a3b8',
           fontFamily: 'monospace',
@@ -103,10 +103,10 @@ export class GrimoireModal {
         .setDepth(20003);
 
       const statusTag = isEvolved
-        ? '✅ АКТИВНО'
+        ? ' АКТИВНО'
         : isReady
-        ? '🔥 ГОТОВО'
-        : '🔒 ЗАКРЫТО';
+        ? ' ГОТОВО'
+        : ' ЗАКРЫТО';
       const statusColor = isEvolved ? '#34d399' : isReady ? '#facc15' : '#64748b';
 
       let tagText: Phaser.GameObjects.Text;
@@ -144,7 +144,7 @@ export class GrimoireModal {
       .setInteractive({ useHandCursor: true });
 
     const closeText = this.scene.add
-      .text(width / 2, height / 2 + bookH / 2 - 38, 'ЗАКРЫТЬ (✕)', {
+      .text(width / 2, height / 2 + bookH / 2 - 38, 'ЗАКРЫТЬ ()', {
         fontSize: '16px',
         fontStyle: 'bold',
         color: '#ffffff',

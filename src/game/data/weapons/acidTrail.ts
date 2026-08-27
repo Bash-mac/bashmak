@@ -28,7 +28,7 @@ export const WPN_ACID_TRAIL: UpgradeDefinition = {
     },
     {
       level: 3,
-      description: '★ ТОКСИЧЕСКИЙ ШОК: Враги в облаке вони замедляются на 50%.',
+      description: ' ТОКСИЧЕСКИЙ ШОК: Враги в облаке вони замедляются на 50%.',
       apply: (mod) => {
         mod.acidTrailLevel = 3;
         mod.slowPercent = Math.max(mod.slowPercent, 0.50);
@@ -44,7 +44,7 @@ export const WPN_ACID_TRAIL: UpgradeDefinition = {
     },
     {
       level: 5,
-      description: '★ ЯДОВИТАЯ АТАКА: Убитые в облаке враги взрываются токсичным газом!',
+      description: ' ЯДОВИТАЯ АТАКА: Убитые в облаке враги взрываются токсичным газом!',
       apply: (mod) => {
         mod.acidTrailLevel = 5;
         mod.acidTrailDps += 50;

@@ -10,7 +10,7 @@ export const TOME_HP_REGEN: UpgradeDefinition = {
   levels: [
     {
       level: 1,
-      description: '🌿 Регенерация здоровья +0.5 HP/сек.',
+      description: ' Регенерация здоровья +0.5 HP/сек.',
       apply: (mod) => {
         mod.tomeHpRegen = 1;
         mod.hpRegenPerSec += 0.5;
@@ -18,7 +18,7 @@ export const TOME_HP_REGEN: UpgradeDefinition = {
     },
     {
       level: 2,
-      description: '🌿 Регенерация здоровья +1.0 HP/сек (суммарно).',
+      description: ' Регенерация здоровья +1.0 HP/сек (суммарно).',
       apply: (mod) => {
         mod.tomeHpRegen = 2;
         mod.hpRegenPerSec += 0.5;
@@ -26,7 +26,7 @@ export const TOME_HP_REGEN: UpgradeDefinition = {
     },
     {
       level: 3,
-      description: '🌿 Регенерация здоровья +1.5 HP/сек (суммарно).',
+      description: ' Регенерация здоровья +1.5 HP/сек (суммарно).',
       apply: (mod) => {
         mod.tomeHpRegen = 3;
         mod.hpRegenPerSec += 0.5;
@@ -34,7 +34,7 @@ export const TOME_HP_REGEN: UpgradeDefinition = {
     },
     {
       level: 4,
-      description: '🌿 Регенерация здоровья +2.0 HP/сек (суммарно).',
+      description: ' Регенерация здоровья +2.0 HP/сек (суммарно).',
       apply: (mod) => {
         mod.tomeHpRegen = 4;
         mod.hpRegenPerSec += 0.5;
@@ -42,7 +42,7 @@ export const TOME_HP_REGEN: UpgradeDefinition = {
     },
     {
       level: 5,
-      description: '★ ВЕЧНЫЙ БИО-ПУЛЬС: Регенерация +3.0 HP/сек!',
+      description: ' ВЕЧНЫЙ БИО-ПУЛЬС: Регенерация +3.0 HP/сек!',
       apply: (mod) => {
         mod.tomeHpRegen = 5;
         mod.hpRegenPerSec += 1.0;

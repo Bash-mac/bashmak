@@ -26,7 +26,7 @@ export const WPN_EGGPLANT_ROLL: UpgradeDefinition = {
     },
     {
       level: 3,
-      description: '★ ТЯЖЕЛЫЙ БОУЛИНГ: 5 отскоков, радиус таранной волны +30%.',
+      description: ' ТЯЖЕЛЫЙ БОУЛИНГ: 5 отскоков, радиус таранной волны +30%.',
       apply: (mod) => {
         mod.eggplantRollLevel = 3;
       },
@@ -41,7 +41,7 @@ export const WPN_EGGPLANT_ROLL: UpgradeDefinition = {
     },
     {
       level: 5,
-      description: '★ НЕОСТАНОВИМЫЙ ТАРАН: 7 рикошетов со взрывным расталкиванием толпы!',
+      description: ' НЕОСТАНОВИМЫЙ ТАРАН: 7 рикошетов со взрывным расталкиванием толпы!',
       apply: (mod) => {
         mod.eggplantRollLevel = 5;
         mod.damagePercentBonus += 0.50;

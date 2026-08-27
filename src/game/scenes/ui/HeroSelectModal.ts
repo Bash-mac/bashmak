@@ -248,7 +248,7 @@ export class HeroSelectModal {
         polContainer.add(lockBadge);
 
         const lockText = this.scene.add
-          .text(0, 49, 'СЕКРЕТНО 🔒', {
+          .text(0, 49, 'СЕКРЕТНО ', {
             fontSize: '10.5px',
             color: '#fecaca',
             fontFamily: 'Gagalin',
@@ -479,7 +479,7 @@ export class HeroSelectModal {
     this.rightPageElements.push(stickyContainer);
 
     const stickyHeader = this.scene.add
-      .text(0, 0, 'ЛЮБИТ: 💚', {
+      .text(0, 0, 'ЛЮБИТ: ', {
         fontSize: '14px',
         color: '#14532d',
         fontFamily: 'Gagalin',
@@ -504,8 +504,8 @@ export class HeroSelectModal {
     const btnRotation = Phaser.Math.DegToRad(-13.5);
 
     const btnLabel = isLocked
-      ? 'ЗАКРЫТО 🔒'
-      : 'В БОЙ! ➔';
+      ? 'ЗАКРЫТО '
+      : 'В БОЙ! ';
 
     const actionText = this.scene.add
       .text(btnX, btnY, btnLabel, {

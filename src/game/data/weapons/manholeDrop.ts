@@ -26,7 +26,7 @@ export const WPN_LIGHTNING_ZAP: UpgradeDefinition = {
     },
     {
       level: 3,
-      description: '★ ЧУГУННЫЙ КОНТУЗ: Люк оглушает цель на 1.5 сек и замедляет мобов вокруг на 60%.',
+      description: ' ЧУГУННЫЙ КОНТУЗ: Люк оглушает цель на 1.5 сек и замедляет мобов вокруг на 60%.',
       apply: (mod) => {
         mod.lightningZapLevel = 3;
         mod.slowPercent = Math.max(mod.slowPercent, 0.60);
@@ -43,7 +43,7 @@ export const WPN_LIGHTNING_ZAP: UpgradeDefinition = {
     },
     {
       level: 5,
-      description: '★ ЛЮКОПАД: Непрерывный камнепад чугунных люков по всем элиткам каждые 1.5 сек!',
+      description: ' ЛЮКОПАД: Непрерывный камнепад чугунных люков по всем элиткам каждые 1.5 сек!',
       apply: (mod) => {
         mod.lightningZapLevel = 5;
         mod.staticZapMax = 35;

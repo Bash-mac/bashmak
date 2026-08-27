@@ -26,7 +26,7 @@ export const WPN_LACE_WHIP: UpgradeDefinition = {
     },
     {
       level: 3,
-      description: '★ ДВОЙНОЙ ХЛЫСТ: Хлещет спереди и сзади одновременно!',
+      description: ' ДВОЙНОЙ ХЛЫСТ: Хлещет спереди и сзади одновременно!',
       apply: (mod) => {
         mod.laceWhipLevel = 3;
       },
@@ -41,7 +41,7 @@ export const WPN_LACE_WHIP: UpgradeDefinition = {
     },
     {
       level: 5,
-      description: '★ СЕЙСМИЧЕСКИЙ КНУТ: Удары вызывают комиксные взрывы и оглушают цели!',
+      description: ' СЕЙСМИЧЕСКИЙ КНУТ: Удары вызывают комиксные взрывы и оглушают цели!',
       apply: (mod) => {
         mod.laceWhipLevel = 5;
         mod.damagePercentBonus += 0.35;

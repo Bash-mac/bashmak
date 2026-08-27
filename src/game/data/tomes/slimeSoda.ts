@@ -10,7 +10,7 @@ export const TOME_DAMAGE: UpgradeDefinition = {
   levels: [
     {
       level: 1,
-      description: '🧪 Урон ВСЕГО арсенала в игре +12%.',
+      description: ' Урон ВСЕГО арсенала в игре +12%.',
       apply: (mod) => {
         mod.tomeDamage = 1;
         mod.damagePercentBonus += 0.12;
@@ -18,7 +18,7 @@ export const TOME_DAMAGE: UpgradeDefinition = {
     },
     {
       level: 2,
-      description: '🧪 Урон ВСЕГО арсенала в игре +24%.',
+      description: ' Урон ВСЕГО арсенала в игре +24%.',
       apply: (mod) => {
         mod.tomeDamage = 2;
         mod.damagePercentBonus += 0.12;
@@ -26,7 +26,7 @@ export const TOME_DAMAGE: UpgradeDefinition = {
     },
     {
       level: 3,
-      description: '🧪 Урон ВСЕГО арсенала в игре +36%.',
+      description: ' Урон ВСЕГО арсенала в игре +36%.',
       apply: (mod) => {
         mod.tomeDamage = 3;
         mod.damagePercentBonus += 0.12;
@@ -34,7 +34,7 @@ export const TOME_DAMAGE: UpgradeDefinition = {
     },
     {
       level: 4,
-      description: '🧪 Урон ВСЕГО арсенала в игре +48%.',
+      description: ' Урон ВСЕГО арсенала в игре +48%.',
       apply: (mod) => {
         mod.tomeDamage = 4;
         mod.damagePercentBonus += 0.12;
@@ -42,7 +42,7 @@ export const TOME_DAMAGE: UpgradeDefinition = {
     },
     {
       level: 5,
-      description: '★ ТОКСИЧЕСКИЙ ДОПИНГ: Урон всего арсенала +65%!',
+      description: ' ТОКСИЧЕСКИЙ ДОПИНГ: Урон всего арсенала +65%!',
       apply: (mod) => {
         mod.tomeDamage = 5;
         mod.damagePercentBonus += 0.17;

@@ -1,11 +1,13 @@
-﻿import type { EnemyDefinition } from '../definitions';
+import type { EnemyDefinition } from '../definitions';
 
 export const CRAWLER_SWARM: EnemyDefinition = {
   id: 'enemy_crawler',
-  name: 'Ползун',
-  textureKey: 'tex_crawler',
+  name: 'Тараканище',
+  textureKey: 'tex_crawler_run_1',
+  animKey: 'anim_crawler_run',
   archetype: 'swarmer',
-  size: 16,
+  size: 18,
+  displayScale: 0.28,
   mass: 2,
   stats: {
     maxHp: 18,
