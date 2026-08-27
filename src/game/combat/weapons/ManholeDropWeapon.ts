@@ -18,7 +18,7 @@ export class ManholeDropWeapon implements IWeapon {
     this.attackTimer += delta;
     if (this.attackTimer < baseInterval) return;
 
-    const targets = this.findStrongestEnemies(ctx.player, ctx.enemiesMap, 450 + mods.extraRange);
+    const targets = this.findStrongestEnemies(ctx.player, ctx.enemiesMap, 450);
     if (targets.length === 0) return;
 
     this.attackTimer = 0;
@@ -60,9 +60,10 @@ export class ManholeDropWeapon implements IWeapon {
         }
 
         // Small shockwave
+        const shockRadius = 48 * (1 + mods.attackAreaBonus);
         const shock = ctx.scene.add.graphics();
         shock.lineStyle(4, 0x94a3b8, 0.9);
-        shock.strokeCircle(tx, ty, 48);
+        shock.strokeCircle(tx, ty, shockRadius);
         ctx.scene.tweens.add({
           targets: shock,
           alpha: 0,

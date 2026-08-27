@@ -39,7 +39,7 @@ export class CarrotBarrageWeapon implements IWeapon {
     this.attackTimer += delta;
     if (this.attackTimer < baseInterval) return;
 
-    const primaryTarget = this.findClosestEnemy(ctx.player, ctx.enemiesMap, 360 + mods.extraRange);
+    const primaryTarget = this.findClosestEnemy(ctx.player, ctx.enemiesMap, 380);
     if (!primaryTarget) return;
 
     this.attackTimer = 0;

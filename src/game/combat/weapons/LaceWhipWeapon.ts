@@ -34,7 +34,7 @@ export class LaceWhipWeapon implements IWeapon {
       damage = Math.round(damage * 1.5); // +50% dmg when standing still
     }
 
-    const range = (180 + mods.extraRange) * (1 + (level >= 3 ? 0.25 : 0));
+    const range = 180 * (1 + mods.attackAreaBonus) * (1 + (level >= 3 ? 0.25 : 0));
 
     // Direction of whip slash based on player velocity or flipX
     const facingRight = ctx.player.sprite ? !ctx.player.sprite.flipX : true;

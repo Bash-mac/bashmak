@@ -19,9 +19,13 @@ export const TOME_IDS = {
   SPEED: 'tome_speed', // «Турбо-Кеды» (Скорость бега)
   ATTACK_SPEED: 'tome_attack_speed', // «Энергетик» (Скорость атак)
   MAGNET: 'tome_magnet', // «Липкая Жвачка» (Магнетизм / XP)
-  CRIT_SIZE: 'tome_crit_size', // «Слизь-Кола» (Крит / Размер сплэша)
+  DAMAGE: 'tome_damage', // «Слизь-Кола» (Чистый урон всего арсенала)
+  CRIT: 'tome_crit', // «Выбитый Зуб» (Шанс и множитель крита)
+  CRIT_SIZE: 'tome_damage', // Alias для совместимости
   ARMOR: 'tome_armor', // «Майка-Алкоголичка» (Броня / Защита)
-  HP_REGEN: 'tome_hp_regen', // «Подорожник» (Реген HP / Вампиризм)
+  HP_REGEN: 'tome_hp_regen', // «Подорожник» (Регенерация HP)
+  LIFESTEAL: 'tome_lifesteal', // «Пиявка» (Вампиризм / Хил за киллы)
+  AREA: 'tome_area', // «Рваный Рупор» (Радиус и область атак)
 } as const;
 
 export const CONSUMABLE_IDS = {

@@ -92,7 +92,7 @@ export const EVOLUTION_RECIPES: EvolutionRecipe[] = [
     description: 'Баклажан превращается в колоссальную сферу-рикошет, сминающую боссов и вызывающую сейсмические взрывы на каждом метре!',
     baseWeaponId: WEAPON_IDS.EGGPLANT_ROLL,
     baseWeaponName: 'Фиолетовый Шар (Lv.5)',
-    requiredTomeId: TOME_IDS.CRIT_SIZE,
+    requiredTomeId: TOME_IDS.DAMAGE,
     requiredTomeName: '«Слизь-Кола» (Lv.5)',
     iconKey: 'icon_evo_planetary_cataclysm',
     apply: (gameState: GameState) => {

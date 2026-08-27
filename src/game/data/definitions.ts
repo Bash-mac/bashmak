@@ -112,6 +112,8 @@ export interface PlayerModifiers {
   // Trackers & Megabonk Weapons/Tomes
   fatSpitScale: number;
   extraRange: number;
+  magnetRadiusBonus: number;
+  attackAreaBonus: number;
   wriggleDash: boolean;
   acidTrail: boolean;
 
@@ -138,8 +140,12 @@ export interface PlayerModifiers {
   tomeAttackSpeed: number;
   tomeArmor: number;
   tomeHpRegen: number;
+  tomeLifesteal: number;
   tomeMagnet: number;
+  tomeDamage: number;
+  tomeCrit: number;
   tomeCritSize: number;
+  tomeArea: number;
 
   // Hero trait runtime state
   standStillTimerMs: number;

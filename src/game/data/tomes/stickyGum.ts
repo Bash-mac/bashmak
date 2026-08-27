@@ -13,7 +13,7 @@ export const TOME_MAGNET: UpgradeDefinition = {
       description: 'Радиус притягивания кристаллов и дропа +60%, получаемый опыт +15%.',
       apply: (mod) => {
         mod.tomeMagnet = 1;
-        mod.extraRange += 80;
+        mod.magnetRadiusBonus += 80;
       },
     },
     {
@@ -21,7 +21,7 @@ export const TOME_MAGNET: UpgradeDefinition = {
       description: 'Радиус авто-магнита +120%, получаемый опыт +30%.',
       apply: (mod) => {
         mod.tomeMagnet = 2;
-        mod.extraRange += 80;
+        mod.magnetRadiusBonus += 80;
       },
     },
     {
@@ -29,7 +29,7 @@ export const TOME_MAGNET: UpgradeDefinition = {
       description: '★ ГИПЕР-ПЫЛЕСОС: Радиус авто-магнита +200% (+2% за каждый уровень игрока).',
       apply: (mod) => {
         mod.tomeMagnet = 3;
-        mod.extraRange += 100;
+        mod.magnetRadiusBonus += 100;
       },
     },
     {
@@ -37,7 +37,7 @@ export const TOME_MAGNET: UpgradeDefinition = {
       description: 'Жвачка притягивает кристаллы со всей карты раз в 25 секунд.',
       apply: (mod) => {
         mod.tomeMagnet = 4;
-        mod.extraRange += 100;
+        mod.magnetRadiusBonus += 100;
       },
     },
     {
@@ -45,7 +45,7 @@ export const TOME_MAGNET: UpgradeDefinition = {
       description: '★ ВАКУУМНЫЙ СИНТЕЗ: Все кристаллы непрерывно летят к игроку + 50% бонус XP!',
       apply: (mod) => {
         mod.tomeMagnet = 5;
-        mod.extraRange += 300;
+        mod.magnetRadiusBonus += 300;
       },
     },
   ],

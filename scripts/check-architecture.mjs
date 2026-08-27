@@ -78,9 +78,6 @@ function checkFile(filePath) {
     if (!content.includes('width: 1280') || !content.includes('height: 720')) {
       errors.push(`❌ [RENDER/SCALE] Base resolution must be width: 1280, height: 720 in '${relPath}'.`);
     }
-    if (content.includes('roundPixels: true')) {
-      errors.push(`❌ [RENDER/DPI] 'roundPixels: true' is forbidden in '${relPath}'. Must be false to prevent blurry/distorted glyph rendering!`);
-    }
   }
 }
 

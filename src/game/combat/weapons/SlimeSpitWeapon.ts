@@ -20,7 +20,7 @@ export class SlimeSpitWeapon implements IWeapon {
     this.attackTimer += delta;
     if (this.attackTimer < baseInterval) return;
 
-    const maxRange = 300 + mods.extraRange;
+    const maxRange = 360;
     const targets = this.findNearbyEnemies(ctx.player, ctx.enemiesMap, maxRange);
     if (targets.length === 0) return;
 

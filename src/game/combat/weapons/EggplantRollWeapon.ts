@@ -39,7 +39,7 @@ export class EggplantRollWeapon implements IWeapon {
     this.attackTimer += delta;
     if (this.attackTimer < baseInterval) return;
 
-    const primaryTarget = this.findClosestEnemy(ctx.player, ctx.enemiesMap, 300 + mods.extraRange);
+    const primaryTarget = this.findClosestEnemy(ctx.player, ctx.enemiesMap, 320);
     if (!primaryTarget) return;
 
     this.attackTimer = 0;

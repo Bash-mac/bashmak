@@ -10,46 +10,42 @@ export const TOME_HP_REGEN: UpgradeDefinition = {
   levels: [
     {
       level: 1,
-      description: 'Регенерация +0.2 HP/сек.',
+      description: '🌿 Регенерация здоровья +0.5 HP/сек.',
       apply: (mod) => {
         mod.tomeHpRegen = 1;
-        mod.hpRegenPerSec += 0.2;
+        mod.hpRegenPerSec += 0.5;
       },
     },
     {
       level: 2,
-      description: 'Регенерация +0.4 HP/сек, вампиризм +0.1 HP за каждого убитого врага.',
+      description: '🌿 Регенерация здоровья +1.0 HP/сек (суммарно).',
       apply: (mod) => {
         mod.tomeHpRegen = 2;
-        mod.hpRegenPerSec += 0.2;
-        mod.healOnKill += 0.1;
+        mod.hpRegenPerSec += 0.5;
       },
     },
     {
       level: 3,
-      description: '★ ЦЕЛЕБНЫЙ ЛИСТ: Регенерация +0.6 HP/сек, Максимальное HP +20.',
-      apply: (mod, stats, health) => {
+      description: '🌿 Регенерация здоровья +1.5 HP/сек (суммарно).',
+      apply: (mod) => {
         mod.tomeHpRegen = 3;
-        mod.hpRegenPerSec += 0.2;
-        stats.modifyMaxHp(20);
-        health.heal(20);
+        mod.hpRegenPerSec += 0.5;
       },
     },
     {
       level: 4,
-      description: 'Регенерация +0.8 HP/сек, вампиризм +0.2 HP за каждого убитого врага.',
+      description: '🌿 Регенерация здоровья +2.0 HP/сек (суммарно).',
       apply: (mod) => {
         mod.tomeHpRegen = 4;
-        mod.hpRegenPerSec += 0.2;
-        mod.healOnKill += 0.1;
+        mod.hpRegenPerSec += 0.5;
       },
     },
     {
       level: 5,
-      description: '★ ВЕЧНЫЙ БИО-ПУЛЬС: Регенерация +1.0 HP/сек, при HP < 25% всплеск лечения +5 HP!',
+      description: '★ ВЕЧНЫЙ БИО-ПУЛЬС: Регенерация +3.0 HP/сек!',
       apply: (mod) => {
         mod.tomeHpRegen = 5;
-        mod.hpRegenPerSec += 0.2;
+        mod.hpRegenPerSec += 1.0;
       },
     },
   ],

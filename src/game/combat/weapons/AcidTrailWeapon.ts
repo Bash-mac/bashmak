@@ -29,7 +29,7 @@ export class AcidTrailWeapon implements IWeapon {
     const px = ctx.player.x;
     const py = ctx.player.y;
     const mods = ctx.gameState.playerModifiers;
-    const auraRadius = (70 + (level - 1) * 12) * (1 + (mods.extraRange > 0 ? 0.25 : 0));
+    const auraRadius = (70 + (level - 1) * 12) * (1 + mods.attackAreaBonus);
     const damage = Math.round((12 + (level - 1) * 6) * (1 + mods.damagePercentBonus));
 
     // Stinky Sock Placeholder VFX: translucent green pulsing stench radius

@@ -1,8 +1,8 @@
 import type { UpgradeDefinition } from '../definitions';
 import { TOME_IDS } from '../itemIds';
 
-export const TOME_CRIT_SIZE: UpgradeDefinition = {
-  id: TOME_IDS.CRIT_SIZE,
+export const TOME_DAMAGE: UpgradeDefinition = {
+  id: TOME_IDS.DAMAGE,
   name: '«Слизь-Кола»',
   category: 'tome',
   iconKey: 'icon_tome_toxic_rage',
@@ -10,52 +10,46 @@ export const TOME_CRIT_SIZE: UpgradeDefinition = {
   levels: [
     {
       level: 1,
-      description: 'Урон всего арсенала +15%, шанс крита +15%, размер всех атак +25%.',
+      description: '🧪 Урон ВСЕГО арсенала в игре +12%.',
       apply: (mod) => {
-        mod.tomeCritSize = 1;
-        mod.damagePercentBonus += 0.15;
-        mod.critChance += 0.15;
-        mod.fatSpitScale += 0.25;
+        mod.tomeDamage = 1;
+        mod.damagePercentBonus += 0.12;
       },
     },
     {
       level: 2,
-      description: 'Урон +25%, шанс крита +25%, множитель крит-урона 2.3×.',
+      description: '🧪 Урон ВСЕГО арсенала в игре +24%.',
       apply: (mod) => {
-        mod.tomeCritSize = 2;
-        mod.damagePercentBonus += 0.10;
-        mod.critChance += 0.10;
-        mod.critMultiplier = 2.3;
+        mod.tomeDamage = 2;
+        mod.damagePercentBonus += 0.12;
       },
     },
     {
       level: 3,
-      description: '★ ТОТАЛЬНОЕ СОКРУШЕНИЕ: Шанс крита +35%, размер снарядов +50%.',
+      description: '🧪 Урон ВСЕГО арсенала в игре +36%.',
       apply: (mod) => {
-        mod.tomeCritSize = 3;
-        mod.damagePercentBonus += 0.15;
-        mod.critChance += 0.10;
-        mod.fatSpitScale += 0.25;
+        mod.tomeDamage = 3;
+        mod.damagePercentBonus += 0.12;
       },
     },
     {
       level: 4,
-      description: 'Шанс крита +45%, множитель крит-урона 2.7×.',
+      description: '🧪 Урон ВСЕГО арсенала в игре +48%.',
       apply: (mod) => {
-        mod.tomeCritSize = 4;
-        mod.critChance += 0.10;
-        mod.critMultiplier = 2.7;
+        mod.tomeDamage = 4;
+        mod.damagePercentBonus += 0.12;
       },
     },
     {
       level: 5,
-      description: '★ ГИГАНТСКИЙ АПОКАЛИПСИС: Шанс крита +60%, множитель 3.2×, двойной радиус всех атак!',
+      description: '★ ТОКСИЧЕСКИЙ ДОПИНГ: Урон всего арсенала +65%!',
       apply: (mod) => {
-        mod.tomeCritSize = 5;
-        mod.critChance += 0.15;
-        mod.critMultiplier = 3.2;
-        mod.fatSpitScale += 0.5;
+        mod.tomeDamage = 5;
+        mod.damagePercentBonus += 0.17;
       },
     },
   ],
 };
+
+export const TOME_CRIT_SIZE = TOME_DAMAGE;
+

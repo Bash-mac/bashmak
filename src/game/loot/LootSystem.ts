@@ -195,7 +195,7 @@ export class LootSystem {
   ): void {
     const levelBonus = 1 + (playerLevel - 1) * 0.02;
     const tomeBonus = mods.tomeMagnet > 0 ? 1 + mods.tomeMagnet * 0.4 : 1.0;
-    const magnetRadius = (95 + mods.extraRange) * levelBonus * tomeBonus;
+    const magnetRadius = (95 + mods.magnetRadiusBonus) * levelBonus * tomeBonus;
     const magnetRadiusSq = magnetRadius * magnetRadius;
 
     // 1. Attract XP Gems

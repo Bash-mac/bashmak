@@ -22,7 +22,7 @@ export class OrbitingFliesWeapon implements IWeapon {
     }
 
     const targetFlyCount = Math.max(2, mods.homingDaggersCount || 2);
-    const radius = 90 + (mods.extraRange > 0 ? 20 : 0);
+    const radius = 90 * (1 + mods.attackAreaBonus);
     const rotationSpeed = (2.6 + (level >= 3 ? 1.0 : 0)) * (1 + mods.attackSpeedBonus * 0.5);
 
     // Maintain fly instances count

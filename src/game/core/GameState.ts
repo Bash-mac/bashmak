@@ -81,6 +81,8 @@ export class GameState {
       cheatDeathUnlocked: false,
       fatSpitScale: 1.0,
       extraRange: 0,
+      magnetRadiusBonus: 0,
+      attackAreaBonus: 0,
       wriggleDash: false,
       acidTrail: false,
 
@@ -107,8 +109,12 @@ export class GameState {
       tomeAttackSpeed: 0,
       tomeArmor: 0,
       tomeHpRegen: 0,
+      tomeLifesteal: 0,
       tomeMagnet: 0,
+      tomeDamage: 0,
+      tomeCrit: 0,
       tomeCritSize: 0,
+      tomeArea: 0,
 
       // Hero Trait Runtime State
       standStillTimerMs: 0,
