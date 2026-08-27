@@ -3,11 +3,11 @@ import type { HeroDefinition } from '../definitions';
 export const BASHMAK_HERO: HeroDefinition = {
   id: 'hero_bashmak',
   name: 'Башмак',
-  comicTitle: 'THE MIGHTY BOOT',
+  comicTitle: 'BASHMAK',
   description: 'Тяжёлый бичеватель. Хлещет шнурком и давит врагов сейсмическими ударами.',
   lore: 'Легендарный армейский ботинок 45-го размера, оживленный радиоактивным мутагеном. Ненавидит грязь, обожает топтать.',
-  textureKey: 'pose_idle',
-  portraitKey: 'face_smug',
+  textureKey: 'hero_card_bashmak',
+  portraitKey: 'hero_card_bashmak',
   posterKey: 'hero_card_bashmak',
   stats: {
     maxHp: 180,

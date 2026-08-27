@@ -25,25 +25,9 @@ export class BootScene extends Phaser.Scene {
     this.load.image('char_worm', '/assets/menu/char_worm.webp');
     this.load.image('char_rat', '/assets/menu/char_rat.webp');
 
-    // Bashmak Poses
-    this.load.image('pose_idle', '/assets/sprites/poses/pose_idle.png');
-    this.load.image('pose_run', '/assets/sprites/poses/pose_run.png');
-    this.load.image('pose_attack', '/assets/sprites/poses/pose_attack.png');
-    this.load.image('pose_ranged_spit', '/assets/sprites/poses/pose_ranged_spit.png');
-    this.load.image('pose_heavy_prep', '/assets/sprites/poses/pose_heavy_prep.png');
-    this.load.image('pose_ultimate', '/assets/sprites/poses/pose_ultimate.png');
-    this.load.image('pose_damaged', '/assets/sprites/poses/pose_damaged.png');
-    this.load.image('pose_alert', '/assets/sprites/poses/pose_alert.png');
 
-    // Bashmak Expressions for HUD & Modals
-    this.load.image('face_happy', '/assets/sprites/expressions/face_happy.png');
-    this.load.image('face_bored', '/assets/sprites/expressions/face_bored.png');
-    this.load.image('face_smug', '/assets/sprites/expressions/face_smug.png');
-    this.load.image('face_angry', '/assets/sprites/expressions/face_angry.png');
-    this.load.image('face_injured', '/assets/sprites/expressions/face_injured.png');
-    this.load.image('face_terrified', '/assets/sprites/expressions/face_terrified.png');
-    this.load.image('face_furious', '/assets/sprites/expressions/face_furious.png');
-    this.load.image('face_victorious', '/assets/sprites/expressions/face_victorious.png');
+
+
 
     // Vypolzok Assets & UI
     this.load.image('vypolzok_portrait', '/assets/sprites/vypolzok/ui/portrait_vypolzok.webp');
@@ -130,11 +114,22 @@ export class BootScene extends Phaser.Scene {
     this.load.image('prop_slime_source', '/assets/sprites/map/props/prop_slime_source.webp');
 
     // --- 90s Gross-Out HD UI System Assets ---
-    // 1. Hero Selection Posters (512x768)
+    // 1. Hero Selection Dossier & Cutout Assets
+    this.load.image('hero_dossier_bg', '/assets/menu/hero_dossier_bg.webp');
+    this.load.image('polaroid_vypolzok', '/assets/ui/hero_modal/polaroid_vypolzok.webp');
+    this.load.image('polaroid_bashmak', '/assets/ui/hero_modal/polaroid_bashmak.webp');
+    this.load.image('polaroid_markovka', '/assets/ui/hero_modal/polaroid_markovka.webp');
+    this.load.image('polaroid_baklazhan', '/assets/ui/hero_modal/polaroid_baklazhan.webp');
+    this.load.image('char_vypolzok', '/assets/ui/hero_modal/char_vypolzok.webp');
+    this.load.image('char_markovka', '/assets/ui/hero_modal/char_markovka.webp');
+    this.load.image('char_bashmak', '/assets/ui/hero_modal/char_bashmak.webp');
+    this.load.image('char_baklazhan', '/assets/ui/hero_modal/char_baklazhan.webp');
     this.load.image('hero_card_worm', '/assets/ui/posters/hero_card_worm.webp');
     this.load.image('hero_card_bashmak', '/assets/ui/posters/hero_card_bashmak.webp');
     this.load.image('hero_card_markovka', '/assets/ui/posters/hero_card_markovka.webp');
     this.load.image('hero_card_baklazhan', '/assets/ui/posters/hero_card_baklazhan.webp');
+    this.load.image('pod_base', '/assets/ui/hero_modal/pod_base.webp');
+    this.load.image('chains_pod', '/assets/ui/hero_modal/chains_pod.webp');
 
     // 2. Card Frames (512x768)
     this.load.image('card_frame_standard', '/assets/ui/frames/card_frame_standard.webp');

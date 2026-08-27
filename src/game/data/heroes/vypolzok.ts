@@ -3,8 +3,8 @@ import type { HeroDefinition } from '../definitions';
 export const VYPOLZOK_HERO: HeroDefinition = {
   id: 'hero_vypolzok',
   name: 'Выползок',
-  comicTitle: 'THE SLIME SPITTER',
-  description: 'Юркий кайтер. Плюётся слизью, замедляя врагов, и ускоряется на собственных слизистых дорожках.',
+  comicTitle: 'VYPOLZOK',
+  description: 'Юркий кайтер. Плюется токсичной слизью и ускоряется на своих дорожках.',
   lore: 'Бывший дождевой червяк, упавший в чан с токсичными отходами канализации. Теперь полон ярости и липкой слизи.',
   textureKey: 'vypolzok_idle_1',
   portraitKey: 'vypolzok_portrait',

@@ -150,6 +150,10 @@ export class MenuScene extends Phaser.Scene {
       }
     });
 
+    if (typeof window !== 'undefined') {
+      (window as any).__MENU_SCENE__ = this;
+    }
+
     const currentHero = getHeroById(SaveManager.getInstance().getSelectedHeroId());
 
     // 5. Vertical Button Stack (Left side)

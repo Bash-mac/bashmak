@@ -6,8 +6,8 @@ import type { HeroDefinition } from '../definitions';
  */
 export const MARKOVKA_HERO: HeroDefinition = {
   id: 'hero_markovka',
-  name: 'Морковка',
-  comicTitle: 'THE CARROT FURY',
+  name: 'Марковка',
+  comicTitle: 'MARKOVKA',
   description: 'Стеклянная пушка. Быстрая, смертоносная, хрупкая. Убивай или умри.',
   lore: 'Генно-модифицированная морковка из заброшенной лаборатории. Скорость — её броня.',
   textureKey: 'markovka_idle_1',

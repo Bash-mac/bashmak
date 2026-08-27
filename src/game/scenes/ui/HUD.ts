@@ -209,7 +209,11 @@ export class HUD {
         this.updateXp(data.totalXp, data.nextLevelXp);
       }),
       bus.on('player:levelUp', () => {
-        this.avatarImage.setTexture('face_victorious').setDisplaySize(68, 68);
+        const heroId = this.scene.registry.get('selectedHeroId') || 'hero_vypolzok';
+        const victoriousKey = heroId === 'hero_markovka' ? 'hud_face_smug_markovka' : 'hud_face_smug';
+        if (this.scene.textures.exists(victoriousKey)) {
+          this.avatarImage.setTexture(victoriousKey).setDisplaySize(68, 68);
+        }
       })
     );
   }
@@ -225,31 +229,29 @@ export class HUD {
     this.hpText.setText(`HP: ${Math.ceil(current)}/${max}`);
 
     // Update Expression Avatar based on Health and Hero
-    const heroId = this.scene.registry.get('selectedHeroId') || 'hero_worm';
-    let smugKey = 'face_smug';
-    let boredKey = 'face_bored';
-    let injuredKey = 'face_injured';
+    const heroId = this.scene.registry.get('selectedHeroId') || 'hero_vypolzok';
+    let smugKey = 'hud_face_smug';
+    let boredKey = 'hud_face_bored';
+    let injuredKey = 'hud_face_injured';
 
     if (heroId === 'hero_markovka') {
       smugKey = 'hud_face_smug_markovka';
       boredKey = 'hud_face_bored_markovka';
       injuredKey = 'hud_face_injured_markovka';
-    } else if (heroId === 'hero_worm') {
-      smugKey = 'hud_face_smug';
-      boredKey = 'hud_face_bored';
-      injuredKey = 'hud_face_injured';
     }
 
     let targetKey = smugKey;
     if (ratio > 0.65) {
-      targetKey = this.scene.textures.exists(smugKey) ? smugKey : 'face_smug';
+      targetKey = smugKey;
     } else if (ratio >= 0.30) {
-      targetKey = this.scene.textures.exists(boredKey) ? boredKey : 'face_bored';
+      targetKey = boredKey;
     } else {
-      targetKey = this.scene.textures.exists(injuredKey) ? injuredKey : 'face_injured';
+      targetKey = injuredKey;
     }
 
-    this.avatarImage.setTexture(targetKey).setDisplaySize(68, 68);
+    if (this.avatarImage && this.scene.textures.exists(targetKey)) {
+      this.avatarImage.setTexture(targetKey).setDisplaySize(68, 68);
+    }
   }
 
   updateXp(current: number, nextLevelXp: number): void {

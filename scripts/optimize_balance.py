@@ -1,4 +1,4 @@
-﻿import random
+import random
 import math
 
 class SimModifiers:
@@ -234,7 +234,7 @@ def run_single(strategy, cfg):
             nextLevelXp = math.floor(cfg['baseXp'] + (playerLevel ** 1.7) * cfg['xpExp'])
 
             # Pick upgrade
-            if strategy == 'tony_homing_spam':
+            if strategy == 'vypolzok_homing_spam':
                 opts = ['wpn_homing_daggers', 'tome_quantity', 'tome_speed', 'tome_crit_size']
             elif strategy == 'tesla_zap':
                 opts = ['wpn_lightning_zap', 'wpn_acid_trail', 'tome_speed', 'tome_magnet']
@@ -294,7 +294,7 @@ def run_single(strategy, cfg):
     }
 
 def evaluate(cfg, runs=250):
-    strats = ['random', 'tony_homing_spam', 'tesla_zap', 'tank_bones']
+    strats = ['random', 'vypolzok_homing_spam', 'tesla_zap', 'tank_bones']
     res = {}
     for s in strats:
         out = [run_single(s, cfg) for _ in range(runs)]

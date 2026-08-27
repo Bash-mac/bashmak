@@ -21,30 +21,21 @@ export class GameApplication {
       try {
         await Promise.all([
           document.fonts.load('16px "Boingster"', 'ВЫБОР МУТАНТА'),
-          document.fonts.load('16px "NarisovanniySANS"', 'Слизистый след'),
           document.fonts.load('16px "Gagalin"', 'ВЫБРАТЬ SELECT'),
           document.fonts.ready,
         ]);
+
       } catch (e) {
         console.warn('[GameApplication] Fonts load timeout or fallback:', e);
       }
     }
 
-    // 3. Initialize Phaser Game instance
+    // 3. Initialize Phaser Game instance (Phaser Scale.RESIZE manages viewport resizing cleanly)
     this.game = new Phaser.Game(GameConfig);
 
-    // Auto-adapt canvas on dynamic orientation change or window resize
-    const handleResize = () => {
-      if (this.game && this.game.scale) {
-        this.game.scale.resize(window.innerWidth, window.innerHeight);
-        this.game.scale.refresh();
-      }
-    };
-    window.addEventListener('resize', handleResize);
-    window.addEventListener('orientationchange', () => {
-      setTimeout(handleResize, 150);
-      setTimeout(handleResize, 400);
-    });
+    if (typeof window !== 'undefined') {
+      (window as any).__GAME_APP__ = this;
+    }
 
     console.log(`[GameApplication] Game initialized on platform: ${this.platform.platformType}`);
   }

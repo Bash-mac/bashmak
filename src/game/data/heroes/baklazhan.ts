@@ -7,11 +7,11 @@ import type { HeroDefinition } from '../definitions';
 export const BAKLAZHAN_HERO: HeroDefinition = {
   id: 'hero_baklazhan',
   name: 'Баклажан',
-  comicTitle: 'THE ROLLING THUNDER',
+  comicTitle: 'BAKLAZHAN',
   description: 'Фиолетовый таран. Разгоняется и давит всё на пути.',
   lore: 'Мутировавший баклажан из заброшенного парника. Круглый, тяжёлый, неостановимый.',
-  textureKey: 'pose_heavy_prep',
-  portraitKey: 'face_furious',
+  textureKey: 'hero_card_baklazhan',
+  portraitKey: 'hero_card_baklazhan',
   posterKey: 'hero_card_baklazhan',
   stats: {
     maxHp: 150,

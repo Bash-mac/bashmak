@@ -82,7 +82,7 @@ interface SimEnemy {
 }
 
 function runSingleMatch(
-  strategy: 'random' | 'tony_homing_spam' | 'tesla_zap' | 'tank_bones',
+  strategy: 'random' | 'vypolzok_homing_spam' | 'tesla_zap' | 'tank_bones',
   config: {
     startHp: number;
     baseDmg: number;
@@ -382,8 +382,17 @@ function runSingleMatch(
 
       let chosen: UpgradeDefinition | null = null;
       if (pool.length > 0) {
-        if (strategy === 'tony_homing_spam') {
-          chosen = pool.find((u) => ['wpn_homing_daggers', 'wpn_acid_trail', 'tome_quantity', 'tome_speed', 'tome_crit_size'].includes(u.id)) || pool[0];
+        if (strategy === 'vypolzok_homing_spam') {
+          // Priority to slime spit, attack interval, attack speed, movement speed
+          const spit = shopUpgrades.find((u) => u.id === 'weapon_slime_spit');
+          const attackSpeed = shopUpgrades.find((u) => u.id === 'stat_attack_speed');
+          const attackInterval = shopUpgrades.find((u) => u.id === 'stat_attack_interval');
+          const moveSpeed = shopUpgrades.find((u) => u.id === 'stat_speed');
+
+          if (spit) chosen = spit;
+          else if (attackInterval) chosen = attackInterval;
+          else if (attackSpeed) chosen = attackSpeed;
+          else if (moveSpeed) chosen = moveSpeed;
         } else if (strategy === 'tesla_zap') {
           chosen = pool.find((u) => ['wpn_lightning_zap', 'wpn_acid_trail', 'tome_speed', 'tome_vitality'].includes(u.id)) || pool[0];
         } else if (strategy === 'tank_bones') {
@@ -438,19 +447,20 @@ export function runSimulationSuite(totalRuns = 1000) {
 
   console.log(`\n=== 🧪 RUNNING CALIBRATED BALANCE SIMULATION (${totalRuns} RUNS) ===\n`);
 
-  const strategies: Array<'random' | 'tony_homing_spam' | 'tesla_zap' | 'tank_bones'> = [
+  const strategies: Array<'random' | 'vypolzok_homing_spam' | 'tesla_zap' | 'tank_bones'> = [
     'random',
-    'tony_homing_spam',
+    'vypolzok_homing_spam',
     'tesla_zap',
     'tank_bones',
   ];
 
   const resultsByStrategy: Record<string, any[]> = {
     random: [],
-    tony_homing_spam: [],
+    vypolzok_homing_spam: [],
     tesla_zap: [],
     tank_bones: [],
   };
+
 
   const runsPerStrategy = Math.floor(totalRuns / strategies.length);
 

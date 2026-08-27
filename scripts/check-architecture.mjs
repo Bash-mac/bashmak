@@ -59,7 +59,15 @@ function checkFile(filePath) {
       }
     }
   }
+
+  // 6. UI Viewport Standard: Modals must not clamp scale to 1.0 (prevents tiny UI on desktop)
+  if (relPath.startsWith('src/game/scenes/ui/') && relPath.endsWith('Modal.ts')) {
+    if (/Math\.min\(\s*1(?:\.0)?\s*,/.test(content)) {
+      errors.push(`❌ [UI/SCALE] Scale clamping 'Math.min(1.0, ...)' found in '${relPath}'. Use un-clamped Virtual Viewport scaling!`);
+    }
+  }
 }
+
 
 function scanDir(dir) {
   const entries = fs.readdirSync(dir, { withFileTypes: true });
