@@ -5,7 +5,7 @@ export const TOME_LIFESTEAL: UpgradeDefinition = {
   id: TOME_IDS.LIFESTEAL,
   name: '«Пиявка»',
   category: 'tome',
-  iconKey: 'icon_tome_mutant_heart',
+  iconKey: 'icon_tome_lifesteal',
   maxLevel: 5,
   levels: [
     {

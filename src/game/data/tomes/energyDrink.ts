@@ -5,7 +5,7 @@ export const TOME_ATTACK_SPEED: UpgradeDefinition = {
   id: TOME_IDS.ATTACK_SPEED,
   name: '«Энергетик»',
   category: 'tome',
-  iconKey: 'icon_tome_speed_sneakers',
+  iconKey: 'icon_tome_attack_speed',
   maxLevel: 5,
   levels: [
     {

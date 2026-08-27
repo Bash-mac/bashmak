@@ -5,7 +5,7 @@ export const TOME_QUANTITY: UpgradeDefinition = {
   id: TOME_IDS.QUANTITY,
   name: '«Двойной Зоб»',
   category: 'tome',
-  iconKey: 'icon_tome_rusty_armor',
+  iconKey: 'icon_tome_quantity',
   maxLevel: 5,
   levels: [
     {

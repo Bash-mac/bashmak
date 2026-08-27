@@ -5,7 +5,7 @@ export const TOME_MAGNET: UpgradeDefinition = {
   id: TOME_IDS.MAGNET,
   name: '«Липкая Жвачка»',
   category: 'tome',
-  iconKey: 'icon_tome_magnet_tooth',
+  iconKey: 'icon_tome_magnet',
   maxLevel: 5,
   levels: [
     {

@@ -5,7 +5,7 @@ export const CONSUMABLE_HEAL: UpgradeDefinition = {
   id: CONSUMABLE_IDS.HEAL,
   name: 'Аптечка-слизь',
   category: 'consumable',
-  iconKey: 'icon_tome_mutant_heart',
+  iconKey: 'icon_tome_hp_regen',
   isConsumable: true,
   maxLevel: 999,
   levels: [

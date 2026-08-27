@@ -5,7 +5,7 @@ export const TOME_SPEED: UpgradeDefinition = {
   id: TOME_IDS.SPEED,
   name: '«Турбо-Кеды»',
   category: 'tome',
-  iconKey: 'icon_tome_speed_sneakers',
+  iconKey: 'icon_tome_speed',
   maxLevel: 5,
   levels: [
     {

@@ -25,7 +25,7 @@ export const TOME_IDS = {
   ARMOR: 'tome_armor', // «Майка-Алкоголичка» (Броня / Защита)
   HP_REGEN: 'tome_hp_regen', // «Подорожник» (Регенерация HP)
   LIFESTEAL: 'tome_lifesteal', // «Пиявка» (Вампиризм / Хил за киллы)
-  AREA: 'tome_area', // «Рваный Рупор» (Радиус и область атак)
+  AREA: 'tome_area', // «Дальноплюй» (Радиус и область атак)
 } as const;
 
 export const CONSUMABLE_IDS = {

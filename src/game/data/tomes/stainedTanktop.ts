@@ -5,7 +5,7 @@ export const TOME_ARMOR: UpgradeDefinition = {
   id: TOME_IDS.ARMOR,
   name: '«Майка-Алкоголичка»',
   category: 'tome',
-  iconKey: 'icon_tome_rusty_armor',
+  iconKey: 'icon_tome_armor',
   maxLevel: 5,
   levels: [
     {

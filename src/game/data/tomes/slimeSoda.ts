@@ -5,7 +5,7 @@ export const TOME_DAMAGE: UpgradeDefinition = {
   id: TOME_IDS.DAMAGE,
   name: '«Слизь-Кола»',
   category: 'tome',
-  iconKey: 'icon_tome_toxic_rage',
+  iconKey: 'icon_tome_damage',
   maxLevel: 5,
   levels: [
     {

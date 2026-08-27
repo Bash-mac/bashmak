@@ -5,7 +5,7 @@ export const CONSUMABLE_SCORE: UpgradeDefinition = {
   id: CONSUMABLE_IDS.SCORE,
   name: 'Мешок слизи',
   category: 'consumable',
-  iconKey: 'icon_tome_magnet_tooth',
+  iconKey: 'icon_tome_magnet',
   isConsumable: true,
   maxLevel: 999,
   levels: [

@@ -5,7 +5,7 @@ export const TOME_CRIT: UpgradeDefinition = {
   id: TOME_IDS.CRIT,
   name: '«Выбитый Зуб»',
   category: 'tome',
-  iconKey: 'icon_tome_magnet_tooth',
+  iconKey: 'icon_tome_crit',
   maxLevel: 5,
   levels: [
     {

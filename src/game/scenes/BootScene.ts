@@ -136,16 +136,11 @@ export class BootScene extends Phaser.Scene {
     this.load.image('card_frame_gold', '/assets/ui/frames/card_frame_gold.webp');
     this.load.image('card_frame_consumable', '/assets/ui/frames/card_frame_consumable.webp');
 
-    // 3. Action Buttons (512x202) - Blank Frames for Multi-language Localization
+    // 3. Action Buttons (512x205) - Blank Frames for Multi-language Localization
     this.load.image('btn_frame_green', '/assets/ui/buttons/btn_frame_green.webp');
     this.load.image('btn_frame_gold', '/assets/ui/buttons/btn_frame_gold.webp');
     this.load.image('btn_frame_red', '/assets/ui/buttons/btn_frame_red.webp');
     this.load.image('btn_frame_dark', '/assets/ui/buttons/btn_frame_dark.webp');
-    this.load.image('btn_comic_green', '/assets/ui/buttons/btn_comic_green.webp');
-    this.load.image('btn_comic_green_hover', '/assets/ui/buttons/btn_comic_green_hover.webp');
-    this.load.image('btn_comic_gold', '/assets/ui/buttons/btn_comic_gold.webp');
-    this.load.image('btn_comic_red', '/assets/ui/buttons/btn_comic_red.webp');
-    this.load.image('btn_comic_dark', '/assets/ui/buttons/btn_comic_dark.webp');
 
     // 4. HUD Overlays
     this.load.image('hud_avatar_badge_frame', '/assets/ui/hud/hud_avatar_badge_frame.webp');
@@ -164,11 +159,16 @@ export class BootScene extends Phaser.Scene {
     this.load.image('icon_weapon_acid_trail', '/assets/ui/icons/icon_weapon_acid_trail.webp');
     this.load.image('icon_weapon_orbiting_flies', '/assets/ui/icons/icon_weapon_orbiting_flies.webp');
 
-    this.load.image('icon_tome_mutant_heart', '/assets/ui/icons/icon_tome_mutant_heart.webp');
-    this.load.image('icon_tome_speed_sneakers', '/assets/ui/icons/icon_tome_speed_sneakers.webp');
-    this.load.image('icon_tome_toxic_rage', '/assets/ui/icons/icon_tome_toxic_rage.webp');
-    this.load.image('icon_tome_magnet_tooth', '/assets/ui/icons/icon_tome_magnet_tooth.webp');
-    this.load.image('icon_tome_rusty_armor', '/assets/ui/icons/icon_tome_rusty_armor.webp');
+    this.load.image('icon_tome_area', '/assets/ui/icons/icon_tome_area.webp');
+    this.load.image('icon_tome_armor', '/assets/ui/icons/icon_tome_armor.webp');
+    this.load.image('icon_tome_attack_speed', '/assets/ui/icons/icon_tome_attack_speed.webp');
+    this.load.image('icon_tome_crit', '/assets/ui/icons/icon_tome_crit.webp');
+    this.load.image('icon_tome_damage', '/assets/ui/icons/icon_tome_damage.webp');
+    this.load.image('icon_tome_hp_regen', '/assets/ui/icons/icon_tome_hp_regen.webp');
+    this.load.image('icon_tome_lifesteal', '/assets/ui/icons/icon_tome_lifesteal.webp');
+    this.load.image('icon_tome_magnet', '/assets/ui/icons/icon_tome_magnet.webp');
+    this.load.image('icon_tome_quantity', '/assets/ui/icons/icon_tome_quantity.webp');
+    this.load.image('icon_tome_speed', '/assets/ui/icons/icon_tome_speed.webp');
 
     this.load.image('icon_evo_acid_tsunami', '/assets/ui/icons/icon_evo_acid_tsunami.webp');
     this.load.image('icon_evo_typhoon_flail', '/assets/ui/icons/icon_evo_typhoon_flail.webp');

@@ -5,7 +5,7 @@ export const TOME_HP_REGEN: UpgradeDefinition = {
   id: TOME_IDS.HP_REGEN,
   name: '«Подорожник»',
   category: 'tome',
-  iconKey: 'icon_tome_mutant_heart',
+  iconKey: 'icon_tome_hp_regen',
   maxLevel: 5,
   levels: [
     {

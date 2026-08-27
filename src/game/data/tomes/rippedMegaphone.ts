@@ -3,9 +3,9 @@ import { TOME_IDS } from '../itemIds';
 
 export const TOME_AREA: UpgradeDefinition = {
   id: TOME_IDS.AREA,
-  name: '«Рваный Рупор»',
+  name: '«Дальноплюй»',
   category: 'tome',
-  iconKey: 'icon_tome_toxic_rage',
+  iconKey: 'icon_tome_area',
   maxLevel: 5,
   levels: [
     {

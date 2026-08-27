@@ -199,9 +199,10 @@ export class LevelUpModal {
         fontSize: w < 240 ? '11px' : '13px',
         fontStyle: 'bold',
         color: '#facc15',
-        fontFamily: 'monospace',
+        fontFamily: '"Gagalin", "Balsamiq Sans", monospace',
         stroke: '#451a03',
         strokeThickness: 3,
+        resolution: 2,
       })
       .setOrigin(0.5, 0.5);
 
@@ -217,13 +218,13 @@ export class LevelUpModal {
     const nameText = this.scene.add
       .text(0, titleY, evo.comicTitle, {
         fontSize: w < 240 ? '15px' : '17px',
-        fontStyle: 'bold',
         color: '#fef08a',
-        fontFamily: 'monospace',
+        fontFamily: '"Gagalin", "Balsamiq Sans", monospace',
         align: 'center',
         wordWrap: { width: cutoutW - 16 },
         stroke: '#451a03',
         strokeThickness: 3,
+        resolution: 2,
       })
       .setOrigin(0.5, 0.5);
 
@@ -233,20 +234,32 @@ export class LevelUpModal {
       .text(0, descY, evo.description, {
         fontSize: w < 240 ? '10px' : '12px',
         color: '#f3e8ff',
-        fontFamily: 'monospace',
+        fontFamily: '"Balsamiq Sans", monospace',
         align: 'center',
         wordWrap: { width: cutoutW - 16 },
         lineSpacing: 3,
+        resolution: 2,
       })
       .setOrigin(0.5, 0);
 
     // 7. 3D Comic Action Button (Resting over bottom plate)
     const btnW = Math.min(w - 48, 175);
-    const btnH = Math.round(btnW * (202 / 512));
+    const btnH = Math.round(btnW * (205 / 512));
     const btnY = h * 0.355;
 
-    const btnImage = this.scene.add.image(0, btnY, 'btn_comic_gold');
+    const btnImage = this.scene.add.image(0, btnY, 'btn_frame_gold');
     btnImage.setDisplaySize(btnW, btnH);
+
+    const btnLabel = this.scene.add
+      .text(0, btnY - 2, 'МУТИРОВАТЬ', {
+        fontSize: w < 240 ? '12px' : '14px',
+        fontFamily: '"Gagalin", "Balsamiq Sans", monospace',
+        color: '#451a03',
+        stroke: '#fef08a',
+        strokeThickness: 1,
+        resolution: 2,
+      })
+      .setOrigin(0.5, 0.5);
 
     cardContainer.add([
       bg,
@@ -256,6 +269,7 @@ export class LevelUpModal {
       nameText,
       descText,
       btnImage,
+      btnLabel,
     ]);
 
     // Top-Level HitArea (guaranteed click handling across all cameras)
@@ -282,6 +296,7 @@ export class LevelUpModal {
     };
 
     hitArea.on('pointerover', () => {
+      btnImage.setTint(0xfff0aa);
       this.scene.tweens.add({
         targets: cardContainer,
         scaleX: 1.03,
@@ -292,6 +307,7 @@ export class LevelUpModal {
     });
 
     hitArea.on('pointerout', () => {
+      btnImage.clearTint();
       this.scene.tweens.add({
         targets: cardContainer,
         scaleX: 1.0,
@@ -316,35 +332,50 @@ export class LevelUpModal {
   ): void {
     const cardContainer = this.scene.add.container(x, y).setDepth(10002).setScrollFactor(0);
 
-    const isConsumable = upgrade.isConsumable;
+    const isConsumable = !!upgrade.isConsumable;
     const isWeapon = upgrade.category === 'weapon';
+    const isNew = !isConsumable && levelToApply === 1;
+    const isUpgrade = !isConsumable && levelToApply > 1;
 
     // 1. Dark Backdrop ONLY within central cutout (never sticks out of frame)
     const cutoutW = w * 0.74;
     const cutoutH = h * 0.74;
     const bg = this.scene.add
-      .rectangle(0, 0, cutoutW, cutoutH, 0x070b14, 0.96);
+      .rectangle(0, 0, cutoutW, cutoutH, isUpgrade ? 0x140d04 : 0x070b14, 0.96);
 
-    // 2. Frame Image (512x768)
-    const frameTex = isConsumable ? 'card_frame_consumable' : 'card_frame_standard';
+    // 2. Frame Image: Standard iron frame for NEW items, Golden frame for UPGRADES
+    const frameTex = isConsumable
+      ? 'card_frame_consumable'
+      : isUpgrade
+      ? 'card_frame_gold'
+      : 'card_frame_standard';
     const frame = this.scene.add.image(0, 0, frameTex);
     frame.setDisplaySize(w, h);
 
     // 3. Category / Level Badge (Under top plate)
-    let badgeText = isWeapon ? '⚔️ ОРУЖИЕ' : isConsumable ? '🧪 РАСХОДНИК' : '🧪 ЖИЖА';
-    if (!isConsumable && levelToApply > 1) {
-      badgeText = `${badgeText}  LVL ${levelToApply - 1} → ${levelToApply}`;
+    let badgeText = '';
+    let badgeColor = '#4ade80';
+
+    if (isConsumable) {
+      badgeText = '🧪 РАСХОДНИК';
+      badgeColor = '#60a5fa';
+    } else if (isNew) {
+      badgeText = isWeapon ? '⚔️ НОВОЕ ОРУЖИЕ' : '📖 НОВЫЙ ТОМ';
+      badgeColor = isWeapon ? '#4ade80' : '#38bdf8';
+    } else {
+      const typeStr = isWeapon ? '⚔️ ОРУЖИЕ' : '📖 ТОМ';
+      badgeText = `${typeStr} • УР. ${levelToApply - 1} ➔ ${levelToApply}`;
+      badgeColor = '#facc15';
     }
 
-    const badgeColor = isWeapon ? '#4ade80' : isConsumable ? '#60a5fa' : '#facc15';
     const badgeLabel = this.scene.add
       .text(0, -h * 0.23, badgeText, {
         fontSize: w < 240 ? '10px' : '12px',
-        fontStyle: 'bold',
         color: badgeColor,
-        fontFamily: 'monospace',
+        fontFamily: '"Gagalin", "Balsamiq Sans", monospace',
         stroke: '#050811',
         strokeThickness: 3,
+        resolution: 2,
       })
       .setOrigin(0.5, 0.5);
 
@@ -360,13 +391,13 @@ export class LevelUpModal {
     const nameText = this.scene.add
       .text(0, titleY, upgrade.name, {
         fontSize: w < 240 ? '15px' : '18px',
-        fontStyle: 'bold',
-        color: '#ffffff',
-        fontFamily: 'monospace',
+        color: isUpgrade ? '#fef08a' : '#ffffff',
+        fontFamily: '"Gagalin", "Balsamiq Sans", monospace',
         align: 'center',
         wordWrap: { width: cutoutW - 16 },
         stroke: '#050811',
         strokeThickness: 3,
+        resolution: 2,
       })
       .setOrigin(0.5, 0.5);
 
@@ -377,20 +408,39 @@ export class LevelUpModal {
       .text(0, descY, levelConfig?.description || '', {
         fontSize: w < 240 ? '10px' : '12px',
         color: '#cbd5e1',
-        fontFamily: 'monospace',
+        fontFamily: '"Balsamiq Sans", monospace',
         align: 'center',
         wordWrap: { width: cutoutW - 16 },
         lineSpacing: 3,
+        resolution: 2,
       })
       .setOrigin(0.5, 0);
 
     // 7. 3D Comic Action Button (Resting over bottom plate)
     const btnW = Math.min(w - 48, 175);
-    const btnH = Math.round(btnW * (202 / 512));
+    const btnH = Math.round(btnW * (205 / 512));
     const btnY = h * 0.355;
 
-    const btnImage = this.scene.add.image(0, btnY, 'btn_comic_green');
+    const btnTex = isUpgrade ? 'btn_frame_gold' : 'btn_frame_green';
+    const btnImage = this.scene.add.image(0, btnY, btnTex);
     btnImage.setDisplaySize(btnW, btnH);
+
+    const actionText = isConsumable
+      ? 'ПРИМЕНИТЬ'
+      : isNew
+      ? 'ВЗЯТЬ'
+      : `УЛУЧШИТЬ (L${levelToApply})`;
+
+    const btnLabel = this.scene.add
+      .text(0, btnY - 2, actionText, {
+        fontSize: w < 240 ? '12px' : '14px',
+        fontFamily: '"Gagalin", "Balsamiq Sans", monospace',
+        color: isUpgrade ? '#451a03' : '#052e16',
+        stroke: isUpgrade ? '#fef08a' : '#86efac',
+        strokeThickness: 1,
+        resolution: 2,
+      })
+      .setOrigin(0.5, 0.5);
 
     cardContainer.add([
       bg,
@@ -400,6 +450,7 @@ export class LevelUpModal {
       nameText,
       descText,
       btnImage,
+      btnLabel,
     ]);
 
     // Top-Level HitArea (guaranteed click handling across all cameras)
@@ -417,7 +468,7 @@ export class LevelUpModal {
     };
 
     hitArea.on('pointerover', () => {
-      btnImage.setTexture('btn_comic_green_hover');
+      btnImage.setTint(isUpgrade ? 0xfff0aa : 0xddffdd);
       this.scene.tweens.add({
         targets: cardContainer,
         scaleX: 1.03,
@@ -428,7 +479,7 @@ export class LevelUpModal {
     });
 
     hitArea.on('pointerout', () => {
-      btnImage.setTexture('btn_comic_green');
+      btnImage.clearTint();
       this.scene.tweens.add({
         targets: cardContainer,
         scaleX: 1.0,
