@@ -188,6 +188,12 @@ export class BootScene extends Phaser.Scene {
       this.load.image(`tex_boss_run_${i}`, `/assets/sprites/enemies/boss/boss_${i}.webp`);
       this.load.image(`tex_enemy_dead_${i}`, `/assets/sprites/enemies/enemy_dead/enemy_dead_${i}.webp`);
     }
+
+    // 7. Pickups & Loot Drops
+    this.load.image('drop_xp_small', '/assets/sprites/drop/drop_xp_small.webp');
+    this.load.image('drop_xp_big', '/assets/sprites/drop/drop_xp_big.webp');
+    this.load.image('drop_goo', '/assets/sprites/drop/drop_goo.webp');
+    this.load.image('drop_vacuum', '/assets/sprites/drop/drop_vacuum.webp');
   }
 
   create(): void {

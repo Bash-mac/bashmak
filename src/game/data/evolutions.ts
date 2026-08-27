@@ -61,7 +61,7 @@ export const EVOLUTION_RECIPES: EvolutionRecipe[] = [
     },
   },
 
-  // 3. Морковный Град Lv5 + «Турбо-Кеды» Lv5 -> ГАТЛИНГ-МОРКОВКА
+  // 3. Морковный Град Lv5 + «Энергетик» Lv5 -> ГАТЛИНГ-МОРКОВКА
   {
     id: EVOLUTION_IDS.GATLING_CARROT,
     name: 'Гатлинг-Морковка',
@@ -69,8 +69,8 @@ export const EVOLUTION_RECIPES: EvolutionRecipe[] = [
     description: 'Лазерный шквал из 20 сверхзвуковых бумерангов-пил в секунду со 100% шансом критического взрыва!',
     baseWeaponId: WEAPON_IDS.CARROT_BARRAGE,
     baseWeaponName: 'Морковный Град (Lv.5)',
-    requiredTomeId: TOME_IDS.SPEED,
-    requiredTomeName: '«Турбо-Кеды» (Lv.5)',
+    requiredTomeId: TOME_IDS.ATTACK_SPEED,
+    requiredTomeName: '«Энергетик» (Lv.5)',
     iconKey: 'icon_evo_gatling_carrot',
     apply: (gameState: GameState) => {
       const mod = gameState.playerModifiers;

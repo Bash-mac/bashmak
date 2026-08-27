@@ -22,11 +22,12 @@ export class LootSystem {
     this.gemsGroup = scene.physics.add.group();
     this.gooDropsGroup = scene.physics.add.group();
 
-    // 1. Gem Pool
+    // 1. Gem Pool (XP Snots)
     this.gemPool = new ObjectPool<Phaser.Types.Physics.Arcade.SpriteWithDynamicBody>(scene, {
       create: () => {
-        const gem = this.gemsGroup.create(0, 0, 'tex_gem') as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
-        gem.setCircle(8);
+        const gem = this.gemsGroup.create(0, 0, 'drop_xp_small') as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
+        gem.setScale(0.24);
+        gem.setCircle(36, 12, 12);
         gem.setDepth(4);
         return gem;
       },
@@ -34,17 +35,19 @@ export class LootSystem {
         gem.setData('speed', 0);
         gem.setData('xpValue', 0);
         gem.clearTint();
-        gem.setScale(1);
+        gem.setTexture('drop_xp_small');
+        gem.setScale(0.24);
       },
       maxSize: 150,
     });
     this.gemPool.prewarm(60);
 
-    // 2. Goo Pool
+    // 2. Goo Pool (Slime Soda Cans)
     this.gooPool = new ObjectPool<Phaser.Types.Physics.Arcade.SpriteWithDynamicBody>(scene, {
       create: () => {
-        const drop = this.gooDropsGroup.create(0, 0, 'tex_goo_drop') as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
-        drop.setCircle(10);
+        const drop = this.gooDropsGroup.create(0, 0, 'drop_goo') as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
+        drop.setScale(0.30);
+        drop.setCircle(36, 12, 12);
         drop.setDepth(4);
         return drop;
       },
@@ -52,7 +55,7 @@ export class LootSystem {
         drop.setData('speed', 0);
         drop.setData('gooValue', 0);
         drop.clearTint();
-        drop.setScale(1);
+        drop.setScale(0.30);
       },
       maxSize: 80,
     });
@@ -127,18 +130,22 @@ export class LootSystem {
   }
 
   private applyGemVisualTier(gem: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody, value: number): void {
-    if (value >= 100) {
-      gem.setTint(0xec4899); // Mega gem: pink/magenta
-      gem.setScale(1.8);
-    } else if (value >= 25) {
-      gem.setTint(0xfacc15); // Super gem: gold
-      gem.setScale(1.5);
+    if (value >= 50) {
+      gem.setTexture('drop_xp_big');
+      gem.setTint(0xec4899); // Mega radioactive blob (pink/magenta)
+      gem.setScale(0.40);
+    } else if (value >= 15) {
+      gem.setTexture('drop_xp_big');
+      gem.setTint(0xfacc15); // Golden radio-slime
+      gem.setScale(0.34);
     } else if (value >= 5) {
-      gem.setTint(0x38bdf8); // High gem: cyan
-      gem.setScale(1.25);
+      gem.setTexture('drop_xp_big');
+      gem.clearTint(); // Cyan-blue nuclear bubble
+      gem.setScale(0.28);
     } else {
-      gem.clearTint(); // Normal gem: lime green
-      gem.setScale(1.0);
+      gem.setTexture('drop_xp_small');
+      gem.clearTint(); // Green slime snot
+      gem.setScale(0.24);
     }
   }
 
@@ -159,12 +166,12 @@ export class LootSystem {
       drop.setData('gooValue', 1);
       drop.setData('speed', 0);
 
-      drop.setScale(0.2);
+      drop.setScale(0.05);
       this.scene.tweens.add({
         targets: drop,
-        scaleX: 1,
-        scaleY: 1,
-        duration: 200,
+        scaleX: 0.30,
+        scaleY: 0.30,
+        duration: 250,
         ease: 'Back.easeOut',
       });
     }
