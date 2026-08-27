@@ -1,4 +1,5 @@
 import type { GameState } from '../core/GameState';
+import { WEAPON_IDS, TOME_IDS, EVOLUTION_IDS } from './itemIds';
 
 export interface EvolutionRecipe {
   id: string;
@@ -16,13 +17,13 @@ export interface EvolutionRecipe {
 export const EVOLUTION_RECIPES: EvolutionRecipe[] = [
   // 1. Слизеплюй Lv5 + Фолиант Магнетизма Lv5 -> КИСЛОТНЫЙ ЦУНАМИ
   {
-    id: 'evo_acid_tsunami',
+    id: EVOLUTION_IDS.ACID_TSUNAMI,
     name: 'Кислотный Цунами',
     comicTitle: '★ ACID TSUNAMI ★',
     description: 'Плевок выпускает огромные токсичные волны слизи на весь экран с перманентным DoT и замедлением врагов на 60%!',
-    baseWeaponId: 'wpn_slime_spit',
+    baseWeaponId: WEAPON_IDS.SLIME_SPIT,
     baseWeaponName: 'Слизеплюй (Lv.5)',
-    requiredTomeId: 'tome_magnet',
+    requiredTomeId: TOME_IDS.MAGNET,
     requiredTomeName: '«Липкая Жвачка» (Lv.5)',
     iconKey: 'icon_evo_acid_tsunami',
     apply: (gameState: GameState) => {
@@ -40,13 +41,13 @@ export const EVOLUTION_RECIPES: EvolutionRecipe[] = [
 
   // 2. Шнуровой Кнут Lv5 + «Двойной Зоб» Lv5 -> ТИФОННЫЙ ЦЕП
   {
-    id: 'evo_typhoon_flail',
+    id: EVOLUTION_IDS.TYPHOON_FLAIL,
     name: 'Тифонный Цеп',
     comicTitle: '★ TYPHOON FLAIL ★',
     description: '4 стальных шнурка непрерывно вращаются на 360° вокруг Башмака, затягивая мобов в воронку и расплющивая их!',
-    baseWeaponId: 'wpn_lace_whip',
+    baseWeaponId: WEAPON_IDS.LACE_WHIP,
     baseWeaponName: 'Шнуровой Кнут (Lv.5)',
-    requiredTomeId: 'tome_quantity',
+    requiredTomeId: TOME_IDS.QUANTITY,
     requiredTomeName: '«Двойной Зоб» (Lv.5)',
     iconKey: 'icon_evo_typhoon_flail',
     apply: (gameState: GameState) => {
@@ -56,19 +57,19 @@ export const EVOLUTION_RECIPES: EvolutionRecipe[] = [
       mod.damagePercentBonus += 0.60;
       mod.attackSpeedBonus += 0.40;
       mod.knockbackMultiplier += 1.0;
-      gameState.activeUpgrades.set('evo_typhoon_flail', 1);
+      gameState.activeUpgrades.set(EVOLUTION_IDS.TYPHOON_FLAIL, 1);
     },
   },
 
   // 3. Морковный Град Lv5 + «Турбо-Кеды» Lv5 -> ГАТЛИНГ-МОРКОВКА
   {
-    id: 'evo_gatling_carrot',
+    id: EVOLUTION_IDS.GATLING_CARROT,
     name: 'Гатлинг-Морковка',
     comicTitle: '★ GATLING CARROT ★',
     description: 'Лазерный шквал из 20 сверхзвуковых бумерангов-пил в секунду со 100% шансом критического взрыва!',
-    baseWeaponId: 'wpn_carrot_barrage',
+    baseWeaponId: WEAPON_IDS.CARROT_BARRAGE,
     baseWeaponName: 'Морковный Град (Lv.5)',
-    requiredTomeId: 'tome_speed',
+    requiredTomeId: TOME_IDS.SPEED,
     requiredTomeName: '«Турбо-Кеды» (Lv.5)',
     iconKey: 'icon_evo_gatling_carrot',
     apply: (gameState: GameState) => {
@@ -79,19 +80,19 @@ export const EVOLUTION_RECIPES: EvolutionRecipe[] = [
       mod.pierceCount += 3;
       mod.critChance += 0.25;
       mod.damagePercentBonus += 0.40;
-      gameState.activeUpgrades.set('evo_gatling_carrot', 1);
+      gameState.activeUpgrades.set(EVOLUTION_IDS.GATLING_CARROT, 1);
     },
   },
 
   // 4. Фиолетовый Шар Lv5 + «Слизь-Кола» Lv5 -> ПЛАНЕТАРНЫЙ КАТАКЛИЗМ
   {
-    id: 'evo_planetary_roll',
+    id: EVOLUTION_IDS.PLANETARY_ROLL,
     name: 'Планетарный Катаклизм',
     comicTitle: '★ PLANETARY ROLL ★',
     description: 'Баклажан превращается в колоссальную сферу-рикошет, сминающую боссов и вызывающую сейсмические взрывы на каждом метре!',
-    baseWeaponId: 'wpn_eggplant_roll',
+    baseWeaponId: WEAPON_IDS.EGGPLANT_ROLL,
     baseWeaponName: 'Фиолетовый Шар (Lv.5)',
-    requiredTomeId: 'tome_crit_size',
+    requiredTomeId: TOME_IDS.CRIT_SIZE,
     requiredTomeName: '«Слизь-Кола» (Lv.5)',
     iconKey: 'icon_evo_planetary_cataclysm',
     apply: (gameState: GameState) => {
@@ -101,7 +102,7 @@ export const EVOLUTION_RECIPES: EvolutionRecipe[] = [
       mod.damagePercentBonus += 0.80;
       mod.splashRadius += 60;
       mod.splashKnockback = true;
-      gameState.activeUpgrades.set('evo_planetary_roll', 1);
+      gameState.activeUpgrades.set(EVOLUTION_IDS.PLANETARY_ROLL, 1);
     },
   },
 ];

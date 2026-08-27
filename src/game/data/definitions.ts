@@ -130,9 +130,14 @@ export interface PlayerModifiers {
   acidTrailDps: number;
   hasSlimeTrail: boolean;
 
+  damageReductionPercent: number;
+
   // Global Tomes
   tomeQuantity: number;
   tomeSpeed: number;
+  tomeAttackSpeed: number;
+  tomeArmor: number;
+  tomeHpRegen: number;
   tomeMagnet: number;
   tomeCritSize: number;
 

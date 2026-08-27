@@ -33,12 +33,16 @@ src/
 │   │   └── components/
 │   │       ├── StatsComponent.ts
 │   │       └── HealthComponent.ts
-│   ├── data/           # Data-driven контент (герои, враги, пассивки, эволюции)
-│   │   ├── definitions.ts
-│   │   ├── evolutions.ts
-│   │   ├── heroes/
+│   ├── data/           # Data-driven контент (1 файл = 1 предмет)
+│   │   ├── itemIds.ts      # Реестр ID всех предметов (защита от коллизий)
+│   │   ├── definitions.ts  # Базовые TypeScript интерфейсы
+│   │   ├── evolutions.ts   # Рецепты эволюций оружия
+│   │   ├── heroes/         # 1 файл = 1 герой (markovka.ts, vypolzok.ts...)
+│   │   ├── weapons/        # 1 файл = 1 оружие с Lv.1-5 (slimeSpit.ts, carrotBarrage.ts...)
+│   │   ├── tomes/          # 1 файл = 1 пассивный том с Lv.1-5 (speedKeds.ts, podorojnik.ts...)
+│   │   ├── consumables/    # 1 файл = 1 расходник (medkit.ts, bomb.ts...)
 │   │   ├── enemies.ts
-│   │   ├── upgrades.ts
+│   │   ├── upgrades.ts     # Фасад-агрегатор ALL_UPGRADES
 │   │   └── metaUpgrades.ts
 │   ├── combat/         # Боевой движок, пулы пуль/урона и оружие
 │   │   ├── CombatSystem.ts
@@ -179,6 +183,7 @@ src/
 5. **Запрещено** спавнить и уничтожать снаряды, лут или сплэши через `scene.add.sprite().destroy()` — использовать строго `ProjectilePool`, `LootSystem`, `DamageNumberPool` и `VfxPool`.
 6. **Запрещено** создавать GameObjects (`scene.add.*`), уничтожать контейнеры через `removeAll(true)` или аллоцировать новые объекты внутри методов `update()` — соблюдать Zero-Allocation в тике.
 7. **Запрещено** верстать UI/модалки в абсолютных пикселях под конкретный экран или использовать `if (width < 700)` — весь UI верстается ТОЛЬКО под единый Virtual Viewport (база `1280x720` в Landscape) внутри контейнера с масштабом `Math.min(width / 1280, height / 720)`. Запрещено зажимать масштаб через `Math.min(1.0, ...)`.
+8. **Запрещено** отключать `resolution: Math.min(window.devicePixelRatio, 2.5)` или включать `roundPixels: true` в `src/config/GameConfig.ts` — это ломает Retina/Full HD отображение на экранах мобильных устройств, вызывая размытие и искажение шрифтов.
 
 ---
 

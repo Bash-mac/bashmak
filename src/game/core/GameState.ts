@@ -99,9 +99,14 @@ export class GameState {
       acidTrailDps: 0,
       hasSlimeTrail: false,
 
+      damageReductionPercent: 0,
+
       // Global Tomes
       tomeQuantity: 0,
       tomeSpeed: 0,
+      tomeAttackSpeed: 0,
+      tomeArmor: 0,
+      tomeHpRegen: 0,
       tomeMagnet: 0,
       tomeCritSize: 0,
 

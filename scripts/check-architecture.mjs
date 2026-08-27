@@ -66,6 +66,16 @@ function checkFile(filePath) {
       errors.push(`❌ [UI/SCALE] Scale clamping 'Math.min(1.0, ...)' found in '${relPath}'. Use un-clamped Virtual Viewport scaling!`);
     }
   }
+
+  // 7. Retina / High-DPI & Crisp Render Config: GameConfig must enforce resolution and roundPixels: false
+  if (relPath === 'src/config/GameConfig.ts') {
+    if (!content.includes('resolution:') || !content.includes('devicePixelRatio')) {
+      errors.push(`❌ [RENDER/DPI] 'resolution: window.devicePixelRatio' is missing in '${relPath}'. Retina/High-DPI resolution is mandatory!`);
+    }
+    if (content.includes('roundPixels: true')) {
+      errors.push(`❌ [RENDER/DPI] 'roundPixels: true' is forbidden in '${relPath}'. Must be false to prevent blurry/distorted glyph rendering!`);
+    }
+  }
 }
 
 

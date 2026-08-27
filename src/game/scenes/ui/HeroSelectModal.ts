@@ -116,7 +116,7 @@ export class HeroSelectModal {
     // 2. Master Responsive Modal Container (Virtual Viewport 1280x720)
     const virtualW = 1280;
     const virtualH = 720;
-    const modalScale = Math.min((width * 0.96) / virtualW, (height * 0.96) / virtualH);
+    const modalScale = Math.min((width * 0.98) / virtualW, (height * 0.98) / virtualH);
 
     const modalContainer = this.scene.add
       .container(width / 2, height / 2)
@@ -182,10 +182,8 @@ export class HeroSelectModal {
     const saveManager = SaveManager.getInstance();
     const currentSelectedId = saveManager.getSelectedHeroId();
 
+    try { localStorage.removeItem('dev_heroes_unlocked'); } catch (e) {}
     const isDev = typeof window !== 'undefined' && (
-      (window as any).__DEV_HEROES__ === true ||
-      localStorage.getItem('dev_heroes_unlocked') === 'true' ||
-      window.location.search.includes('hero=') ||
       window.location.search.includes('dev=1')
     );
 
@@ -303,9 +301,6 @@ export class HeroSelectModal {
 
 
     const isDev = typeof window !== 'undefined' && (
-      (window as any).__DEV_HEROES__ === true ||
-      localStorage.getItem('dev_heroes_unlocked') === 'true' ||
-      window.location.search.includes('hero=') ||
       window.location.search.includes('dev=1')
     );
     const isLocked = !isDev && this.previewedHeroId !== 'hero_vypolzok' && this.previewedHeroId !== 'hero_markovka';
@@ -330,11 +325,11 @@ export class HeroSelectModal {
 
     const subText = this.scene.add
       .text(2, 22, hero.description, {
-        fontSize: '12.5px',
+        fontSize: '15px',
         color: '#020617',
         fontFamily: 'Boingster',
-        wordWrap: { width: 260 },
-        lineSpacing: 1.5,
+        wordWrap: { width: 280 },
+        lineSpacing: 2,
       })
       .setOrigin(0, 0);
     headerContainer.add(subText);
@@ -367,7 +362,7 @@ export class HeroSelectModal {
     if (isLocked) {
       const chains = this.scene.add
         .image(cfg.x, cfg.y, 'chains_pod')
-        .setDisplaySize(cfg.w * 1.15, cfg.h * 1.05)
+        .setDisplaySize(300, 300)
         .setOrigin(0.5);
 
       this.scene.tweens.add({
@@ -404,7 +399,7 @@ export class HeroSelectModal {
 
       const label = this.scene.add
         .text(0, rowY, st.name, {
-          fontSize: '12px',
+          fontSize: '13px',
           color: '#020617',
           fontFamily: 'Gagalin',
         })
@@ -431,7 +426,7 @@ export class HeroSelectModal {
 
     const wepTitle = this.scene.add
       .text(0, 0, 'ОРУЖИЕ: ' + extra.weaponName, {
-        fontSize: '14.5px',
+        fontSize: '16.5px',
         color: '#7c2d12',
         fontFamily: 'Gagalin',
       })
@@ -440,25 +435,25 @@ export class HeroSelectModal {
 
     const wepDesc = this.scene.add
       .text(0, 16, extra.weaponDesc, {
-        fontSize: '12.5px',
+        fontSize: '14.5px',
         color: '#020617',
         fontFamily: 'Boingster',
-        wordWrap: { width: 215 },
-        lineSpacing: 1.5,
+        wordWrap: { width: 230 },
+        lineSpacing: 2,
       })
       .setOrigin(0, 0);
     weaponContainer.add(wepDesc);
 
     // 5. Trait Section (Aligned to Right Column Stream: x=315, -7.3 deg, closer to weapon)
     const traitContainer = this.scene.add
-      .container(315, 46)
+      .container(315, 52)
       .setRotation(Phaser.Math.DegToRad(-7.3));
     container.add(traitContainer);
     this.rightPageElements.push(traitContainer);
 
     const traitTitle = this.scene.add
       .text(0, 0, 'ТРЕЙТ: ' + extra.traitName, {
-        fontSize: '14.5px',
+        fontSize: '16.5px',
         color: '#581c87',
         fontFamily: 'Gagalin',
       })
@@ -467,11 +462,11 @@ export class HeroSelectModal {
 
     const traitDesc = this.scene.add
       .text(0, 16, extra.traitDesc, {
-        fontSize: '12.5px',
+        fontSize: '14.5px',
         color: '#020617',
         fontFamily: 'Boingster',
-        wordWrap: { width: 215 },
-        lineSpacing: 1.5,
+        wordWrap: { width: 230 },
+        lineSpacing: 2,
       })
       .setOrigin(0, 0);
     traitContainer.add(traitDesc);
@@ -485,7 +480,7 @@ export class HeroSelectModal {
 
     const stickyHeader = this.scene.add
       .text(0, 0, 'ЛЮБИТ: 💚', {
-        fontSize: '12.5px',
+        fontSize: '14px',
         color: '#14532d',
         fontFamily: 'Gagalin',
       })
@@ -494,10 +489,10 @@ export class HeroSelectModal {
 
     const stickyText = this.scene.add
       .text(0, 18, extra.favorites, {
-        fontSize: '11px',
+        fontSize: '12.5px',
         color: '#020617',
         fontFamily: 'Boingster',
-        lineSpacing: 1.5,
+        lineSpacing: 2,
       })
       .setOrigin(0, 0);
     stickyContainer.add(stickyText);

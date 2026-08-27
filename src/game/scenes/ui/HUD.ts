@@ -3,6 +3,7 @@ import { EventBus } from '../../core/EventBus';
 import type { GameState } from '../../core/GameState';
 import { ALL_UPGRADES } from '../../data/upgrades';
 import { EVOLUTION_RECIPES } from '../../data/evolutions';
+import { getHeroById } from '../../data/heroes';
 
 interface HudSlot {
   container: Phaser.GameObjects.Container;
@@ -23,6 +24,7 @@ export class HUD {
   // HP Pipe Bar System
   private hpFillImage: Phaser.GameObjects.Image;
   private hpText: Phaser.GameObjects.Text;
+  private lastHpText = '';
 
   // XP Pipe Bar System (Matching 90s acid pipe)
   private xpFillImage: Phaser.GameObjects.Image;
@@ -96,13 +98,15 @@ export class HUD {
     const hpPipeFrame = scene.add.image(barX + barW / 2 - 2, hpY, 'hud_bar_frame');
     hpPipeFrame.setDisplaySize(barW, barH);
 
-    // Compact centered HP text
-    this.hpText = scene.add.text(barX + tubeOffsetX + tubeW / 2, hpY, '100 / 100', {
+    // Compact centered HP text placed exactly in the center of the glass cutout (barX + 122px)
+    const glassCenterX = barX + 122;
+    this.hpText = scene.add.text(glassCenterX, hpY, '100 / 100', {
       fontSize: '10px',
       color: '#ffffff',
       fontFamily: '"Gagalin", "Balsamiq Sans", monospace',
       stroke: '#3b0707',
       strokeThickness: 3,
+      align: 'center',
     }).setOrigin(0.5, 0.5);
 
     // --- XP Pipe (Directly below HP Pipe — pure visual liquid progress) ---
@@ -197,7 +201,8 @@ export class HUD {
     ]);
 
     this.setupEventListeners();
-    this.updateHp(100, 100);
+    const initialMaxHp = getHeroById(heroId).stats.maxHp;
+    this.updateHp(initialMaxHp, initialMaxHp);
     this.updateXp(0, 10);
   }
 
@@ -232,7 +237,11 @@ export class HUD {
       this.hpFillImage.setCrop(0, 0, Math.max(1, origW * ratio), origH);
     }
 
-    this.hpText.setText(`${Math.ceil(current)} / ${max}`);
+    const newHpText = `${Math.ceil(current)} / ${max}`;
+    if (newHpText !== this.lastHpText) {
+      this.lastHpText = newHpText;
+      this.hpText.setText(newHpText);
+    }
 
     // Update Expression Avatar based on Health and Hero
     const heroId = this.scene.registry.get('selectedHeroId') || 'hero_vypolzok';

@@ -25,8 +25,9 @@ export const GameConfig: Phaser.Types.Core.GameConfig = {
     powerPreference: 'high-performance',
     antialias: true,
     pixelArt: false,
-    roundPixels: true,
-  },
+    roundPixels: false,
+    ...((typeof window !== 'undefined' && window.devicePixelRatio) ? { resolution: Math.min(window.devicePixelRatio, 2.5) } : {}),
+  } as Phaser.Types.Core.RenderConfig,
   scene: [BootScene, MenuScene, GameScene, UpgradesScene],
   input: {
     activePointers: 3,

@@ -28,4 +28,8 @@ export class StatsComponent {
   modifySpeed(multiplier: number): void {
     this.speed *= multiplier;
   }
+
+  modifyArmor(amount: number): void {
+    this.armor = Math.max(0, this.armor + amount);
+  }
 }

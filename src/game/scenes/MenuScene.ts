@@ -59,8 +59,6 @@ export class MenuScene extends Phaser.Scene {
 
       if (logoClicks >= 3) {
         logoClicks = 0;
-        (window as any).__DEV_HEROES__ = true;
-        try { localStorage.setItem('dev_heroes_unlocked', 'true'); } catch (e) {}
         this.platform.vibrate(80);
         this.openHeroSelect();
       }

@@ -92,6 +92,7 @@ export class GameScene extends Phaser.Scene {
     this.inputManager = new InputManager(this);
     this.inputManager.init();
     this.hud = new HUD(this);
+    this.hud.updateHp(this.playerEntity.health.currentHp, this.playerEntity.stats.maxHp);
     this.gameOverModal = new GameOverModal(this);
 
     this.levelUpModal = new LevelUpModal(
@@ -168,6 +169,10 @@ export class GameScene extends Phaser.Scene {
             enemy.destroy();
             this.enemiesMap.delete(data.id);
           }
+          if (this.gameState.playerModifiers.healOnKill > 0 && this.playerEntity.isAlive) {
+            this.playerEntity.health.heal(this.gameState.playerModifiers.healOnKill);
+            this.hud.updateHp(this.playerEntity.health.currentHp, this.playerEntity.stats.maxHp);
+          }
           if (this.currentHero?.id === 'hero_markovka') this.heroTraitSystem.onEnemyKilledByMarkovka(this.getTraitCtx());
         }
       }),
@@ -209,7 +214,10 @@ export class GameScene extends Phaser.Scene {
   private applyDamageToPlayer(dmg: number): void {
     if (!this.playerEntity.isAlive || this.playerIframeTimerMs > 0 || this.isDying) return;
     this.playerIframeTimerMs = 500;
-    this.playerEntity.health.takeDamage(dmg);
+    const armor = this.playerEntity.stats.armor || 0;
+    const dmgRed = this.gameState.playerModifiers.damageReductionPercent || 0;
+    const effectiveDmg = Math.max(1, Math.round((dmg - armor) * (1 - dmgRed)));
+    this.playerEntity.health.takeDamage(effectiveDmg);
     this.audio.playPlayerHurt();
 
     const sprite = this.playerEntity.sprite;
@@ -291,6 +299,10 @@ export class GameScene extends Phaser.Scene {
     this.hud.update(this.gameState);
 
     if (this.playerIframeTimerMs > 0) this.playerIframeTimerMs -= delta;
+    if (this.gameState.playerModifiers.hpRegenPerSec > 0 && this.playerEntity.health.percent < 1) {
+      this.playerEntity.health.heal(this.gameState.playerModifiers.hpRegenPerSec * deltaSeconds);
+      this.hud.updateHp(this.playerEntity.health.currentHp, this.playerEntity.stats.maxHp);
+    }
     this.playerEntity.updateStatusEffects(delta, (poisonDmg) => this.applyDamageToPlayer(poisonDmg));
 
     const moveVector = this.inputManager.getMovementVector();
