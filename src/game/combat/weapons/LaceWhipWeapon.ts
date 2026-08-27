@@ -40,15 +40,19 @@ export class LaceWhipWeapon implements IWeapon {
     const facingRight = ctx.player.sprite ? !ctx.player.sprite.flipX : true;
     const baseAngle = facingRight ? 0 : Math.PI;
 
-    // Draw visual whip arc VFX
-    this.drawWhipArc(ctx.scene, px, py, baseAngle, range);
+    // Draw visual whip arc VFX (front and dual back arc if level >= 3)
+    const backAngle = level >= 3 ? baseAngle + Math.PI : undefined;
+    const backRange = range * 0.85;
+    this.drawWhipArc(ctx.scene, px, py, baseAngle, range, backAngle, backRange);
 
     // Hit enemies in 180° semicircle arc
-    ctx.enemiesMap.forEach((enemy) => {
-      if (!enemy.isAlive || enemy.isExploding) return;
-      const dist = Phaser.Math.Distance.Between(px, py, enemy.x, enemy.y);
-      if (dist <= range) {
-        const enemyAngle = Phaser.Math.Angle.Between(px, py, enemy.x, enemy.y);
+    for (const enemy of ctx.enemiesMap.values()) {
+      if (!enemy.isAlive || enemy.isExploding) continue;
+      const dx = enemy.x - px;
+      const dy = enemy.y - py;
+      const distSq = dx * dx + dy * dy;
+      if (distSq <= range * range) {
+        const enemyAngle = Math.atan2(dy, dx);
         let angleDiff = Math.abs(Phaser.Math.Angle.Wrap(enemyAngle - baseAngle));
 
         if (angleDiff <= Math.PI / 2 + 0.2) {
@@ -62,18 +66,18 @@ export class LaceWhipWeapon implements IWeapon {
           }
         }
       }
-    });
+    }
 
     // Level 3+: Dual whip slash behind player
-    if (level >= 3) {
-      const backAngle = baseAngle + Math.PI;
-      this.drawWhipArc(ctx.scene, px, py, backAngle, range * 0.85);
-
-      ctx.enemiesMap.forEach((enemy) => {
-        if (!enemy.isAlive || enemy.isExploding) return;
-        const dist = Phaser.Math.Distance.Between(px, py, enemy.x, enemy.y);
-        if (dist <= range * 0.85) {
-          const enemyAngle = Phaser.Math.Angle.Between(px, py, enemy.x, enemy.y);
+    if (level >= 3 && backAngle !== undefined) {
+      const backRangeSq = backRange * backRange;
+      for (const enemy of ctx.enemiesMap.values()) {
+        if (!enemy.isAlive || enemy.isExploding) continue;
+        const dx = enemy.x - px;
+        const dy = enemy.y - py;
+        const distSq = dx * dx + dy * dy;
+        if (distSq <= backRangeSq) {
+          const enemyAngle = Math.atan2(dy, dx);
           const angleDiff = Math.abs(Phaser.Math.Angle.Wrap(enemyAngle - backAngle));
 
           if (angleDiff <= Math.PI / 2 + 0.2) {
@@ -81,19 +85,31 @@ export class LaceWhipWeapon implements IWeapon {
             enemy.applyKnockback(Math.cos(enemyAngle) * 220, Math.sin(enemyAngle) * 220, 140);
           }
         }
-      });
+      }
     }
 
     AudioManager.getInstance().playImpactSplat();
     ctx.vibrate?.(35);
   }
 
-  private drawWhipArc(scene: Phaser.Scene, px: number, py: number, baseAngle: number, range: number): void {
+  private drawWhipArc(
+    scene: Phaser.Scene,
+    px: number,
+    py: number,
+    baseAngle: number,
+    range: number,
+    backAngle?: number,
+    backRange?: number
+  ): void {
     if (!this.whipGfx) {
       this.whipGfx = scene.add.graphics().setDepth(12);
     }
 
+    scene.tweens.killTweensOf(this.whipGfx);
     this.whipGfx.clear();
+    this.whipGfx.setAlpha(1);
+
+    // Front arc
     this.whipGfx.lineStyle(6, 0xfef08a, 0.95);
     this.whipGfx.beginPath();
     this.whipGfx.arc(px, py, range, baseAngle - Math.PI / 2, baseAngle + Math.PI / 2, false);
@@ -104,6 +120,19 @@ export class LaceWhipWeapon implements IWeapon {
     this.whipGfx.arc(px, py, range * 0.9, baseAngle - Math.PI / 2, baseAngle + Math.PI / 2, false);
     this.whipGfx.strokePath();
 
+    // Back arc (Level >= 3)
+    if (backAngle !== undefined && backRange !== undefined) {
+      this.whipGfx.lineStyle(5, 0xfef08a, 0.85);
+      this.whipGfx.beginPath();
+      this.whipGfx.arc(px, py, backRange, backAngle - Math.PI / 2, backAngle + Math.PI / 2, false);
+      this.whipGfx.strokePath();
+
+      this.whipGfx.lineStyle(2, 0xd97706, 0.9);
+      this.whipGfx.beginPath();
+      this.whipGfx.arc(px, py, backRange * 0.9, backAngle - Math.PI / 2, backAngle + Math.PI / 2, false);
+      this.whipGfx.strokePath();
+    }
+
     scene.tweens.add({
       targets: this.whipGfx,
       alpha: 0,
@@ -112,7 +141,7 @@ export class LaceWhipWeapon implements IWeapon {
       onComplete: () => {
         if (this.whipGfx) {
           this.whipGfx.clear();
-          this.whipGfx.alpha = 1;
+          this.whipGfx.setAlpha(1);
         }
       },
     });

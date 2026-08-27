@@ -17,33 +17,49 @@ export class EnemyAISystem {
   private isBossVulnerable = false;
   private bossTelegraphGfx?: Phaser.GameObjects.Graphics;
 
+  private spatialGrid: Map<number, Entity[]> = new Map();
+  private bucketPool: Entity[][] = [];
+
   public reset(): void {
     this.bossDashTimer = 0;
     this.isBossDashing = false;
     this.isBossVulnerable = false;
     this.bossTelegraphGfx?.clear();
+    for (const bucket of this.spatialGrid.values()) {
+      bucket.length = 0;
+      this.bucketPool.push(bucket);
+    }
+    this.spatialGrid.clear();
   }
 
   public update(delta: number, ctx: EnemyAIContext): void {
-    const enemiesList = Array.from(ctx.enemiesMap.values());
     const playerX = ctx.player.x;
     const playerY = ctx.player.y;
 
-    // --- Spatial bucket grid for O(N) separation instead of O(N²) ---
+    // --- Spatial bucket grid for O(N) separation instead of O(N²) (Zero-Allocation) ---
+    for (const bucket of this.spatialGrid.values()) {
+      bucket.length = 0;
+      this.bucketPool.push(bucket);
+    }
+    this.spatialGrid.clear();
+
     const CELL = 48; // px, slightly larger than separationRadius=42
-    const spatialGrid = new Map<number, Entity[]>();
     const cellKey = (cx: number, cy: number) => cx * 100003 + cy;
-    for (const e of enemiesList) {
+
+    for (const e of ctx.enemiesMap.values()) {
       if (!e.isAlive || !e.sprite) continue;
       const cx = Math.floor(e.x / CELL);
       const cy = Math.floor(e.y / CELL);
       const key = cellKey(cx, cy);
-      const bucket = spatialGrid.get(key);
-      if (bucket) bucket.push(e);
-      else spatialGrid.set(key, [e]);
+      let bucket = this.spatialGrid.get(key);
+      if (!bucket) {
+        bucket = this.bucketPool.pop() ?? [];
+        this.spatialGrid.set(key, bucket);
+      }
+      bucket.push(e);
     }
 
-    for (const enemy of enemiesList) {
+    for (const enemy of ctx.enemiesMap.values()) {
       if (!enemy.isAlive || !enemy.sprite || enemy.isExploding) continue;
 
       enemy.updateStatusEffects(delta);
@@ -82,7 +98,7 @@ export class EnemyAISystem {
 
       for (let dx = -1; dx <= 1; dx++) {
         for (let dy = -1; dy <= 1; dy++) {
-          const neighbors = spatialGrid.get(cellKey(ecx + dx, ecy + dy));
+          const neighbors = this.spatialGrid.get(cellKey(ecx + dx, ecy + dy));
           if (!neighbors) continue;
           for (const other of neighbors) {
             if (other.id === enemy.id) continue;

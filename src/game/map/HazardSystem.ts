@@ -129,7 +129,7 @@ export class HazardSystem {
     scene: Phaser.Scene,
     onExplode: (e: Entity) => void
   ): void {
-    if (exploder.isExploding || !exploder.isAlive || !exploder.sprite?.active) return;
+    if (!exploder || exploder.isExploding || !exploder.isAlive || !exploder.sprite?.active) return;
     exploder.isExploding = true;
     exploder.stats.speed = 0;
     if (exploder.sprite?.body) {
@@ -146,9 +146,7 @@ export class HazardSystem {
         repeat: 3,
         duration: 120,
         onComplete: () => {
-          if (exploder.sprite?.active) {
-            onExplode(exploder);
-          }
+          onExplode(exploder);
         },
       });
     } else {
@@ -157,7 +155,7 @@ export class HazardSystem {
   }
 
   public detonateExploder(exploder: Entity, ctx: HazardContext): void {
-    if (!exploder || (!exploder.isAlive && !exploder.sprite?.active)) return;
+    if (!exploder) return;
     const x = exploder.x;
     const y = exploder.y;
     const blastRadius = exploder.definition?.explosionRadius || 80;
@@ -167,7 +165,12 @@ export class HazardSystem {
     exploder.health.currentHp = 0;
     ctx.enemiesMap.delete(exploder.id);
     if (exploder.sprite) {
+      if (exploder.sprite.body) {
+        exploder.sprite.body.stop();
+        exploder.sprite.body.enable = false;
+      }
       ctx.scene.tweens.killTweensOf(exploder.sprite);
+      (ctx.scene as any).enemiesGroup?.remove(exploder.sprite, false, false);
       exploder.destroy();
     }
 

@@ -137,15 +137,20 @@ export class MegaBootWeapon implements IWeapon {
 
   private findNearestEnemy(ctx: WeaponContext): Entity | null {
     let nearest: Entity | null = null;
-    let minDist = Infinity;
-    ctx.enemiesMap.forEach((enemy) => {
-      if (!enemy.isAlive || enemy.isExploding) return;
-      const dist = Phaser.Math.Distance.Between(ctx.player.x, ctx.player.y, enemy.x, enemy.y);
-      if (dist < minDist) {
-        minDist = dist;
+    let minDistSq = Infinity;
+    const px = ctx.player.x;
+    const py = ctx.player.y;
+
+    for (const enemy of ctx.enemiesMap.values()) {
+      if (!enemy.isAlive || enemy.isExploding) continue;
+      const dx = enemy.x - px;
+      const dy = enemy.y - py;
+      const distSq = dx * dx + dy * dy;
+      if (distSq < minDistSq) {
+        minDistSq = distSq;
         nearest = enemy;
       }
-    });
+    }
     return nearest;
   }
 }

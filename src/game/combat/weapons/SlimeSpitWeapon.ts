@@ -129,16 +129,33 @@ export class SlimeSpitWeapon implements IWeapon {
     });
   }
 
-  private findNearbyEnemies(player: Entity, enemiesMap: Map<string, Entity>, range: number): Entity[] {
-    const valid: Array<{ entity: Entity; dist: number }> = [];
-    enemiesMap.forEach((enemy) => {
-      if (!enemy.isAlive || enemy.isExploding) return;
-      const dist = Phaser.Math.Distance.Between(player.x, player.y, enemy.x, enemy.y);
-      if (dist <= range) {
-        valid.push({ entity: enemy, dist });
+  private findNearbyEnemies(player: Entity, enemiesMap: Map<string, Entity>, range: number, maxCount = 4): Entity[] {
+    const rangeSq = range * range;
+    const px = player.x;
+    const py = player.y;
+    const targets: Entity[] = [];
+    const distancesSq: number[] = [];
+
+    for (const enemy of enemiesMap.values()) {
+      if (!enemy.isAlive || enemy.isExploding) continue;
+      const dx = enemy.x - px;
+      const dy = enemy.y - py;
+      const distSq = dx * dx + dy * dy;
+      if (distSq > rangeSq) continue;
+
+      let insertIdx = targets.length;
+      while (insertIdx > 0 && distancesSq[insertIdx - 1] > distSq) {
+        insertIdx--;
       }
-    });
-    valid.sort((a, b) => a.dist - b.dist);
-    return valid.map((v) => v.entity);
+      if (insertIdx < maxCount) {
+        targets.splice(insertIdx, 0, enemy);
+        distancesSq.splice(insertIdx, 0, distSq);
+        if (targets.length > maxCount) {
+          targets.pop();
+          distancesSq.pop();
+        }
+      }
+    }
+    return targets;
   }
 }

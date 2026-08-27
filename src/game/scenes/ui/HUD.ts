@@ -17,13 +17,15 @@ export class HUD {
   private container: Phaser.GameObjects.Container;
   private avatarImage: Phaser.GameObjects.Image;
 
+  // Avatar Level Badge
+  private lvlBadgeText: Phaser.GameObjects.Text;
+
   // HP Pipe Bar System
   private hpFillImage: Phaser.GameObjects.Image;
   private hpText: Phaser.GameObjects.Text;
 
   // XP Pipe Bar System (Matching 90s acid pipe)
   private xpFillImage: Phaser.GameObjects.Image;
-  private xpText: Phaser.GameObjects.Text;
 
   // Stats (Right side)
   private timerText: Phaser.GameObjects.Text;
@@ -31,7 +33,7 @@ export class HUD {
 
   // 4 Slot Mutation Tracker (Using hud_slot_frame & square icons)
   private slots: HudSlot[] = [];
-  private lastSlotsSignature = '';
+  private lastSlotsChecksum = -1;
 
   private unbinds: Array<() => void> = [];
 
@@ -39,9 +41,9 @@ export class HUD {
     this.scene = scene;
     this.container = scene.add.container(0, 0).setScrollFactor(0).setDepth(9000);
 
-    // 1. Avatar Expression Portrait & Comic Porthole Frame
-    const avatarX = 54;
-    const avatarY = 54;
+    // 1. Avatar Expression Portrait & Comic Porthole Frame (Shifted right of TG Close button)
+    const avatarX = 175;
+    const avatarY = 50;
 
     const maskGfx = scene.make.graphics({ x: 0, y: 0 });
     maskGfx.fillStyle(0xffffff, 1);
@@ -57,8 +59,23 @@ export class HUD {
     const avatarBadge = scene.add.image(avatarX, avatarY, 'hud_avatar_badge_frame');
     avatarBadge.setDisplaySize(92, 92);
 
+    // Level Badge attached directly to the avatar frame
+    const lvlBadgeBg = scene.add.graphics();
+    lvlBadgeBg.fillStyle(0x0f172a, 0.95);
+    lvlBadgeBg.lineStyle(2.5, 0xfacc15, 1);
+    lvlBadgeBg.fillCircle(avatarX + 28, avatarY + 26, 13);
+    lvlBadgeBg.strokeCircle(avatarX + 28, avatarY + 26, 13);
+
+    this.lvlBadgeText = scene.add.text(avatarX + 28, avatarY + 26, '1', {
+      fontSize: '12px',
+      color: '#fde047',
+      fontFamily: '"Gagalin", "Balsamiq Sans", monospace',
+      stroke: '#451a03',
+      strokeThickness: 3,
+    }).setOrigin(0.5, 0.5);
+
     // 2. Dual Pipe Bar System (HP Blood Pipe + XP Acid Pipe)
-    const barX = 106;
+    const barX = 227;
     const barW = 230;
     const barH = 34;
 
@@ -68,7 +85,7 @@ export class HUD {
     const tubeH = 12;
 
     // --- HP Pipe (Top) ---
-    const hpY = 28;
+    const hpY = 26;
     const hpBg = scene.add.graphics();
     hpBg.fillStyle(0x0a0f1d, 0.95);
     hpBg.fillRect(barX + tubeOffsetX, hpY - tubeH / 2, tubeW, tubeH);
@@ -79,17 +96,17 @@ export class HUD {
     const hpPipeFrame = scene.add.image(barX + barW / 2 - 2, hpY, 'hud_bar_frame');
     hpPipeFrame.setDisplaySize(barW, barH);
 
-    this.hpText = scene.add.text(barX + tubeOffsetX + 8, hpY, 'HP: 100/100', {
-      fontSize: '11px',
-      fontStyle: 'bold',
+    // Compact centered HP text
+    this.hpText = scene.add.text(barX + tubeOffsetX + tubeW / 2, hpY, '100 / 100', {
+      fontSize: '10px',
       color: '#ffffff',
-      fontFamily: 'monospace',
-      stroke: '#450a0a',
-      strokeThickness: 2,
-    }).setOrigin(0, 0.5);
+      fontFamily: '"Gagalin", "Balsamiq Sans", monospace',
+      stroke: '#3b0707',
+      strokeThickness: 3,
+    }).setOrigin(0.5, 0.5);
 
-    // --- XP Pipe (Directly below HP Pipe) ---
-    const xpY = 62;
+    // --- XP Pipe (Directly below HP Pipe — pure visual liquid progress) ---
+    const xpY = 58;
     const xpBg = scene.add.graphics();
     xpBg.fillStyle(0x0a0f1d, 0.95);
     xpBg.fillRect(barX + tubeOffsetX, xpY - tubeH / 2, tubeW, tubeH);
@@ -100,44 +117,33 @@ export class HUD {
     const xpPipeFrame = scene.add.image(barX + barW / 2 - 2, xpY, 'hud_bar_frame');
     xpPipeFrame.setDisplaySize(barW, barH);
 
-    this.xpText = scene.add.text(barX + tubeOffsetX + 8, xpY, 'LVL 1 (0/10 XP)', {
-      fontSize: '11px',
-      fontStyle: 'bold',
-      color: '#4ade80',
-      fontFamily: 'monospace',
-      stroke: '#064e3b',
-      strokeThickness: 2,
-    }).setOrigin(0, 0.5);
-
-    // 3. Stats (Right side)
-    const rightEdge = scene.cameras.main.width - 16;
-    this.timerText = scene.add.text(rightEdge, 16, 'TIME: 00:00', {
+    // 3. Stats (Right side shifted left to avoid TG buttons)
+    const rightEdge = scene.cameras.main.width - 110;
+    this.timerText = scene.add.text(rightEdge, 14, 'TIME: 00:00', {
       fontSize: '16px',
-      fontStyle: 'bold',
       color: '#ffffff',
-      fontFamily: 'monospace',
-      stroke: '#0f172a',
+      fontFamily: '"Gagalin", "Balsamiq Sans", monospace',
+      stroke: '#090d16',
       strokeThickness: 3,
     }).setOrigin(1, 0);
 
-    this.killsText = scene.add.text(rightEdge, 38, 'KILLS: 0', {
+    this.killsText = scene.add.text(rightEdge, 36, 'KILLS: 0', {
       fontSize: '16px',
-      fontStyle: 'bold',
       color: '#f87171',
-      fontFamily: 'monospace',
+      fontFamily: '"Gagalin", "Balsamiq Sans", monospace',
       stroke: '#450a0a',
       strokeThickness: 3,
     }).setOrigin(1, 0);
 
-    // 4. 4 Mutation / Weapon Slots Under Avatar (Aligned cleanly under porthole)
-    const startX = 32;
-    const startY = 120;
+    // 4. 4 Mutation / Weapon Slots (Bottom Center)
     const slotSize = 48;
-    const slotSpacing = 6;
+    const slotSpacing = 8;
+    const totalW = 4 * slotSize + 3 * slotSpacing;
+    const startX = scene.cameras.main.width / 2 - totalW / 2 + slotSize / 2;
+    const slotY = scene.cameras.main.height - 34;
 
     for (let i = 0; i < 4; i++) {
       const slotX = startX + i * (slotSize + slotSpacing);
-      const slotY = startY;
 
       const slotContainer = scene.add.container(slotX, slotY);
 
@@ -157,9 +163,8 @@ export class HUD {
 
       const slotBadge = scene.add.text(innerCutout / 2 - 1, innerCutout / 2 - 1, 'L1', {
         fontSize: '10px',
-        fontStyle: 'bold',
         color: '#facc15',
-        fontFamily: 'monospace',
+        fontFamily: '"Gagalin", "Balsamiq Sans", monospace',
         stroke: '#451a03',
         strokeThickness: 2,
       }).setOrigin(1, 1).setVisible(false);
@@ -177,6 +182,8 @@ export class HUD {
     this.container.add([
       this.avatarImage,
       avatarBadge,
+      lvlBadgeBg,
+      this.lvlBadgeText,
       hpBg,
       this.hpFillImage,
       hpPipeFrame,
@@ -184,7 +191,6 @@ export class HUD {
       xpBg,
       this.xpFillImage,
       xpPipeFrame,
-      this.xpText,
       this.timerText,
       this.killsText,
       ...this.slots.map((s) => s.container),
@@ -226,7 +232,7 @@ export class HUD {
       this.hpFillImage.setCrop(0, 0, Math.max(1, origW * ratio), origH);
     }
 
-    this.hpText.setText(`HP: ${Math.ceil(current)}/${max}`);
+    this.hpText.setText(`${Math.ceil(current)} / ${max}`);
 
     // Update Expression Avatar based on Health and Hero
     const heroId = this.scene.registry.get('selectedHeroId') || 'hero_vypolzok';
@@ -264,11 +270,13 @@ export class HUD {
 
     const state = (this.scene as any).gameState as GameState | undefined;
     const lvl = state?.level ?? 1;
-    this.xpText.setText(`LVL ${lvl} (${current}/${nextLevelXp} XP)`);
+    if (this.lvlBadgeText) {
+      this.lvlBadgeText.setText(String(lvl));
+    }
   }
 
   update(state: GameState): void {
-    const rightEdge = this.scene.cameras.main.width - 16;
+    const rightEdge = this.scene.cameras.main.width - 110;
     this.timerText.setX(rightEdge);
     this.killsText.setX(rightEdge);
 
@@ -283,40 +291,55 @@ export class HUD {
   }
 
   private updateBuildSlots(state: GameState): void {
-    const activeEntries = Array.from(state.activeUpgrades.entries());
-    const signature = activeEntries.map(([id, lvl]) => `${id}:${lvl}`).join('|');
+    let checksum = state.activeUpgrades.size;
+    for (const lvl of state.activeUpgrades.values()) {
+      checksum = (checksum * 31 + lvl) | 0;
+    }
 
-    if (signature === this.lastSlotsSignature) {
+    if (checksum === this.lastSlotsChecksum) {
       return;
     }
-    this.lastSlotsSignature = signature;
+    this.lastSlotsChecksum = checksum;
 
-    for (let i = 0; i < this.slots.length; i++) {
+    let idx = 0;
+    for (const [upgId, lvl] of state.activeUpgrades.entries()) {
+      if (idx >= this.slots.length) break;
+      const slot = this.slots[idx];
+      const upgDef = ALL_UPGRADES.find((u) => u.id === upgId);
+      const evoDef = EVOLUTION_RECIPES.find((e) => e.id === upgId);
+
+      const iconKey = upgDef?.iconKey || evoDef?.iconKey || 'icon_weapon_slime_spit';
+      const isMax = lvl >= 5 || !!evoDef;
+
+      slot.icon.setTexture(iconKey).setVisible(true);
+      slot.frame.setAlpha(1.0);
+      slot.badge.setText(isMax ? 'MAX' : `L${lvl}`).setVisible(true);
+      slot.badge.setColor(isMax ? '#facc15' : '#4ade80');
+      idx++;
+    }
+
+    for (let i = idx; i < this.slots.length; i++) {
       const slot = this.slots[i];
-      if (i < activeEntries.length) {
-        const [upgId, lvl] = activeEntries[i];
-        const upgDef = ALL_UPGRADES.find((u) => u.id === upgId);
-        const evoDef = EVOLUTION_RECIPES.find((e) => e.id === upgId);
-
-        const iconKey = upgDef?.iconKey || evoDef?.iconKey || 'icon_weapon_slime_spit';
-        const isMax = lvl >= 5 || !!evoDef;
-
-        slot.icon.setTexture(iconKey).setVisible(true);
-        slot.frame.setAlpha(1.0);
-        slot.badge.setText(isMax ? 'MAX' : `L${lvl}`).setVisible(true);
-        slot.badge.setColor(isMax ? '#facc15' : '#4ade80');
-      } else {
-        slot.icon.setVisible(false);
-        slot.frame.setAlpha(0.35);
-        slot.badge.setVisible(false);
-      }
+      slot.icon.setVisible(false);
+      slot.frame.setAlpha(0.35);
+      slot.badge.setVisible(false);
     }
   }
 
-  resize(width: number, _height: number): void {
-    const rightEdge = width - 16;
+  resize(width: number, height: number): void {
+    const rightEdge = width - 110;
     this.timerText.setX(rightEdge);
     this.killsText.setX(rightEdge);
+
+    const slotSize = 48;
+    const slotSpacing = 8;
+    const totalW = 4 * slotSize + 3 * slotSpacing;
+    const startX = width / 2 - totalW / 2 + slotSize / 2;
+    const slotY = height - 34;
+
+    for (let i = 0; i < this.slots.length; i++) {
+      this.slots[i].container.setPosition(startX + i * (slotSize + slotSpacing), slotY);
+    }
   }
 
   destroy(): void {

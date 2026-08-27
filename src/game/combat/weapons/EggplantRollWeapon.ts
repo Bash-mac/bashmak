@@ -39,11 +39,10 @@ export class EggplantRollWeapon implements IWeapon {
     this.attackTimer += delta;
     if (this.attackTimer < baseInterval) return;
 
-    const targets = this.findNearbyEnemies(ctx.player, ctx.enemiesMap, 300 + mods.extraRange);
-    if (targets.length === 0) return;
+    const primaryTarget = this.findClosestEnemy(ctx.player, ctx.enemiesMap, 300 + mods.extraRange);
+    if (!primaryTarget) return;
 
     this.attackTimer = 0;
-    const primaryTarget = targets[0];
     const damage = Math.round((35 + (rollLevel - 1) * 12) * (1 + mods.damagePercentBonus));
     const bounces = 3 + (rollLevel >= 2 ? 1 : 0) + (rollLevel >= 3 ? 1 : 0) + (rollLevel >= 5 ? 2 : 0) + (mods.bounceCount || 0);
 
@@ -154,28 +153,40 @@ export class EggplantRollWeapon implements IWeapon {
 
   private findNextBounceTarget(x: number, y: number, excludeId: string, enemiesMap: Map<string, Entity>, range: number): Entity | null {
     let closest: Entity | null = null;
-    let minDist = range;
+    const rangeSq = range * range;
+    let minDistSq = rangeSq;
 
-    enemiesMap.forEach((enemy) => {
-      if (!enemy.isAlive || enemy.isExploding || enemy.id === excludeId) return;
-      const dist = Phaser.Math.Distance.Between(x, y, enemy.x, enemy.y);
-      if (dist < minDist) {
-        minDist = dist;
+    for (const enemy of enemiesMap.values()) {
+      if (!enemy.isAlive || enemy.isExploding || enemy.id === excludeId) continue;
+      const dx = enemy.x - x;
+      const dy = enemy.y - y;
+      const distSq = dx * dx + dy * dy;
+      if (distSq < minDistSq) {
+        minDistSq = distSq;
         closest = enemy;
       }
-    });
+    }
 
     return closest;
   }
 
-  private findNearbyEnemies(player: Entity, enemiesMap: Map<string, Entity>, range: number): Entity[] {
-    const list: Entity[] = [];
-    enemiesMap.forEach((enemy) => {
-      if (!enemy.isAlive || enemy.isExploding) return;
-      const dist = Phaser.Math.Distance.Between(player.x, player.y, enemy.x, enemy.y);
-      if (dist <= range) list.push(enemy);
-    });
-    list.sort((a, b) => Phaser.Math.Distance.Between(player.x, player.y, a.x, a.y) - Phaser.Math.Distance.Between(player.x, player.y, b.x, b.y));
-    return list;
+  private findClosestEnemy(player: Entity, enemiesMap: Map<string, Entity>, range: number): Entity | null {
+    const rangeSq = range * range;
+    const px = player.x;
+    const py = player.y;
+    let closest: Entity | null = null;
+    let minDistSq = rangeSq;
+
+    for (const enemy of enemiesMap.values()) {
+      if (!enemy.isAlive || enemy.isExploding) continue;
+      const dx = enemy.x - px;
+      const dy = enemy.y - py;
+      const distSq = dx * dx + dy * dy;
+      if (distSq < minDistSq) {
+        minDistSq = distSq;
+        closest = enemy;
+      }
+    }
+    return closest;
   }
 }

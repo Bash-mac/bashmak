@@ -157,16 +157,18 @@ export class GameScene extends Phaser.Scene {
         if (enemy) {
           if (enemy.definition?.archetype === 'exploder') {
             this.hazardSystem.detonateExploder(enemy, this.getHazardCtx());
-            if (this.currentHero?.id === 'hero_markovka') this.heroTraitSystem.onEnemyKilledByMarkovka(this.getTraitCtx());
           } else {
             this.lootSystem.spawnGem(data.x, data.y, data.xpValue, this.playerEntity.x, this.playerEntity.y);
             if (enemy.definition?.archetype === 'boss') this.lootSystem.spawnGoo(data.x, data.y, 25);
             else if (enemy.type === 'boss' || (enemy.definition?.stats.maxHp ?? 0) >= 150) this.lootSystem.spawnGoo(data.x, data.y, 5);
             else if (Math.random() < 0.16) this.lootSystem.spawnGoo(data.x, data.y, 1);
+            if (enemy.sprite) {
+              this.enemiesGroup.remove(enemy.sprite, false, false);
+            }
             enemy.destroy();
             this.enemiesMap.delete(data.id);
-            if (this.currentHero?.id === 'hero_markovka') this.heroTraitSystem.onEnemyKilledByMarkovka(this.getTraitCtx());
           }
+          if (this.currentHero?.id === 'hero_markovka') this.heroTraitSystem.onEnemyKilledByMarkovka(this.getTraitCtx());
         }
       }),
       this.eventBus.on('player:levelUp', () => {

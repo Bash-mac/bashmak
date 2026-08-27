@@ -36,7 +36,9 @@ export class AcidTrailWeapon implements IWeapon {
     if (!this.auraGfx) {
       this.auraGfx = ctx.scene.add.graphics().setDepth(7);
     }
+    ctx.scene.tweens.killTweensOf(this.auraGfx);
     this.auraGfx.clear();
+    this.auraGfx.setAlpha(1);
     this.auraGfx.lineStyle(2, 0x84cc16, 0.4);
     this.auraGfx.fillStyle(0xa3e635, 0.08);
     this.auraGfx.fillCircle(px, py, auraRadius);
@@ -55,10 +57,13 @@ export class AcidTrailWeapon implements IWeapon {
     });
 
     // Damage enemies directly inside stench aura
-    ctx.enemiesMap.forEach((enemy) => {
-      if (!enemy.isAlive || enemy.isExploding) return;
-      const dist = Phaser.Math.Distance.Between(px, py, enemy.x, enemy.y);
-      if (dist <= auraRadius) {
+    const auraRadiusSq = auraRadius * auraRadius;
+    for (const enemy of ctx.enemiesMap.values()) {
+      if (!enemy.isAlive || enemy.isExploding) continue;
+      const dx = enemy.x - px;
+      const dy = enemy.y - py;
+      const distSq = dx * dx + dy * dy;
+      if (distSq <= auraRadiusSq) {
         ctx.combatSystem.applyDamage(ctx.player, enemy, damage);
         if (level >= 3) {
           enemy.applySlow(0.40, 1500);
@@ -67,6 +72,6 @@ export class AcidTrailWeapon implements IWeapon {
           ctx.flashSprite(enemy.sprite, 0x84cc16);
         }
       }
-    });
+    }
   }
 }

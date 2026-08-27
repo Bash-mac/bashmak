@@ -59,7 +59,7 @@ export class CollisionManager {
     scene.physics.add.overlap(projectilesGroup, enemiesGroup, (projObj, enemyObj) => {
       const proj = projObj as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
       const enemy = enemiesMap.get((enemyObj as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody).getData('entityId'));
-      if (enemy && enemy.isAlive && !enemy.isExploding && proj.active) {
+      if (enemy && enemy.isAlive && proj.active) {
         const damage = (proj.getData('damage') as number) || 10;
         const isCrit = (proj.getData('isCrit') as boolean) || false;
         combatSystem.applyDamage(player, enemy, damage);
@@ -118,12 +118,9 @@ export class CollisionManager {
       }
     });
 
-    // 3. World Colliders
-    scene.physics.add.collider(enemiesGroup, enemiesGroup);
+    // 3. World Colliders (Player vs Obstacles only; enemies separation handled via spatial flocking in EnemyAISystem)
     scene.physics.add.collider(player.sprite!, mapObjects.pillarsGroup);
-    scene.physics.add.collider(enemiesGroup, mapObjects.pillarsGroup);
     scene.physics.add.collider(player.sprite!, mapObjects.barrelsGroup);
-    scene.physics.add.collider(enemiesGroup, mapObjects.barrelsGroup);
 
     // 4. Projectiles vs Barrels
     scene.physics.add.overlap(projectilesGroup, mapObjects.barrelsGroup, (_proj, barrelObj) => {

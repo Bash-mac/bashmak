@@ -39,11 +39,10 @@ export class CarrotBarrageWeapon implements IWeapon {
     this.attackTimer += delta;
     if (this.attackTimer < baseInterval) return;
 
-    const targets = this.findNearbyEnemies(ctx.player, ctx.enemiesMap, 360 + mods.extraRange);
-    if (targets.length === 0) return;
+    const primaryTarget = this.findClosestEnemy(ctx.player, ctx.enemiesMap, 360 + mods.extraRange);
+    if (!primaryTarget) return;
 
     this.attackTimer = 0;
-    const primaryTarget = targets[0];
 
     let damage = ctx.player.stats.damage * (1 + mods.damagePercentBonus);
 
@@ -179,14 +178,23 @@ export class CarrotBarrageWeapon implements IWeapon {
     }
   }
 
-  private findNearbyEnemies(player: Entity, enemiesMap: Map<string, Entity>, range: number): Entity[] {
-    const list: Entity[] = [];
-    enemiesMap.forEach((enemy) => {
-      if (!enemy.isAlive || enemy.isExploding) return;
-      const dist = Phaser.Math.Distance.Between(player.x, player.y, enemy.x, enemy.y);
-      if (dist <= range) list.push(enemy);
-    });
-    list.sort((a, b) => Phaser.Math.Distance.Between(player.x, player.y, a.x, a.y) - Phaser.Math.Distance.Between(player.x, player.y, b.x, b.y));
-    return list;
+  private findClosestEnemy(player: Entity, enemiesMap: Map<string, Entity>, range: number): Entity | null {
+    const rangeSq = range * range;
+    const px = player.x;
+    const py = player.y;
+    let closest: Entity | null = null;
+    let minDistSq = rangeSq;
+
+    for (const enemy of enemiesMap.values()) {
+      if (!enemy.isAlive || enemy.isExploding) continue;
+      const dx = enemy.x - px;
+      const dy = enemy.y - py;
+      const distSq = dx * dx + dy * dy;
+      if (distSq < minDistSq) {
+        minDistSq = distSq;
+        closest = enemy;
+      }
+    }
+    return closest;
   }
 }

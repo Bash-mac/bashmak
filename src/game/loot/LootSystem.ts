@@ -196,17 +196,20 @@ export class LootSystem {
     const levelBonus = 1 + (playerLevel - 1) * 0.02;
     const tomeBonus = mods.tomeMagnet > 0 ? 1 + mods.tomeMagnet * 0.4 : 1.0;
     const magnetRadius = (95 + mods.extraRange) * levelBonus * tomeBonus;
+    const magnetRadiusSq = magnetRadius * magnetRadius;
 
     // 1. Attract XP Gems
     const gems = this.gemsGroup.getChildren() as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody[];
     for (const gem of gems) {
       if (!gem.active) continue;
-      const dist = Phaser.Math.Distance.Between(playerX, playerY, gem.x, gem.y);
-      if (dist <= magnetRadius) {
+      const dx = playerX - gem.x;
+      const dy = playerY - gem.y;
+      const distSq = dx * dx + dy * dy;
+      if (distSq <= magnetRadiusSq) {
         let speed = (gem.getData('speed') as number) || 0;
         speed += (playerSpeed + 420) * deltaSeconds;
         gem.setData('speed', speed);
-        const angle = Phaser.Math.Angle.Between(gem.x, gem.y, playerX, playerY);
+        const angle = Math.atan2(dy, dx);
         gem.setVelocity(Math.cos(angle) * speed, Math.sin(angle) * speed);
       }
     }
@@ -215,12 +218,14 @@ export class LootSystem {
     const gooDrops = this.gooDropsGroup.getChildren() as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody[];
     for (const drop of gooDrops) {
       if (!drop.active) continue;
-      const dist = Phaser.Math.Distance.Between(playerX, playerY, drop.x, drop.y);
-      if (dist <= magnetRadius) {
+      const dx = playerX - drop.x;
+      const dy = playerY - drop.y;
+      const distSq = dx * dx + dy * dy;
+      if (distSq <= magnetRadiusSq) {
         let speed = (drop.getData('speed') as number) || 0;
         speed += (playerSpeed + 420) * deltaSeconds;
         drop.setData('speed', speed);
-        const angle = Phaser.Math.Angle.Between(drop.x, drop.y, playerX, playerY);
+        const angle = Math.atan2(dy, dx);
         drop.setVelocity(Math.cos(angle) * speed, Math.sin(angle) * speed);
       }
     }

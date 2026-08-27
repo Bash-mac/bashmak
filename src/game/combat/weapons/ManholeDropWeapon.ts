@@ -1,4 +1,3 @@
-import Phaser from 'phaser';
 import type { IWeapon, WeaponContext } from './IWeapon';
 import type { Entity } from '../../entities/Entity';
 import { AudioManager } from '../../audio/AudioManager';
@@ -88,18 +87,31 @@ export class ManholeDropWeapon implements IWeapon {
     });
   }
 
-  private findStrongestEnemies(player: Entity, enemiesMap: Map<string, Entity>, range: number): Entity[] {
+  private findStrongestEnemies(player: Entity, enemiesMap: Map<string, Entity>, range: number, maxCount = 3): Entity[] {
     const list: Entity[] = [];
-    enemiesMap.forEach((enemy) => {
-      if (!enemy.isAlive || enemy.isExploding) return;
-      const dist = Phaser.Math.Distance.Between(player.x, player.y, enemy.x, enemy.y);
-      if (dist <= range) {
-        list.push(enemy);
-      }
-    });
+    const rangeSq = range * range;
+    const px = player.x;
+    const py = player.y;
 
-    // Sort by maxHp descending (priority on tanks and bosses)
-    list.sort((a, b) => b.stats.maxHp - a.stats.maxHp);
+    for (const enemy of enemiesMap.values()) {
+      if (!enemy.isAlive || enemy.isExploding) continue;
+      const dx = enemy.x - px;
+      const dy = enemy.y - py;
+      const distSq = dx * dx + dy * dy;
+      if (distSq > rangeSq) continue;
+
+      let insertIdx = list.length;
+      while (insertIdx > 0 && list[insertIdx - 1].stats.maxHp < enemy.stats.maxHp) {
+        insertIdx--;
+      }
+      if (insertIdx < maxCount) {
+        list.splice(insertIdx, 0, enemy);
+        if (list.length > maxCount) {
+          list.pop();
+        }
+      }
+    }
+
     return list;
   }
 }

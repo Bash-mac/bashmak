@@ -60,28 +60,36 @@ export class OrbitingFliesWeapon implements IWeapon {
 
     // Check collision with nearby enemies
     const damage = Math.round((14 + (level - 1) * 5) * (1 + mods.damagePercentBonus));
+    const hitRadiusSq = 26 * 26;
 
-    ctx.enemiesMap.forEach((enemy) => {
-      if (!enemy.isAlive || enemy.isExploding) return;
-      if (this.hitCooldowns.has(enemy.id)) return;
+    for (const enemy of ctx.enemiesMap.values()) {
+      if (!enemy.isAlive || enemy.isExploding) continue;
+      if (this.hitCooldowns.has(enemy.id)) continue;
+
+      const ex = enemy.x;
+      const ey = enemy.y;
 
       for (const fly of this.flies) {
         if (!fly.sprite || !fly.sprite.active) continue;
-        const dist = Phaser.Math.Distance.Between(fly.sprite.x, fly.sprite.y, enemy.x, enemy.y);
-        if (dist <= 26) {
+        const fx = fly.sprite.x;
+        const fy = fly.sprite.y;
+        const dx = fx - ex;
+        const dy = fy - ey;
+        const distSq = dx * dx + dy * dy;
+        if (distSq <= hitRadiusSq) {
           ctx.combatSystem.applyDamage(ctx.player, enemy, damage);
           this.hitCooldowns.set(enemy.id, 280);
 
-          const pushAngle = Phaser.Math.Angle.Between(px, py, enemy.x, enemy.y);
+          const pushAngle = Math.atan2(ey - py, ex - px);
           enemy.applyKnockback(Math.cos(pushAngle) * 160, Math.sin(pushAngle) * 160, 100);
 
           if (ctx.vfxPool) {
-            ctx.vfxPool.spawnImpactSplat(fly.sprite.x, fly.sprite.y, 0.6);
+            ctx.vfxPool.spawnImpactSplat(fx, fy, 0.6);
           }
           break;
         }
       }
-    });
+    }
   }
 
   public reset(): void {

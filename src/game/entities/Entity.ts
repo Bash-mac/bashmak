@@ -138,6 +138,13 @@ export class Entity {
 
   destroy(): void {
     if (this.sprite) {
+      if (this.sprite.scene) {
+        this.sprite.scene.tweens.killTweensOf(this.sprite);
+      }
+      if (this.sprite.body) {
+        this.sprite.body.stop();
+        this.sprite.body.enable = false;
+      }
       this.sprite.destroy();
       this.sprite = undefined;
     }

@@ -12,9 +12,13 @@ export class AudioManager {
   private sfxVolume = 0.8;
   private bgmVolume = 0.5;
 
-  // XP Streak Pitch Escalator
+  // XP Streak Pitch Escalator & SFX Throttling
   private xpStreakCount = 0;
   private xpStreakResetTimer: number | null = null;
+  private lastXpTime = 0;
+  private lastGooTime = 0;
+  private lastImpactTime = 0;
+  private lastSpitTime = 0;
 
   // BGM Lookahead Scheduler State
   private bgmSchedulerId: number | null = null;
@@ -97,6 +101,11 @@ export class AudioManager {
   public playXpPickup(): void {
     if (this.isMuted || !this.ensureContext()) return;
 
+    const ctx = this.ctx!;
+    const now = ctx.currentTime;
+    if (now - this.lastXpTime < 0.035) return; // 35ms throttle
+    this.lastXpTime = now;
+
     // Reset streak if inactive for 700ms
     if (this.xpStreakResetTimer) {
       window.clearTimeout(this.xpStreakResetTimer);
@@ -112,9 +121,6 @@ export class AudioManager {
     const semitones = noteSteps[stepIndex];
     const freq = baseFreq * Math.pow(2, semitones / 12);
     this.xpStreakCount++;
-
-    const ctx = this.ctx!;
-    const now = ctx.currentTime;
 
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
@@ -140,6 +146,8 @@ export class AudioManager {
     if (this.isMuted || !this.ensureContext()) return;
     const ctx = this.ctx!;
     const now = ctx.currentTime;
+    if (now - this.lastGooTime < 0.04) return;
+    this.lastGooTime = now;
 
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
@@ -165,6 +173,8 @@ export class AudioManager {
     if (this.isMuted || !this.ensureContext()) return;
     const ctx = this.ctx!;
     const now = ctx.currentTime;
+    if (now - this.lastSpitTime < 0.05) return;
+    this.lastSpitTime = now;
 
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
@@ -190,6 +200,8 @@ export class AudioManager {
     if (this.isMuted || !this.ensureContext()) return;
     const ctx = this.ctx!;
     const now = ctx.currentTime;
+    if (now - this.lastImpactTime < 0.035) return;
+    this.lastImpactTime = now;
 
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();

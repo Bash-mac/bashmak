@@ -214,10 +214,17 @@ export class HeroSelectModal {
         .setOrigin(0.5);
 
 
-      if (isLocked) {
-        photo.setTint(0x444444);
-      }
       polContainer.add(photo);
+
+      if (isLocked) {
+        photo.setTint(0x333333);
+        const polChains = this.scene.add
+          .image(0, -16, 'chains_pod')
+          .setDisplaySize(120, 120)
+          .setOrigin(0.5)
+          .setAlpha(0.9);
+        polContainer.add(polChains);
+      }
 
       const nameColor = isLocked ? '#94a3b8' : isSelected ? '#15803d' : '#1e293b';
       const nameStroke = isSelected ? '#052e16' : '#ffffff';
@@ -356,6 +363,26 @@ export class HeroSelectModal {
 
     container.add(heroSprite);
     this.rightPageElements.push(heroSprite);
+
+    if (isLocked) {
+      const chains = this.scene.add
+        .image(cfg.x, cfg.y, 'chains_pod')
+        .setDisplaySize(cfg.w * 1.15, cfg.h * 1.05)
+        .setOrigin(0.5);
+
+      this.scene.tweens.add({
+        targets: chains,
+        angle: { from: -1.5, to: 1.5 },
+        y: cfg.y + 3,
+        duration: 1600,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+      });
+
+      container.add(chains);
+      this.rightPageElements.push(chains);
+    }
 
     // 3. Stats Note (Graph Paper Section - Perfectly Aligned to -7.3 deg Paper Grid)
     const statsContainer = this.scene.add
