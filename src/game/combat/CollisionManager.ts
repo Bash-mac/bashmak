@@ -59,6 +59,9 @@ export class CollisionManager {
     // 1. Projectiles vs Enemies
     scene.physics.add.overlap(projectilesGroup, enemiesGroup, (projObj, enemyObj) => {
       const proj = projObj as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
+      if (proj.getData('isToiletLid') || proj.getData('isEggplantBall')) {
+        return;
+      }
       const enemy = enemiesMap.get((enemyObj as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody).getData('entityId'));
       if (enemy && enemy.isAlive && proj.active) {
         const damage = (proj.getData('damage') as number) || 10;

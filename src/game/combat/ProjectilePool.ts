@@ -14,6 +14,7 @@ export class ProjectilePool {
     this.getPoolForTexture('tex_carrot_proj', 30);
     this.getPoolForTexture('tex_homing_dagger', 20);
     this.getPoolForTexture('tex_eggplant_ball', 10);
+    this.getPoolForTexture('vfx_toilet_lid_spin', 10);
   }
 
   private getPoolForTexture(
@@ -34,6 +35,8 @@ export class ProjectilePool {
           proj.setData('isSlimeSpit', false);
           proj.setData('isCarrot', false);
           proj.setData('isHoming', false);
+          proj.setData('isToiletLid', false);
+          proj.stop();
           proj.clearTint();
           proj.setScale(1);
           proj.rotation = 0;

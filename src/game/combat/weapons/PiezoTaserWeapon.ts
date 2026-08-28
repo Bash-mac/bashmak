@@ -46,8 +46,17 @@ export class PiezoTaserWeapon implements IWeapon {
     const ty = primaryTarget.y;
     const mods = ctx.gameState.playerModifiers;
 
-    // 1. Primary Electric Arc from Player to Target
-    this.drawLightningArc(ctx.scene, px, py, tx, ty, 0xfacc15, 0x22c55e, 4);
+    // 0. Muzzle click spark at player position pointing to target
+    const angleDeg = Phaser.Math.RadToDeg(Phaser.Math.Angle.Between(px, py, tx, ty));
+    ctx.vfxPool?.spawnPiezoMuzzle(px, py, angleDeg, 0.45);
+
+    // 1. Primary Dynamic Procedural Lightning from Player to Target
+    ctx.vfxPool?.spawnProceduralLightning(px, py, tx, ty, {
+      color: 0xfacc15,
+      glowColor: 0x4ade80,
+      durationMs: 140,
+      forks: true,
+    });
 
     // Damage & Stun (Rolls crit based on player stats)
     const baseDmg = 45 + (level - 1) * 16;
@@ -57,6 +66,7 @@ export class PiezoTaserWeapon implements IWeapon {
 
     ctx.combatSystem.applyDamage(ctx.player, primaryTarget, primaryDamage);
     if (primaryTarget.sprite) ctx.flashSprite?.(primaryTarget.sprite, 0xfef08a);
+    ctx.vfxPool?.spawnPiezoHit(tx, ty, level >= 5 ? 0.75 : 0.5);
 
     if (level >= 3) {
       primaryTarget.applySlow(0.80, 800); // 80% micro-paralysis
@@ -71,14 +81,20 @@ export class PiezoTaserWeapon implements IWeapon {
     const nearbyEnemies = this.findNearbyEnemies(primaryTarget, ctx.enemiesMap, 95 * (1 + mods.attackAreaBonus), chainCount);
 
     nearbyEnemies.forEach((secTarget, idx) => {
-      ctx.scene.time.delayedCall(50 + idx * 40, () => {
+      ctx.scene.time.delayedCall(35 + idx * 30, () => {
         if (!secTarget.isAlive) return;
-        this.drawLightningArc(ctx.scene, tx, ty, secTarget.x, secTarget.y, 0x4ade80, 0xfef08a, 2.5);
+        ctx.vfxPool?.spawnProceduralLightning(tx, ty, secTarget.x, secTarget.y, {
+          color: 0xfef08a,
+          glowColor: 0x22c55e,
+          durationMs: 110,
+          forks: false,
+        });
         const rawSecDmg = Math.round(rawPrimaryDamage * 0.55);
         const isSecCrit = Math.random() < mods.critChance;
         const secDmg = isSecCrit ? Math.round(rawSecDmg * (mods.critMultiplier || 2.0)) : rawSecDmg;
         ctx.combatSystem.applyDamage(ctx.player, secTarget, secDmg);
         if (secTarget.sprite) ctx.flashSprite?.(secTarget.sprite, 0xa3e635);
+        ctx.vfxPool?.spawnPiezoHit(secTarget.x, secTarget.y, 0.35);
         if (level >= 3) secTarget.applySlow(0.50, 1500);
         if (ctx.damageNumbers) {
           ctx.damageNumbers.showDamage(secTarget.x, secTarget.y, secDmg, isSecCrit);
@@ -89,67 +105,6 @@ export class PiezoTaserWeapon implements IWeapon {
     // Sound & Haptics
     AudioManager.getInstance().playLightningZap();
     ctx.vibrate?.(30);
-  }
-
-  private drawLightningArc(
-    scene: Phaser.Scene,
-    x1: number,
-    y1: number,
-    x2: number,
-    y2: number,
-    coreColor: number,
-    glowColor: number,
-    lineWidth: number
-  ): void {
-    const gfx = scene.add.graphics().setDepth(20);
-    const dist = Phaser.Math.Distance.Between(x1, y1, x2, y2);
-    const segments = Math.max(3, Math.floor(dist / 32));
-
-    const angle = Phaser.Math.Angle.Between(x1, y1, x2, y2);
-    const cos = Math.cos(angle);
-    const sin = Math.sin(angle);
-
-    const points: { x: number; y: number }[] = [{ x: x1, y: y1 }];
-
-    for (let i = 1; i < segments; i++) {
-      const prog = i / segments;
-      const baseX = x1 + (x2 - x1) * prog;
-      const baseY = y1 + (y2 - y1) * prog;
-      const offset = (Math.random() - 0.5) * 28;
-      // Perpendicular jitter
-      points.push({
-        x: baseX - sin * offset,
-        y: baseY + cos * offset,
-      });
-    }
-    points.push({ x: x2, y: y2 });
-
-    // Outer glow line
-    gfx.lineStyle(lineWidth + 3, glowColor, 0.75);
-    gfx.beginPath();
-    gfx.moveTo(points[0].x, points[0].y);
-    for (let i = 1; i < points.length; i++) {
-      gfx.lineTo(points[i].x, points[i].y);
-    }
-    gfx.strokePath();
-
-    // Inner bright core
-    gfx.lineStyle(lineWidth, coreColor, 1.0);
-    gfx.beginPath();
-    gfx.moveTo(points[0].x, points[0].y);
-    for (let i = 1; i < points.length; i++) {
-      gfx.lineTo(points[i].x, points[i].y);
-    }
-    gfx.strokePath();
-
-    // Fade tween
-    scene.tweens.add({
-      targets: gfx,
-      alpha: 0,
-      duration: 140,
-      ease: 'Quad.easeOut',
-      onComplete: () => gfx.destroy(),
-    });
   }
 
   private findRandomEnemiesInRange(player: Entity, enemiesMap: Map<string, Entity>, range: number): Entity[] {

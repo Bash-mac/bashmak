@@ -36,3 +36,6 @@ AGENTS.md
 !.env.example
 
 test-results/
+
+# Local temp backups
+tmp_*/

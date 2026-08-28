@@ -272,6 +272,30 @@ export class AudioManager {
   }
 
   // =========================================================================
+  // --- 6.8. TOILET LID RICOCHET: Metallic Clank & Wet Slap ---
+  // =========================================================================
+  public playToiletClank(): void {
+    if (this.isMuted || !this.ensureContext()) return;
+    const ctx = this.ctx!;
+    const now = ctx.currentTime;
+
+    // Metallic ping oscillator
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(620, now);
+    osc.frequency.exponentialRampToValueAtTime(180, now + 0.14);
+
+    gain.gain.setValueAtTime(0.4, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+
+    osc.connect(gain);
+    gain.connect(this.getSfxDestination());
+    osc.start(now);
+    osc.stop(now + 0.15);
+  }
+
+  // =========================================================================
   // ---  7. PLAYER HURT: Comic Punch Ouch ---
   // =========================================================================
   public playPlayerHurt(): void {

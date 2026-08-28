@@ -135,6 +135,9 @@ export interface PlayerModifiers {
   acidTrailLevel: number;
   acidTrailDps: number;
   hasSlimeTrail: boolean;
+  toiletLidLevel?: number;
+  toiletLidBounces?: number;
+  toiletLidSlimeTrail?: boolean;
 
   damageReductionPercent: number;
 

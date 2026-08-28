@@ -7,6 +7,7 @@ import { OrbitingFliesWeapon } from './weapons/OrbitingFliesWeapon';
 import { MegaBootWeapon } from './weapons/MegaBootWeapon';
 import { PiezoTaserWeapon } from './weapons/PiezoTaserWeapon';
 import { AcidTrailWeapon } from './weapons/AcidTrailWeapon';
+import { ToiletLidWeapon } from './weapons/ToiletLidWeapon';
 
 export class WeaponManager {
   private weapons: IWeapon[] = [];
@@ -21,6 +22,7 @@ export class WeaponManager {
       new MegaBootWeapon(),
       new PiezoTaserWeapon(),
       new AcidTrailWeapon(),
+      new ToiletLidWeapon(),
     ];
   }
 
@@ -46,6 +48,7 @@ export class WeaponManager {
       new MegaBootWeapon(),
       new PiezoTaserWeapon(),
       new AcidTrailWeapon(),
+      new ToiletLidWeapon(),
     ];
   }
 }

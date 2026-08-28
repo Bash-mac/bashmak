@@ -4,6 +4,8 @@ import { GameState } from '../../core/GameState';
 import { SaveManager } from '../../core/SaveManager';
 import { ALL_UPGRADES } from '../../data/upgrades';
 import { EVOLUTION_RECIPES } from '../../data/evolutions';
+import type { PlayerModifiers } from '../../data/definitions';
+import { WEAPON_IDS, TOME_IDS } from '../../data/itemIds';
 import type { SpawnManager } from '../../spawning/SpawnManager';
 import type { LootSystem } from '../../loot/LootSystem';
 import type { CombatSystem } from '../../combat/CombatSystem';
@@ -306,8 +308,14 @@ export class DebugModal {
     const btnSetLevel = (targetLvl: number) => {
       if (targetLvl === 0) {
         ctx.gameState.activeUpgrades.delete(upg.id);
+        const idx = ctx.gameState.selectedUpgrades.indexOf(upg.id);
+        if (idx !== -1) ctx.gameState.selectedUpgrades.splice(idx, 1);
+        this.resetUpgradeModifier(upg.id, ctx.gameState.playerModifiers);
       } else {
         ctx.gameState.activeUpgrades.set(upg.id, targetLvl);
+        if (!ctx.gameState.selectedUpgrades.includes(upg.id)) {
+          ctx.gameState.selectedUpgrades.push(upg.id);
+        }
         const lvlDef = upg.levels.find((l) => l.level === targetLvl) || upg.levels[upg.levels.length - 1];
         lvlDef?.apply(ctx.gameState.playerModifiers, ctx.player.stats, ctx.player.health);
       }
@@ -319,6 +327,94 @@ export class DebugModal {
     const b0 = this.createSmallBtn(x + w - 30, y, 'CLR', 0x475569, () => btnSetLevel(0), 38, 22);
 
     this.scrollContainer.add([nameText, b1.bg, b1.text, bMax.bg, bMax.text, b0.bg, b0.text]);
+  }
+
+  private resetUpgradeModifier(upgId: string, mods: PlayerModifiers): void {
+    switch (upgId) {
+      case WEAPON_IDS.SLIME_SPIT:
+      case 'weapon_slime_spit':
+        mods.slimeSpitLevel = 0;
+        mods.doubleSpitChance = 0;
+        mods.burstFireCount = 1;
+        mods.poisonSalivaDmg = 0;
+        mods.fatSpitScale = 1.0;
+        break;
+      case WEAPON_IDS.LACE_WHIP:
+      case 'weapon_lace_whip':
+        mods.laceWhipLevel = 0;
+        break;
+      case WEAPON_IDS.CARROT_BARRAGE:
+      case 'weapon_carrot_barrage':
+        mods.carrotBarrageLevel = 0;
+        break;
+      case WEAPON_IDS.EGGPLANT_ROLL:
+      case 'weapon_eggplant_roll':
+        mods.eggplantRollLevel = 0;
+        break;
+      case WEAPON_IDS.HOMING_DAGGERS:
+      case 'weapon_homing_daggers':
+        mods.homingDaggersLevel = 0;
+        mods.homingDaggersCount = 0;
+        break;
+      case WEAPON_IDS.MEGA_BOOT:
+      case 'weapon_mega_boot':
+        mods.megaBootLevel = 0;
+        break;
+      case WEAPON_IDS.LIGHTNING_ZAP:
+      case 'weapon_lightning_zap':
+        mods.lightningZapLevel = 0;
+        break;
+      case WEAPON_IDS.ACID_TRAIL:
+      case 'weapon_acid_trail':
+        mods.acidTrailLevel = 0;
+        mods.acidTrailDps = 0;
+        mods.hasSlimeTrail = false;
+        break;
+      case WEAPON_IDS.TOILET_LID:
+      case 'weapon_toilet_lid':
+        mods.toiletLidLevel = 0;
+        mods.toiletLidBounces = 0;
+        mods.toiletLidSlimeTrail = false;
+        break;
+      case TOME_IDS.QUANTITY:
+        mods.tomeQuantity = 0;
+        mods.multishotCount = 1;
+        break;
+      case TOME_IDS.SPEED:
+        mods.tomeSpeed = 0;
+        break;
+      case TOME_IDS.ATTACK_SPEED:
+        mods.tomeAttackSpeed = 0;
+        mods.attackSpeedBonus = 0;
+        break;
+      case TOME_IDS.ARMOR:
+        mods.tomeArmor = 0;
+        break;
+      case TOME_IDS.HP_REGEN:
+        mods.tomeHpRegen = 0;
+        mods.hpRegenPerSec = 0;
+        break;
+      case TOME_IDS.LIFESTEAL:
+        mods.tomeLifesteal = 0;
+        mods.healOnKill = 0;
+        break;
+      case TOME_IDS.MAGNET:
+        mods.tomeMagnet = 0;
+        mods.magnetRadiusBonus = 0;
+        break;
+      case TOME_IDS.DAMAGE:
+        mods.tomeDamage = 0;
+        mods.damagePercentBonus = 0;
+        break;
+      case TOME_IDS.CRIT:
+        mods.tomeCrit = 0;
+        mods.critChance = 0;
+        break;
+      case TOME_IDS.AREA:
+        mods.tomeArea = 0;
+        mods.attackAreaBonus = 0;
+        break;
+    }
   }
 
   private renderCheatsTab(

@@ -96,6 +96,12 @@ export class BootScene extends Phaser.Scene {
     this.load.image('fx_slime', '/assets/sprites/poses/fx_slime.png');
     this.load.image('fx_impact', '/assets/sprites/poses/fx_impact.png');
     this.load.image('fx_poison', '/assets/sprites/poses/fx_poison.png');
+    this.load.spritesheet('vfx_electro_zap', '/assets/sprites/vfx/vfx_electro_zap.png', { frameWidth: 256, frameHeight: 256 });
+    this.load.spritesheet('vfx_piezo_muzzle', '/assets/sprites/vfx/vfx_piezo_muzzle.png', { frameWidth: 128, frameHeight: 128 });
+    this.load.spritesheet('vfx_piezo_hit', '/assets/sprites/vfx/vfx_piezo_hit.png', { frameWidth: 128, frameHeight: 128 });
+    this.load.spritesheet('vfx_toilet_lid_spin', '/assets/sprites/vfx/vfx_toilet_lid_spin.png', { frameWidth: 160, frameHeight: 160 });
+    this.load.spritesheet('vfx_toilet_lid_spin_slime', '/assets/sprites/vfx/vfx_toilet_lid_spin_slime.png', { frameWidth: 200, frameHeight: 160 });
+    this.load.spritesheet('vfx_toilet_lid_impact', '/assets/sprites/vfx/vfx_toilet_lid_impact.png', { frameWidth: 256, frameHeight: 256 });
 
     // Map Floor Tiles & Decals
     this.load.image('tex_floor', '/assets/sprites/map/tex_floor.webp');
@@ -149,6 +155,21 @@ export class BootScene extends Phaser.Scene {
     this.load.image('hud_bar_fill_xp', '/assets/ui/hud/hud_bar_fill_xp.webp');
     this.load.image('hud_slot_frame', '/assets/ui/hud/hud_slot_frame.webp');
 
+    // 4b. Pause Modal Kit
+    this.load.image('pause_panel', '/assets/ui/pause/pause_panel.webp');
+    this.load.image('pause_ribbon_stats', '/assets/ui/pause/pause_ribbon_stats.webp');
+    this.load.image('pause_ribbon_section', '/assets/ui/pause/pause_ribbon_section.webp');
+    this.load.image('pause_btn_green', '/assets/ui/pause/pause_btn_green.webp');
+    this.load.image('pause_btn_purple', '/assets/ui/pause/pause_btn_purple.webp');
+    this.load.image('pause_btn_orange', '/assets/ui/pause/pause_btn_orange.webp');
+    this.load.image('pause_btn_gray', '/assets/ui/pause/pause_btn_gray.webp');
+    this.load.image('pause_slot_empty', '/assets/ui/pause/pause_slot_empty.webp');
+    this.load.image('pause_slot_locked', '/assets/ui/pause/pause_slot_locked.webp');
+    this.load.image('pause_icon_play', '/assets/ui/pause/pause_icon_play.webp');
+    this.load.image('pause_icon_grimoire', '/assets/ui/pause/pause_icon_grimoire.webp');
+    this.load.image('pause_icon_restart', '/assets/ui/pause/pause_icon_restart.webp');
+    this.load.image('pause_icon_home', '/assets/ui/pause/pause_icon_home.webp');
+
     // 5. Square Icons (256x256) - Weapons, Tomes, Evolutions
     this.load.image('icon_weapon_slime_spit', '/assets/ui/icons/icon_weapon_slime_spit.webp');
     this.load.image('icon_weapon_carrot_barrage', '/assets/ui/icons/icon_weapon_carrot_barrage.webp');
@@ -157,6 +178,7 @@ export class BootScene extends Phaser.Scene {
     this.load.image('icon_weapon_eggplant_roll', '/assets/ui/icons/icon_weapon_eggplant_roll.webp');
     this.load.image('icon_weapon_acid_trail', '/assets/ui/icons/icon_weapon_acid_trail.webp');
     this.load.image('icon_weapon_orbiting_flies', '/assets/ui/icons/icon_weapon_orbiting_flies.webp');
+    this.load.image('icon_weapon_toilet_lid', '/assets/ui/icons/icon_weapon_toilet_lid.webp');
 
     this.load.image('icon_tome_area', '/assets/ui/icons/icon_tome_area.webp');
     this.load.image('icon_tome_armor', '/assets/ui/icons/icon_tome_armor.webp');
@@ -434,6 +456,44 @@ export class BootScene extends Phaser.Scene {
         { key: 'vfx_carrot_splat_4' },
       ],
       frameRate: 14,
+      repeat: 0,
+    });
+
+    // 8. VFX: Arcada Effector Electric Zap & Muzzle
+    this.anims.create({
+      key: 'vfx_anim_electro_zap',
+      frames: this.anims.generateFrameNumbers('vfx_electro_zap', { start: 0, end: 11 }),
+      frameRate: 24,
+      repeat: 0,
+    });
+    this.anims.create({
+      key: 'vfx_anim_piezo_muzzle',
+      frames: this.anims.generateFrameNumbers('vfx_piezo_muzzle', { start: 0, end: 7 }),
+      frameRate: 24,
+      repeat: 0,
+    });
+    this.anims.create({
+      key: 'vfx_anim_piezo_hit',
+      frames: this.anims.generateFrameNumbers('vfx_piezo_hit', { start: 0, end: 7 }),
+      frameRate: 24,
+      repeat: 0,
+    });
+    this.anims.create({
+      key: 'anim_toilet_lid_spin',
+      frames: this.anims.generateFrameNumbers('vfx_toilet_lid_spin', { start: 0, end: 7 }),
+      frameRate: 24,
+      repeat: -1,
+    });
+    this.anims.create({
+      key: 'anim_toilet_lid_spin_slime',
+      frames: this.anims.generateFrameNumbers('vfx_toilet_lid_spin_slime', { start: 0, end: 7 }),
+      frameRate: 24,
+      repeat: -1,
+    });
+    this.anims.create({
+      key: 'vfx_anim_toilet_lid_impact',
+      frames: this.anims.generateFrameNumbers('vfx_toilet_lid_impact', { start: 0, end: 5 }),
+      frameRate: 18,
       repeat: 0,
     });
   }

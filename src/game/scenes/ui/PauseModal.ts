@@ -12,6 +12,30 @@ export interface PauseModalCallbacks {
   onMenu: () => void;
 }
 
+// Proportions of pause_panel.webp (1366x1024 native)
+const PANEL_W = 1366;
+const PANEL_H = 1024;
+const BANNER_CX = 0.49; // green banner center, measured on the art
+const BANNER_CY = 0.10;
+
+interface SlotItem {
+  id: string;
+  name: string;
+  level: number;
+  icon: string;
+  isMax: boolean;
+}
+
+interface ButtonDef {
+  frame: string;
+  icon: string;
+  label: string;
+  color: string;
+  vibrate: number;
+  guarded: boolean;
+  cb: () => void;
+}
+
 export class PauseModal {
   private scene: Phaser.Scene;
   private platform = createPlatformAdapter();
@@ -29,237 +53,219 @@ export class PauseModal {
 
     const { width, height } = this.scene.cameras.main;
     const state = GameState.getInstance();
-    const isPortrait = width < 650 || width < height;
     const centerX = width / 2;
-    const centerY = height / 2;
 
-    const boxW = Math.min(520, width - 24);
-    const boxH = Math.min(520, height - 30);
-
-    // 1. Dark Backdrop (Depth: 25000)
     const backdrop = this.scene.add
-      .rectangle(centerX, centerY, width, height, 0x090d16, 0.88)
+      .rectangle(centerX, height / 2, width, height, 0x090d16, 0.88)
       .setScrollFactor(0)
       .setDepth(25000)
       .setInteractive();
     this.elements.push(backdrop);
 
-    // 2. Modal Box
-    const boxBg = this.scene.add
-      .rectangle(centerX, centerY, boxW, boxH, 0x111827, 0.98)
-      .setStrokeStyle(3, 0xfacc15)
-      .setScrollFactor(0)
-      .setDepth(25001);
-    this.elements.push(boxBg);
+    // Panel art keeps its native aspect; content offsets are defined in
+    // native panel units and multiplied by k so both orientations scale.
+    const panelH = Math.min(height - 24, (width - 24) * (PANEL_H / PANEL_W));
+    const k = panelH / PANEL_H;
+    const panelW = panelH * (PANEL_W / PANEL_H);
+    const panelX = centerX;
+    const panelY = height / 2;
+    const topY = panelY - panelH / 2;
+    const px = (nx: number) => panelX + (nx - PANEL_W / 2) * k;
+    const py = (ny: number) => topY + ny * k;
 
-    // 3. Title
+    const panel = this.scene.add
+      .image(panelX, panelY, 'pause_panel')
+      .setDisplaySize(panelW, panelH)
+      .setScrollFactor(0)
+      .setDepth(25001)
+      .setInteractive();
+    this.elements.push(panel);
+
+    // Title on the painted green banner
     const title = this.scene.add
-      .text(centerX, centerY - boxH / 2 + 35, 'ПАУЗА', {
-        fontSize: isPortrait ? '24px' : '30px',
+      .text(px(BANNER_CX * PANEL_W), py(BANNER_CY * PANEL_H), 'ПАУЗА', {
+        fontSize: `${Math.max(20, Math.round(46 * k))}px`,
         fontStyle: 'bold',
-        color: '#facc15',
+        color: '#1a2f08',
         fontFamily: '"Gagalin", "Balsamiq Sans", monospace',
-        stroke: '#451a03',
-        strokeThickness: 4,
       })
       .setOrigin(0.5)
       .setScrollFactor(0)
-      .setDepth(25002);
+      .setDepth(25005);
     this.elements.push(title);
 
-    // 4. Stats Summary
+    // Stats on the parchment ribbon, colored segments like the reference
     const minutes = Math.floor(state.runTime / 60);
     const seconds = Math.floor(state.runTime % 60);
-    const timeSurvived = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    const timeStr = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    const segFont = { fontSize: `${Math.max(12, Math.round(27 * k))}px`, fontFamily: '"Gagalin", "Balsamiq Sans", monospace' };
+    const segs: { text: string; color: string }[] = [
+      { text: 'ВРЕМЯ ', color: '#6b5a3e' },
+      { text: timeStr, color: '#2e7d32' },
+      { text: '   УБИЙСТВА ', color: '#6b5a3e' },
+      { text: String(state.kills), color: '#6a1b9a' },
+      { text: '   УРОВЕНЬ ', color: '#6b5a3e' },
+      { text: String(state.level), color: '#c05600' },
+    ];
+    const statsY = py(216);
+    const statsTexts = segs.map((s) => {
+      const t = this.scene.add.text(0, statsY - 12 * k, s.text, { ...segFont, color: s.color }).setOrigin(0, 0.5).setScrollFactor(0).setDepth(25005);
+      this.elements.push(t);
+      return t;
+    });
+    const totalW = statsTexts.reduce((acc, t) => acc + t.width, 0);
+    let cursor = panelX - totalW / 2;
+    for (const t of statsTexts) {
+      t.setX(Math.round(cursor));
+      cursor += t.width;
+    }
 
-    const statsInfo = `Время: ${timeSurvived}   |   Убийства: ${state.kills}   |   Уровень: ${state.level}`;
-    const statsText = this.scene.add
-      .text(centerX, centerY - boxH / 2 + 70, statsInfo, {
-        fontSize: isPortrait ? '11px' : '13px',
-        color: '#94a3b8',
-        fontFamily: '"Balsamiq Sans", monospace',
-      })
-      .setOrigin(0.5)
+    const statsRibbon = this.scene.add
+      .image(panelX, statsY, 'pause_ribbon_stats')
+      .setDisplaySize(620 * k, 620 * k * (184 / 912))
       .setScrollFactor(0)
       .setDepth(25002);
-    this.elements.push(statsText);
+    this.elements.push(statsRibbon);
 
-    // 5. Active Upgrades Overview (Weapons + Tomes)
-    const activeWeaponsList: { id: string; name: string; level: number; icon: string }[] = [];
-    const activeTomesList: { id: string; name: string; level: number; icon: string }[] = [];
+    const weapons = this.collectSlots(state, 'weapon');
+    const tomes = this.collectSlots(state, 'tome');
 
+    this.renderSlotsRow('ОРУЖИЕ', weapons, state.maxWeaponSlots, py(296), py(366), 0x8be85f, k);
+    this.renderSlotsRow('ФОЛИАНТЫ', tomes, state.maxTomeSlots, py(438), py(508), 0xb678f0, k);
+
+    let isTriggered = false;
+    const buttons: ButtonDef[] = [
+      { frame: 'pause_btn_green', icon: 'pause_icon_play', label: 'ПРОДОЛЖИТЬ', color: '#ffffff', vibrate: 20, guarded: true, cb: callbacks.onResume },
+      { frame: 'pause_btn_purple', icon: 'pause_icon_grimoire', label: 'ГРИМУАР ЭВОЛЮЦИЙ', color: '#ffffff', vibrate: 20, guarded: false, cb: () => callbacks.onGrimoire?.() },
+      { frame: 'pause_btn_orange', icon: 'pause_icon_restart', label: 'ЗАНОВО', color: '#fef3c7', vibrate: 30, guarded: true, cb: callbacks.onRestart },
+      { frame: 'pause_btn_gray', icon: 'pause_icon_home', label: 'В ГЛАВНОЕ МЕНЮ', color: '#cbd5e1', vibrate: 30, guarded: true, cb: callbacks.onMenu },
+    ];
+
+    const btnW = 500 * k;
+    const btnH = 96 * k;
+    const centers = [604, 714, 824, 934];
+    buttons.forEach((def, i) => {
+      const by = py(centers[i]);
+      const frame = this.scene.add
+        .image(panelX, by, def.frame)
+        .setDisplaySize(btnW, btnH)
+        .setScrollFactor(0)
+        .setDepth(25003)
+        .setInteractive({ useHandCursor: true });
+      frame.on('pointerdown', () => {
+        if (def.guarded && isTriggered) return;
+        isTriggered = true;
+        this.platform.vibrate(def.vibrate);
+        this.audio.playClick();
+        this.clear();
+        def.cb();
+      });
+      this.elements.push(frame);
+
+      // Optically centered on the plank area (art has slime drips on the top edge)
+      const contentY = by + 3 * k;
+      const iconSize = 56 * k;
+      const label = this.scene.add.text(0, contentY, def.label, {
+        fontSize: `${Math.max(12, Math.round(28 * k))}px`,
+        fontStyle: 'bold',
+        color: def.color,
+        fontFamily: '"Gagalin", "Balsamiq Sans", monospace',
+        stroke: '#1a1206',
+        strokeThickness: Math.max(2, Math.round(4 * k)),
+      }).setOrigin(0.5).setScrollFactor(0).setDepth(25005);
+      const contentW = label.width + iconSize + 12 * k;
+      // icon left of the text, pair centered on the button
+      const icon = this.scene.add
+        .image(panelX - contentW / 2 + iconSize / 2, contentY, def.icon)
+        .setDisplaySize(iconSize, iconSize)
+        .setScrollFactor(0)
+        .setDepth(25004);
+      label.setX(icon.x + iconSize / 2 + 12 * k + label.width / 2);
+      this.elements.push(frame, icon, label);
+    });
+  }
+
+  private collectSlots(state: GameState, kind: 'weapon' | 'tome'): SlotItem[] {
+    const items: SlotItem[] = [];
     state.activeUpgrades.forEach((level, id) => {
       const upgDef = ALL_UPGRADES.find((u) => u.id === id);
       const evoDef = EVOLUTION_RECIPES.find((e) => e.id === id);
-      if (upgDef || evoDef) {
-        const item = {
-          id,
-          name: upgDef?.name || evoDef?.name || '',
-          level,
-          icon: upgDef?.iconKey || evoDef?.iconKey || 'icon_weapon_slime_spit',
-        };
-        if (evoDef || upgDef?.category === 'weapon') activeWeaponsList.push(item);
-        else if (upgDef?.category === 'tome') activeTomesList.push(item);
+      if (!upgDef && !evoDef) return;
+      const isWeapon = !!evoDef || upgDef?.category === 'weapon';
+      if (kind === 'weapon' ? !isWeapon : isWeapon || upgDef?.category !== 'tome') return;
+      items.push({
+        id,
+        name: upgDef?.name || evoDef?.name || '',
+        level,
+        icon: upgDef?.iconKey || evoDef?.iconKey || 'icon_weapon_slime_spit',
+        isMax: level >= 5 || !!evoDef,
+      });
+    });
+    return items;
+  }
+
+  private renderSlotsRow(label: string, items: SlotItem[], maxSlots: number, ribbonY: number, slotsY: number, tint: number, k: number): void {
+    const centerX = this.scene.cameras.main.width / 2;
+
+    const ribbon = this.scene.add
+      .image(centerX, ribbonY, 'pause_ribbon_section')
+      .setDisplaySize(300 * k, 300 * k * (72 / 277))
+      .setScrollFactor(0)
+      .setDepth(25002);
+    this.elements.push(ribbon);
+
+    const labelText = this.scene.add
+      .text(centerX, ribbonY, `${label}  ${items.length}/${maxSlots}`, {
+        fontSize: `${Math.max(11, Math.round(24 * k))}px`,
+        fontStyle: 'bold',
+        color: '#3b2a14',
+        fontFamily: '"Gagalin", "Balsamiq Sans", monospace',
+      })
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(25005);
+    this.elements.push(labelText);
+
+    const slotSize = Math.max(34, Math.round(80 * k));
+    const gap = Math.round(14 * k);
+    const startX = centerX - (maxSlots * slotSize + (maxSlots - 1) * gap) / 2 + slotSize / 2;
+
+    for (let i = 0; i < maxSlots; i++) {
+      const sx = startX + i * (slotSize + gap);
+      const item = items[i];
+      const frame = this.scene.add
+        .image(sx, slotsY, 'pause_slot_empty')
+        .setDisplaySize(slotSize, slotSize)
+        .setScrollFactor(0)
+        .setDepth(25003);
+      if (item) {
+        frame.setTint(tint);
+      } else {
+        frame.setAlpha(0.55);
       }
-    });
+      this.elements.push(frame);
 
-    const upgradesBoxY = centerY - boxH / 2 + 95;
-    const renderSlotsRow = (titleText: string, items: typeof activeWeaponsList, maxSlots: number, rowY: number) => {
-      const title = this.scene.add.text(centerX, rowY, titleText, {
-        fontSize: '11px', fontStyle: 'bold', color: '#94a3b8', fontFamily: 'monospace',
-      }).setOrigin(0.5).setScrollFactor(0).setDepth(25002);
-      this.elements.push(title);
-
-      const iconSize = 28;
-      const iconSpacing = 6;
-      const totalW = maxSlots * iconSize + (maxSlots - 1) * iconSpacing;
-      const startX = centerX - totalW / 2 + iconSize / 2;
-      const iconsY = rowY + 18;
-
-      for (let i = 0; i < maxSlots; i++) {
-        const ix = startX + i * (iconSize + iconSpacing);
-        const item = items[i];
-        const iconBg = this.scene.add.rectangle(ix, iconsY, iconSize, iconSize, 0x0f172a)
-          .setStrokeStyle(1, item ? 0x4ade80 : 0x334155).setScrollFactor(0).setDepth(25002);
-        this.elements.push(iconBg);
-
-        if (item) {
-          const iconImg = this.scene.add.image(ix, iconsY, item.icon).setDisplaySize(iconSize - 4, iconSize - 4).setScrollFactor(0).setDepth(25003);
-          const lvlBadge = this.scene.add.text(ix + iconSize / 2 - 1, iconsY + iconSize / 2 - 1, `L${item.level}`, {
-            fontSize: '8px', fontStyle: 'bold', color: '#fde047', fontFamily: 'monospace', stroke: '#000000', strokeThickness: 2,
-          }).setOrigin(1, 1).setScrollFactor(0).setDepth(25004);
-          this.elements.push(iconImg, lvlBadge);
-        }
+      if (item) {
+        const icon = this.scene.add
+          .image(sx, slotsY, item.icon)
+          .setDisplaySize(slotSize * 0.66, slotSize * 0.66)
+          .setScrollFactor(0)
+          .setDepth(25004);
+        const badge = this.scene.add
+          .text(Math.round(sx + slotSize / 2 - 2), Math.round(slotsY + slotSize / 2 - 2), item.isMax ? 'MAX' : `L${item.level}`, {
+            fontSize: `${Math.max(8, Math.round(17 * k))}px`,
+            fontStyle: 'bold',
+            color: item.isMax ? '#facc15' : '#4ade80',
+            fontFamily: '"Gagalin", "Balsamiq Sans", monospace',
+            stroke: '#000000',
+            strokeThickness: 2,
+          })
+          .setOrigin(1, 1)
+          .setScrollFactor(0)
+          .setDepth(25005);
+        this.elements.push(icon, badge);
       }
-    };
-
-    renderSlotsRow(`ОРУЖИЕ (${activeWeaponsList.length}/${state.maxWeaponSlots}):`, activeWeaponsList, state.maxWeaponSlots, upgradesBoxY);
-    renderSlotsRow(`ФОЛИАНТЫ (${activeTomesList.length}/${state.maxTomeSlots}):`, activeTomesList, state.maxTomeSlots, upgradesBoxY + 44);
-
-    // 6. Action Buttons
-    const btnW = Math.min(280, boxW - 40);
-    const btnH = 42;
-    const startBtnY = centerY + 45;
-    const btnSpacing = 10;
-
-    let isTriggered = false;
-
-    // --- Button 1: Resume ---
-    const resumeBtnY = startBtnY;
-    const resumeBtn = this.scene.add
-      .rectangle(centerX, resumeBtnY, btnW, btnH, 0x16a34a)
-      .setStrokeStyle(2, 0x4ade80)
-      .setScrollFactor(0)
-      .setDepth(25002)
-      .setInteractive({ useHandCursor: true });
-
-    const resumeText = this.scene.add
-      .text(centerX, resumeBtnY, 'ПРОДОЛЖИТЬ', {
-        fontSize: '15px',
-        fontStyle: 'bold',
-        color: '#ffffff',
-        fontFamily: '"Gagalin", "Balsamiq Sans", monospace',
-      })
-      .setOrigin(0.5)
-      .setScrollFactor(0)
-      .setDepth(25003);
-
-    resumeBtn.on('pointerdown', () => {
-      if (isTriggered) return;
-      isTriggered = true;
-      this.platform.vibrate(20);
-      this.audio.playClick();
-      this.clear();
-      callbacks.onResume();
-    });
-    this.elements.push(resumeBtn, resumeText);
-
-    // --- Button 2: Grimoire ---
-    const grimoireBtnY = resumeBtnY + btnH + btnSpacing;
-    const grimoireBtn = this.scene.add
-      .rectangle(centerX, grimoireBtnY, btnW, btnH, 0x4338ca)
-      .setStrokeStyle(2, 0x818cf8)
-      .setScrollFactor(0)
-      .setDepth(25002)
-      .setInteractive({ useHandCursor: true });
-
-    const grimoireText = this.scene.add
-      .text(centerX, grimoireBtnY, 'ГРИМУАР ЭВОЛЮЦИЙ', {
-        fontSize: '14px',
-        fontStyle: 'bold',
-        color: '#ffffff',
-        fontFamily: '"Gagalin", "Balsamiq Sans", monospace',
-      })
-      .setOrigin(0.5)
-      .setScrollFactor(0)
-      .setDepth(25003);
-
-    grimoireBtn.on('pointerdown', () => {
-      this.platform.vibrate(20);
-      this.audio.playClick();
-      this.clear();
-      callbacks.onGrimoire?.();
-    });
-    this.elements.push(grimoireBtn, grimoireText);
-
-    // --- Button 3: Restart ---
-    const restartBtnY = grimoireBtnY + btnH + btnSpacing;
-    const restartBtn = this.scene.add
-      .rectangle(centerX, restartBtnY, btnW, btnH, 0xb45309)
-      .setStrokeStyle(1.5, 0xfbbf24)
-      .setScrollFactor(0)
-      .setDepth(25002)
-      .setInteractive({ useHandCursor: true });
-
-    const restartText = this.scene.add
-      .text(centerX, restartBtnY, 'ЗАНОВО', {
-        fontSize: '14px',
-        fontStyle: 'bold',
-        color: '#fef3c7',
-        fontFamily: '"Gagalin", "Balsamiq Sans", monospace',
-      })
-      .setOrigin(0.5)
-      .setScrollFactor(0)
-      .setDepth(25003);
-
-    restartBtn.on('pointerdown', () => {
-      if (isTriggered) return;
-      isTriggered = true;
-      this.platform.vibrate(30);
-      this.audio.playClick();
-      this.clear();
-      callbacks.onRestart();
-    });
-    this.elements.push(restartBtn, restartText);
-
-    // --- Button 4: Main Menu ---
-    const menuBtnY = restartBtnY + btnH + btnSpacing;
-    const menuBtn = this.scene.add
-      .rectangle(centerX, menuBtnY, btnW, btnH, 0x334155)
-      .setStrokeStyle(1, 0x64748b)
-      .setScrollFactor(0)
-      .setDepth(25002)
-      .setInteractive({ useHandCursor: true });
-
-    const menuText = this.scene.add
-      .text(centerX, menuBtnY, 'В ГЛАВНОЕ МЕНЮ', {
-        fontSize: '13px',
-        color: '#cbd5e1',
-        fontFamily: '"Gagalin", "Balsamiq Sans", monospace',
-      })
-      .setOrigin(0.5)
-      .setScrollFactor(0)
-      .setDepth(25003);
-
-    menuBtn.on('pointerdown', () => {
-      if (isTriggered) return;
-      isTriggered = true;
-      this.platform.vibrate(30);
-      this.audio.playClick();
-      this.clear();
-      callbacks.onMenu();
-    });
-    this.elements.push(menuBtn, menuText);
+    }
   }
 
   public clear(): void {

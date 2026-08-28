@@ -10,8 +10,9 @@ export const WEAPON_IDS = {
   EGGPLANT_ROLL: 'wpn_eggplant_roll',
   HOMING_DAGGERS: 'wpn_homing_daggers', // Орбитальные мухи
   MEGA_BOOT: 'wpn_mega_boot',
-  LIGHTNING_ZAP: 'wpn_lightning_zap', // Чугунный люк
+  LIGHTNING_ZAP: 'wpn_lightning_zap', // Пьезо-шокер
   ACID_TRAIL: 'wpn_acid_trail', // Дырявый носок
+  TOILET_LID: 'wpn_toilet_lid', // Крышка от унитаза
 } as const;
 
 export const TOME_IDS = {

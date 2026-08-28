@@ -107,6 +107,9 @@ export class GameState {
       acidTrailLevel: 0,
       acidTrailDps: 0,
       hasSlimeTrail: false,
+      toiletLidLevel: 0,
+      toiletLidBounces: 3,
+      toiletLidSlimeTrail: false,
 
       damageReductionPercent: 0,
 
