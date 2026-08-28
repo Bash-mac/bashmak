@@ -23,7 +23,7 @@ export const TOME_CRIT: UpgradeDefinition = {
       apply: (mod) => {
         mod.tomeCrit = 2;
         mod.critChance += 0.10;
-        mod.critMultiplier = 2.1;
+        mod.critMultiplier = Math.max(mod.critMultiplier, 2.1);
       },
     },
     {
@@ -32,7 +32,7 @@ export const TOME_CRIT: UpgradeDefinition = {
       apply: (mod) => {
         mod.tomeCrit = 3;
         mod.critChance += 0.10;
-        mod.critMultiplier = 2.4;
+        mod.critMultiplier = Math.max(mod.critMultiplier, 2.4);
       },
     },
     {
@@ -41,7 +41,7 @@ export const TOME_CRIT: UpgradeDefinition = {
       apply: (mod) => {
         mod.tomeCrit = 4;
         mod.critChance += 0.10;
-        mod.critMultiplier = 2.8;
+        mod.critMultiplier = Math.max(mod.critMultiplier, 2.8);
       },
     },
     {
@@ -50,7 +50,7 @@ export const TOME_CRIT: UpgradeDefinition = {
       apply: (mod) => {
         mod.tomeCrit = 5;
         mod.critChance += 0.15;
-        mod.critMultiplier = 3.2;
+        mod.critMultiplier = Math.max(mod.critMultiplier, 3.2);
       },
     },
   ],

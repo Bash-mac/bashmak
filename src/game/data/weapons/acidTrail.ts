@@ -14,15 +14,13 @@ export const WPN_ACID_TRAIL: UpgradeDefinition = {
       apply: (mod) => {
         mod.acidTrail = true;
         mod.acidTrailLevel = 1;
-        mod.acidTrailDps = 15;
       },
     },
     {
       level: 2,
-      description: 'Радиус облака вони +50%, урон в секунду +40%.',
+      description: 'Урон вони +50%, облако шире. Открывает рывок Wriggle Dash сквозь толпу.',
       apply: (mod) => {
         mod.acidTrailLevel = 2;
-        mod.acidTrailDps += 10;
         mod.wriggleDash = true;
       },
     },
@@ -36,10 +34,9 @@ export const WPN_ACID_TRAIL: UpgradeDefinition = {
     },
     {
       level: 4,
-      description: 'Урон вони +80%, радиус облака увеличен.',
+      description: 'Урон вони +33%, радиус облака увеличен.',
       apply: (mod) => {
         mod.acidTrailLevel = 4;
-        mod.acidTrailDps += 25;
       },
     },
     {
@@ -47,7 +44,6 @@ export const WPN_ACID_TRAIL: UpgradeDefinition = {
       description: ' ЯДОВИТАЯ АТАКА: Убитые в облаке враги взрываются токсичным газом!',
       apply: (mod) => {
         mod.acidTrailLevel = 5;
-        mod.acidTrailDps += 50;
         mod.poisonExplodeOnDeath = true;
       },
     },

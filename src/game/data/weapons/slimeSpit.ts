@@ -22,7 +22,7 @@ export const WPN_SLIME_SPIT: UpgradeDefinition = {
       description: 'Залп +1 сгусток слизи (2 снаряда) + урон кислоты +25%.',
       apply: (mod) => {
         mod.slimeSpitLevel = 2;
-        mod.multishotCount = 2;
+        mod.multishotCount += 1;
         mod.damagePercentBonus += 0.25;
       },
     },

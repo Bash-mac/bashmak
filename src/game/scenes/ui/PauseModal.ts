@@ -135,19 +135,22 @@ export class PauseModal {
 
     let isTriggered = false;
     const buttons: ButtonDef[] = [
-      { frame: 'pause_btn_green', icon: 'pause_icon_play', label: 'ПРОДОЛЖИТЬ', color: '#ffffff', vibrate: 20, guarded: true, cb: callbacks.onResume },
-      { frame: 'pause_btn_purple', icon: 'pause_icon_grimoire', label: 'ГРИМУАР ЭВОЛЮЦИЙ', color: '#ffffff', vibrate: 20, guarded: false, cb: () => callbacks.onGrimoire?.() },
-      { frame: 'pause_btn_orange', icon: 'pause_icon_restart', label: 'ЗАНОВО', color: '#fef3c7', vibrate: 30, guarded: true, cb: callbacks.onRestart },
-      { frame: 'pause_btn_gray', icon: 'pause_icon_home', label: 'В ГЛАВНОЕ МЕНЮ', color: '#cbd5e1', vibrate: 30, guarded: true, cb: callbacks.onMenu },
+      { frame: 'btn_frame_green', icon: 'pause_icon_play', label: 'ПРОДОЛЖИТЬ', color: '#ffffff', vibrate: 20, guarded: true, cb: callbacks.onResume },
+      { frame: 'btn_frame_gold', icon: 'pause_icon_grimoire', label: 'ГРИМУАР ЭВОЛЮЦИЙ', color: '#ffffff', vibrate: 20, guarded: false, cb: () => callbacks.onGrimoire?.() },
+      { frame: 'btn_frame_red', icon: 'pause_icon_restart', label: 'ЗАНОВО', color: '#fef3c7', vibrate: 30, guarded: true, cb: callbacks.onRestart },
+      { frame: 'btn_frame_dark', icon: 'pause_icon_home', label: 'В ГЛАВНОЕ МЕНЮ', color: '#cbd5e1', vibrate: 30, guarded: true, cb: callbacks.onMenu },
     ];
 
-    const btnW = 500 * k;
-    const btnH = 96 * k;
-    const centers = [604, 714, 824, 934];
+    // Chunky 2.5:1 frames -> compact 2x2 grid (native frame ratio preserved)
+    const btnW = 340 * k;
+    const btnH = 136 * k;
+    const colDx = 185 * k;
+    const rows = [656, 812];
     buttons.forEach((def, i) => {
-      const by = py(centers[i]);
+      const bx = panelX + (i % 2 === 0 ? -colDx : colDx);
+      const by = py(rows[Math.floor(i / 2)]);
       const frame = this.scene.add
-        .image(panelX, by, def.frame)
+        .image(bx, by, def.frame)
         .setDisplaySize(btnW, btnH)
         .setScrollFactor(0)
         .setDepth(25003)
@@ -162,25 +165,25 @@ export class PauseModal {
       });
       this.elements.push(frame);
 
-      // Optically centered on the plank area (art has slime drips on the top edge)
-      const contentY = by + 3 * k;
-      const iconSize = 56 * k;
+      // Optically centered on the liquid area (frames have thick top/bottom rims)
+      const contentY = by + 2 * k;
+      const iconSize = 30 * k;
       const label = this.scene.add.text(0, contentY, def.label, {
-        fontSize: `${Math.max(12, Math.round(28 * k))}px`,
+        fontSize: `${Math.max(11, Math.round(19 * k))}px`,
         fontStyle: 'bold',
         color: def.color,
         fontFamily: '"Gagalin", "Balsamiq Sans", monospace',
         stroke: '#1a1206',
         strokeThickness: Math.max(2, Math.round(4 * k)),
       }).setOrigin(0.5).setScrollFactor(0).setDepth(25005);
-      const contentW = label.width + iconSize + 12 * k;
+      const contentW = label.width + iconSize + 10 * k;
       // icon left of the text, pair centered on the button
       const icon = this.scene.add
-        .image(panelX - contentW / 2 + iconSize / 2, contentY, def.icon)
+        .image(bx - contentW / 2 + iconSize / 2, contentY, def.icon)
         .setDisplaySize(iconSize, iconSize)
         .setScrollFactor(0)
         .setDepth(25004);
-      label.setX(icon.x + iconSize / 2 + 12 * k + label.width / 2);
+      label.setX(icon.x + iconSize / 2 + 10 * k + label.width / 2);
       this.elements.push(frame, icon, label);
     });
   }

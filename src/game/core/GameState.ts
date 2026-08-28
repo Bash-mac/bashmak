@@ -17,7 +17,7 @@ export class GameState {
   // Progression
   public level = 1;
   public currentXp = 0;
-  public nextLevelXp = 5; // Level 2 requires 5 XP
+  public nextLevelXp = 21; // Level 2 requires 21 XP (calculateXpForLevel(1))
 
   // Dynamic weapon & tome slots (from SaveManager meta-upgrades)
   public maxWeaponSlots = 2;
@@ -105,7 +105,6 @@ export class GameState {
       staticZapCharge: 0,
       staticZapMax: 100,
       acidTrailLevel: 0,
-      acidTrailDps: 0,
       hasSlimeTrail: false,
       toiletLidLevel: 0,
       toiletLidBounces: 3,
@@ -198,7 +197,6 @@ export class GameState {
       case 'weapon_acid_trail':
         this.playerModifiers.acidTrail = true;
         this.playerModifiers.acidTrailLevel = 1;
-        this.playerModifiers.acidTrailDps = 15;
         this.activeUpgrades.set('wpn_acid_trail', 1);
         if (!this.selectedUpgrades.includes('wpn_acid_trail')) {
           this.selectedUpgrades.push('wpn_acid_trail');
@@ -265,14 +263,11 @@ export class GameState {
   }
 
   /**
-   * Exact Vampire Survivors XP Formula:
-   * Level 1-20: 5 + (n - 1) * 10
-   * Level 21-40: XP(20) + (n - 20) * 13
-   * Level 41+: XP(40) + (n - 40) * 16 + (n - 40)^1.1
+   * Smooth power curve: XP(n) = 12 + 8.5 * n^1.75
+   * Lvl 1: 21, Lvl 2: 41, Lvl 3: 70, Lvl 5: 154, Lvl 10: 490, Lvl 15: 984, Lvl 20: 1620
    */
   public calculateXpForLevel(lvl: number): number {
     const n = Math.max(1, lvl);
-    // Smooth power curve: Lvl 1: 15, Lvl 3: 40, Lvl 6: 120, Lvl 10: 380, Lvl 15: 850, Lvl 20: 1550
     return Math.round(12 + Math.pow(n, 1.75) * 8.5);
   }
 

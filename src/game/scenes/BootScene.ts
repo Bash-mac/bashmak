@@ -20,7 +20,6 @@ export class BootScene extends Phaser.Scene {
     this.load.image('mission_plank', '/assets/menu/mission_plank.webp');
     this.load.image('icon_trophy', '/assets/menu/icon_trophy.webp');
     this.load.image('icon_help', '/assets/menu/icon_help.webp');
-    this.load.image('icon_gear', '/assets/menu/icon_gear.webp');
     this.load.image('social_buttons', '/assets/menu/social_buttons.webp');
     this.load.image('char_worm', '/assets/menu/char_worm.webp');
     this.load.image('char_rat', '/assets/menu/char_rat.webp');
@@ -34,8 +33,6 @@ export class BootScene extends Phaser.Scene {
     this.load.image('hud_face_smug', '/assets/sprites/vypolzok/ui/hud_face_smug.webp');
     this.load.image('hud_face_bored', '/assets/sprites/vypolzok/ui/hud_face_bored.webp');
     this.load.image('hud_face_injured', '/assets/sprites/vypolzok/ui/hud_face_injured.webp');
-    this.load.image('icon_slime_spit', '/assets/sprites/vypolzok/ui/icon_slime_spit.webp');
-    this.load.image('icon_trait_trail', '/assets/sprites/vypolzok/ui/icon_trait_trail.webp');
 
     // Vypolzok Character Sprites
     for (let i = 1; i <= 4; i++) {
@@ -62,7 +59,6 @@ export class BootScene extends Phaser.Scene {
 
     // Markovka (Beda) Assets & UI
     this.load.image('portrait_markovka', '/assets/sprites/markovka/HUD/portrait_markovka.webp');
-    this.load.image('markovka_portrait', '/assets/sprites/markovka/HUD/portrait_markovka.webp');
     this.load.image('hud_face_smug_markovka', '/assets/sprites/markovka/HUD/hud_face_smug.webp');
     this.load.image('hud_face_bored_markovka', '/assets/sprites/markovka/HUD/hud_face_bored.webp');
     this.load.image('hud_face_injured_markovka', '/assets/sprites/markovka/HUD/hud_face_injured.webp');
@@ -93,9 +89,6 @@ export class BootScene extends Phaser.Scene {
     this.load.image('tex_acid_pool', '/assets/sprites/vypolzok/vfx/acid_pool/acid_pool_1.webp');
 
     // Combat FX
-    this.load.image('fx_slime', '/assets/sprites/poses/fx_slime.png');
-    this.load.image('fx_impact', '/assets/sprites/poses/fx_impact.png');
-    this.load.image('fx_poison', '/assets/sprites/poses/fx_poison.png');
     this.load.spritesheet('vfx_electro_zap', '/assets/sprites/vfx/vfx_electro_zap.png', { frameWidth: 256, frameHeight: 256 });
     this.load.spritesheet('vfx_piezo_muzzle', '/assets/sprites/vfx/vfx_piezo_muzzle.png', { frameWidth: 128, frameHeight: 128 });
     this.load.spritesheet('vfx_piezo_hit', '/assets/sprites/vfx/vfx_piezo_hit.png', { frameWidth: 128, frameHeight: 128 });
@@ -107,7 +100,6 @@ export class BootScene extends Phaser.Scene {
     this.load.image('tex_floor', '/assets/sprites/map/tex_floor.webp');
     this.load.image('floor_cracked', '/assets/sprites/map/floor_cracked.webp');
     this.load.image('floor_sewage', '/assets/sprites/map/floor_sewage.webp');
-    this.load.image('floor_rusted', '/assets/sprites/map/floor_rusted.webp');
     this.load.image('floor_graffiti', '/assets/sprites/map/floor_graffiti.webp');
 
     // Map Architecture & Interactive Props
@@ -134,7 +126,6 @@ export class BootScene extends Phaser.Scene {
     this.load.image('hero_card_bashmak', '/assets/ui/posters/hero_card_bashmak.webp');
     this.load.image('hero_card_markovka', '/assets/ui/posters/hero_card_markovka.webp');
     this.load.image('hero_card_baklazhan', '/assets/ui/posters/hero_card_baklazhan.webp');
-    this.load.image('pod_base', '/assets/ui/hero_modal/pod_base.webp');
     this.load.image('chains_pod', '/assets/ui/hero_modal/chains_pod.webp');
 
     // 2. Card Frames (512x768)
@@ -159,12 +150,7 @@ export class BootScene extends Phaser.Scene {
     this.load.image('pause_panel', '/assets/ui/pause/pause_panel.webp');
     this.load.image('pause_ribbon_stats', '/assets/ui/pause/pause_ribbon_stats.webp');
     this.load.image('pause_ribbon_section', '/assets/ui/pause/pause_ribbon_section.webp');
-    this.load.image('pause_btn_green', '/assets/ui/pause/pause_btn_green.webp');
-    this.load.image('pause_btn_purple', '/assets/ui/pause/pause_btn_purple.webp');
-    this.load.image('pause_btn_orange', '/assets/ui/pause/pause_btn_orange.webp');
-    this.load.image('pause_btn_gray', '/assets/ui/pause/pause_btn_gray.webp');
     this.load.image('pause_slot_empty', '/assets/ui/pause/pause_slot_empty.webp');
-    this.load.image('pause_slot_locked', '/assets/ui/pause/pause_slot_locked.webp');
     this.load.image('pause_icon_play', '/assets/ui/pause/pause_icon_play.webp');
     this.load.image('pause_icon_grimoire', '/assets/ui/pause/pause_icon_grimoire.webp');
     this.load.image('pause_icon_restart', '/assets/ui/pause/pause_icon_restart.webp');
@@ -214,7 +200,6 @@ export class BootScene extends Phaser.Scene {
     this.load.image('drop_xp_small', '/assets/sprites/drop/drop_xp_small.webp');
     this.load.image('drop_xp_big', '/assets/sprites/drop/drop_xp_big.webp');
     this.load.image('drop_goo', '/assets/sprites/drop/drop_goo.webp');
-    this.load.image('drop_vacuum', '/assets/sprites/drop/drop_vacuum.webp');
   }
 
   create(): void {

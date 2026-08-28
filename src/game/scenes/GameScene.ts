@@ -248,7 +248,7 @@ export class GameScene extends Phaser.Scene {
   private applyDamageToPlayer(dmg: number): void {
     if (!this.playerEntity.isAlive || this.playerIframeTimerMs > 0 || this.isDying) return;
     this.playerIframeTimerMs = 500;
-    const effectiveDmg = Math.max(1, Math.round((dmg - (this.playerEntity.stats.armor || 0)) * (1 - (this.gameState.playerModifiers.damageReductionPercent || 0))));
+    const effectiveDmg = Math.max(1, Math.round(dmg * (12 / (12 + (this.playerEntity.stats.armor || 0))) * (1 - (this.gameState.playerModifiers.damageReductionPercent || 0))));
     this.playerEntity.health.takeDamage(effectiveDmg); this.audio.playPlayerHurt();
 
     const sprite = this.playerEntity.sprite;

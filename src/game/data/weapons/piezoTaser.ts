@@ -10,7 +10,7 @@ export const WPN_LIGHTNING_ZAP: UpgradeDefinition = {
   levels: [
     {
       level: 1,
-      description: 'Бьет током случайного врага в радиусе (45 урона) + 2 цепные искры по соседям.',
+      description: 'Бьет током случайного врага в радиусе (32 урона) + 2 цепные искры по соседям.',
       apply: (mod) => {
         mod.lightningZapLevel = 1;
         mod.staticZapMax = 100;

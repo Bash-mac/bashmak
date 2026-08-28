@@ -59,7 +59,7 @@ export class OrbitingFliesWeapon implements IWeapon {
     }
 
     // Check collision with nearby enemies
-    const damage = Math.round((14 + (level - 1) * 5) * (1 + mods.damagePercentBonus));
+    const damage = Math.round((7 + ctx.player.stats.damage * 0.5 + (level - 1) * 5) * (1 + mods.damagePercentBonus));
     const hitRadiusSq = 26 * 26;
 
     for (const enemy of ctx.enemiesMap.values()) {

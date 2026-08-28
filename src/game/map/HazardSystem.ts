@@ -159,7 +159,10 @@ export class HazardSystem {
     const x = exploder.x;
     const y = exploder.y;
     const blastRadius = exploder.definition?.explosionRadius || 80;
-    const blastDmg = exploder.definition?.explosionDamage || 22;
+    // Blast scales with the same time/champion multipliers as contact damage
+    const baseDefDmg = exploder.definition?.stats.damage || 1;
+    const dmgScale = baseDefDmg > 0 ? exploder.stats.damage / baseDefDmg : 1;
+    const blastDmg = Math.round((exploder.definition?.explosionDamage || 22) * dmgScale);
 
     // 1. Clean up entity & sprite immediately so it never lingers or moves as a zombie
     exploder.health.currentHp = 0;

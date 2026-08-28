@@ -29,7 +29,7 @@ export class LaceWhipWeapon implements IWeapon {
     const px = ctx.player.x;
     const py = ctx.player.y;
 
-    let damage = Math.round(22 * (1 + mods.damagePercentBonus) * (1 + (level - 1) * 0.3));
+    let damage = Math.round((13 + ctx.player.stats.damage * 0.5) * (1 + mods.damagePercentBonus) * (1 + (level - 1) * 0.3));
     if (mods.standStillBonusActive) {
       damage = Math.round(damage * 1.5); // +50% dmg when standing still
     }

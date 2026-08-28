@@ -73,7 +73,7 @@ export class ToiletLidWeapon implements IWeapon {
     }
 
     const count = (level >= 4 ? 2 : 1) + (mods.multishotCount > 1 ? mods.multishotCount - 1 : 0);
-    const baseDmg = 50 + (level - 1) * 18;
+    const baseDmg = 27 + ctx.player.stats.damage * 0.5 + (level - 1) * 18;
     const bounces = (mods.toiletLidBounces ?? 3) + (mods.bounceCount || 0);
 
     for (let i = 0; i < count; i++) {
@@ -186,7 +186,6 @@ export class ToiletLidWeapon implements IWeapon {
         lid.bouncesLeft--;
         AudioManager.getInstance().playToiletClank();
         ctx.vfxPool?.spawnToiletLidImpact(spr.x, spr.y, 0.38);
-        if (lid.level >= 5) lid.damageMultiplier += 0.15;
       }
 
       // 2. Enemy Hit Check
@@ -234,9 +233,9 @@ export class ToiletLidWeapon implements IWeapon {
             }
           }
 
-          // Lv.5 accumulative +15% per ricochet
+          // Lv.5 accumulative +8% per enemy ricochet (wall bounces don't ramp)
           if (lid.level >= 5) {
-            lid.damageMultiplier += 0.15;
+            lid.damageMultiplier += 0.08;
             lid.speed = Math.min(850, lid.speed * 1.05);
           }
 

@@ -367,7 +367,6 @@ export class DebugModal {
       case WEAPON_IDS.ACID_TRAIL:
       case 'weapon_acid_trail':
         mods.acidTrailLevel = 0;
-        mods.acidTrailDps = 0;
         mods.hasSlimeTrail = false;
         break;
       case WEAPON_IDS.TOILET_LID:

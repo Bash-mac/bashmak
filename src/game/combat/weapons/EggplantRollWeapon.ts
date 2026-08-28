@@ -43,7 +43,7 @@ export class EggplantRollWeapon implements IWeapon {
     if (!primaryTarget) return;
 
     this.attackTimer = 0;
-    const damage = Math.round((35 + (rollLevel - 1) * 12) * (1 + mods.damagePercentBonus));
+    const damage = Math.round((25 + ctx.player.stats.damage * 0.5 + (rollLevel - 1) * 12) * (1 + mods.damagePercentBonus));
     const bounces = 3 + (rollLevel >= 2 ? 1 : 0) + (rollLevel >= 3 ? 1 : 0) + (rollLevel >= 5 ? 2 : 0) + (mods.bounceCount || 0);
 
     this.launchBall(ctx, primaryTarget, damage, bounces);

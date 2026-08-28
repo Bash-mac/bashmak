@@ -13,8 +13,9 @@ export class CombatSystem {
     if (!target.isAlive) return 0;
 
     const baseDamage = customDamage ?? attacker.stats.damage;
+    // Percentage mitigation: k=12 gives ~8% per armor point, stable across the run
     const targetArmor = target.stats.armor || 0;
-    const effectiveDamage = Math.max(1, Math.round(baseDamage - targetArmor));
+    const effectiveDamage = Math.max(1, Math.round(baseDamage * (12 / (12 + targetArmor))));
 
     target.health.takeDamage(effectiveDamage);
 

@@ -133,7 +133,6 @@ export interface PlayerModifiers {
   staticZapCharge: number;
   staticZapMax: number;
   acidTrailLevel: number;
-  acidTrailDps: number;
   hasSlimeTrail: boolean;
   toiletLidLevel?: number;
   toiletLidBounces?: number;

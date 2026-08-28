@@ -59,7 +59,7 @@ export class PiezoTaserWeapon implements IWeapon {
     });
 
     // Damage & Stun (Rolls crit based on player stats)
-    const baseDmg = 45 + (level - 1) * 16;
+    const baseDmg = 25 + ctx.player.stats.damage * 0.5 + (level - 1) * 16;
     const rawPrimaryDamage = Math.round(baseDmg * (1 + mods.damagePercentBonus));
     const isCrit = Math.random() < mods.critChance;
     const primaryDamage = isCrit ? Math.round(rawPrimaryDamage * (mods.critMultiplier || 2.0)) : rawPrimaryDamage;

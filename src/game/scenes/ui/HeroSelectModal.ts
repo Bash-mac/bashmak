@@ -31,7 +31,7 @@ const HERO_DOSSIER_DATA: Record<string, HeroDossierExtra> = {
   hero_vypolzok: {
     aka: 'СЛИЗНЯК',
     statsBars: { hp: 3, speed: 4, damage: 3, mass: 4, special: 4 },
-    artConfig: { x: 180, y: -15, w: 220, h: 308 },
+    artConfig: { x: 148, y: -52, w: 192, h: 269 },
     weaponName: 'ТОКСИЧНЫЕ ПЛЕВКИ',
     weaponDesc: 'Плевок сгустками кислоты. Создает лужи замедления (-35% врагам).',
     traitName: 'СЛИЗИСТЫЙ СЛЕД',
@@ -473,25 +473,28 @@ export class HeroSelectModal {
 
     // 6. Sticky Note "ЛЮБИТ" (Aligned to -7.3 deg Sticky Paper)
     const stickyContainer = this.scene.add
-      .container(10, 168)
+      .container(0, 174)
       .setRotation(Phaser.Math.DegToRad(-7.3));
     container.add(stickyContainer);
     this.rightPageElements.push(stickyContainer);
 
     const stickyHeader = this.scene.add
-      .text(0, 0, 'ЛЮБИТ: ', {
-        fontSize: '14px',
+      .text(4, 12, 'ЛЮБИТ: ', {
+        fontSize: '13px',
         color: '#14532d',
         fontFamily: 'Gagalin',
+        stroke: '#000000',
+        strokeThickness: 2,
       })
       .setOrigin(0, 0);
     stickyContainer.add(stickyHeader);
 
     const stickyText = this.scene.add
-      .text(0, 18, extra.favorites, {
-        fontSize: '12.5px',
+      .text(4, 30, extra.favorites, {
+        fontSize: '11px',
         color: '#020617',
         fontFamily: 'Boingster',
+        wordWrap: { width: 96 },
         lineSpacing: 2,
       })
       .setOrigin(0, 0);

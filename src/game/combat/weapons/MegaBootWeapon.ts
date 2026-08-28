@@ -29,7 +29,7 @@ export class MegaBootWeapon implements IWeapon {
     const lvl = mods.megaBootLevel;
 
     const baseRadius = (75 + (lvl - 1) * 18) * (1 + mods.attackAreaBonus);
-    const baseDamage = Math.round(35 * (1 + mods.damagePercentBonus) * (1 + (lvl - 1) * 0.35));
+    const baseDamage = Math.round((28 + ctx.player.stats.damage * 0.5) * (1 + mods.damagePercentBonus) * (1 + (lvl - 1) * 0.35));
 
     // Direction of stomp (movement vector or closest enemy)
     const moveVector = ctx.player.sprite?.body

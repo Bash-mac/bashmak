@@ -10,7 +10,7 @@ export const WPN_TOILET_LID: UpgradeDefinition = {
   levels: [
     {
       level: 1,
-      description: 'Швыряет унитазную крышку. Рикошетит от врагов и стен (3 отскока, 50 урона).',
+      description: 'Швыряет унитазную крышку. Рикошетит от врагов и стен (3 отскока, 34 урона).',
       apply: (mod) => {
         mod.toiletLidLevel = 1;
         mod.toiletLidBounces = 3;
@@ -46,7 +46,7 @@ export const WPN_TOILET_LID: UpgradeDefinition = {
     },
     {
       level: 5,
-      description: 'ГИПЕР-РИКОШЕТ: До 10 отскоков! Скорость +50%, а каждый рикошет увеличивает урон крышки на +15%.',
+      description: 'ГИПЕР-РИКОШЕТ: До 10 отскоков! Скорость +50%, а каждый рикошет по врагу увеличивает урон крышки на +8%.',
       apply: (mod) => {
         mod.toiletLidLevel = 5;
         mod.toiletLidBounces = 10;
