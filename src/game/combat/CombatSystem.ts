@@ -29,7 +29,7 @@ export class CombatSystem {
         this.eventBus.emit('player:died');
         this.gameState.endRun(false);
       }
-    } else if (target.type === 'enemy') {
+    } else if (target.type === 'enemy' || target.type === 'boss') {
       this.eventBus.emit('enemy:damaged', {
         id: target.id,
         currentHp: target.health.currentHp,
@@ -49,17 +49,6 @@ export class CombatSystem {
 
       if (!target.isAlive) {
         this.gameState.recordKill();
-
-        // Heal on kill upgrade
-        const mods = this.gameState.playerModifiers;
-        if (mods.healOnKill > 0 && attacker.type === 'hero') {
-          attacker.health.heal(mods.healOnKill);
-          this.eventBus.emit('player:healed', {
-            currentHp: attacker.health.currentHp,
-            maxHp: attacker.health.maxHp,
-            amount: mods.healOnKill,
-          });
-        }
 
         this.eventBus.emit('enemy:died', {
           id: target.id,

@@ -17,18 +17,22 @@ export interface EnemyScaling {
 
 export class SpawnManager {
   private getPlayerPosition: () => { x: number; y: number; vx: number; vy: number };
-  private spawnCallback: (definition: EnemyDefinition, x: number, y: number, scaling: EnemyScaling) => void;
+  private spawnCallback: (definition: EnemyDefinition, x: number, y: number, scaling: EnemyScaling, isChampion?: boolean) => void;
   private getActiveEnemyCount?: () => number;
   private getViewportExtents?: () => { halfW: number; halfH: number };
 
   private spawnTimer = 0;
+  private surgeTimer = 0;
+  private nextSurgeInterval = 18000;
+  private championTimer = 0;
+  private nextChampionInterval = 45000;
   private currentActiveCount = 0;
   public miniBossSpawned = false;
   public bossSpawned = false;
 
   constructor(
     getPlayerPosition: () => { x: number; y: number; vx: number; vy: number },
-    spawnCallback: (definition: EnemyDefinition, x: number, y: number, scaling: EnemyScaling) => void,
+    spawnCallback: (definition: EnemyDefinition, x: number, y: number, scaling: EnemyScaling, isChampion?: boolean) => void,
     getViewportExtents?: () => { halfW: number; halfH: number },
     getActiveEnemyCount?: () => number
   ) {
@@ -41,14 +45,14 @@ export class SpawnManager {
   update(deltaMs: number, runTimeSeconds: number): void {
     const minutes = runTimeSeconds / 60;
 
-    // Time scaling multipliers: HP +25%/min, Speed +5%/min, Damage +15%/min
+    // Time scaling multipliers: HP +22%/min, Speed +5%/min, Damage +15%/min
     const scaling: EnemyScaling = {
-      hpMultiplier: 1 + 0.25 * minutes,
+      hpMultiplier: 1 + 0.22 * minutes,
       speedMultiplier: 1 + 0.05 * minutes,
       damageMultiplier: 1 + 0.15 * minutes,
     };
 
-    // 1. Timed Event Spawns
+    // 1. Timed Boss Spawns
     if (minutes >= 5.0 && !this.miniBossSpawned) {
       this.spawnMiniBoss(scaling);
     }
@@ -56,54 +60,70 @@ export class SpawnManager {
       this.spawnBoss(scaling);
     }
 
-    // 2. Smooth Early-Game to Late-Game Target Population Curve
-    let targetPopulation = 5;
-    let maxBatchSize = 1;
-    let spawnInterval = 1200;
+    // 2. Periodic Champion Spawn (every 45-60s starting at 1.5 min)
+    if (minutes >= 1.5) {
+      this.championTimer += deltaMs;
+      if (this.championTimer >= this.nextChampionInterval) {
+        this.championTimer = 0;
+        this.nextChampionInterval = 45000 + Math.random() * 20000;
+        this.spawnChampion(minutes, scaling);
+      }
+    }
 
-    if (minutes < 0.4) {
-      // 0:00 - 0:24 (Warmup / tutorial farm)
-      targetPopulation = 5;
-      maxBatchSize = 1;
-      spawnInterval = 1200;
-    } else if (minutes < 0.8) {
-      // 0:24 - 0:48 (Early trickle)
-      targetPopulation = 10;
-      maxBatchSize = 2;
-      spawnInterval = 800;
-    } else if (minutes < 1.5) {
-      // 0:48 - 1:30 (First steady swarm)
-      targetPopulation = 22;
+    // 3. Periodic Wave Surge Events (breaks up monotonous trickle)
+    this.surgeTimer += deltaMs;
+    if (this.surgeTimer >= this.nextSurgeInterval) {
+      this.surgeTimer = 0;
+      this.nextSurgeInterval = 20000 + Math.random() * 6000;
+      this.triggerWaveSurge(minutes, scaling);
+    }
+
+    // 3. Dynamic Target Population Curve
+    let targetPopulation = 18;
+    let maxBatchSize = 3;
+    let spawnInterval = 450;
+
+    if (minutes < 0.5) {
+      // 0:00 - 0:30 (Energetic start)
+      targetPopulation = 18;
       maxBatchSize = 3;
-      spawnInterval = 500;
-    } else if (minutes < 2.5) {
-      targetPopulation = 42;
+      spawnInterval = 450;
+    } else if (minutes < 1.0) {
+      // 0:30 - 1:00 (Ramping up)
+      targetPopulation = 32;
       maxBatchSize = 4;
       spawnInterval = 350;
-    } else if (minutes < 4.0) {
-      targetPopulation = 65;
+    } else if (minutes < 2.0) {
+      // 1:00 - 2:00
+      targetPopulation = 55;
       maxBatchSize = 5;
-      spawnInterval = 250;
-    } else if (minutes < 6.0) {
-      targetPopulation = 90;
-      maxBatchSize = 5;
-      spawnInterval = 200;
-    } else if (minutes < 8.0) {
-      targetPopulation = 110;
+      spawnInterval = 260;
+    } else if (minutes < 3.5) {
+      // 2:00 - 3:30
+      targetPopulation = 80;
       maxBatchSize = 6;
       spawnInterval = 200;
-    } else {
-      targetPopulation = 130;
+    } else if (minutes < 5.0) {
+      // 3:30 - 5:00
+      targetPopulation = 105;
+      maxBatchSize = 6;
+      spawnInterval = 170;
+    } else if (minutes < 7.0) {
+      // 5:00 - 7:00
+      targetPopulation = 125;
       maxBatchSize = 7;
-      spawnInterval = 180;
+      spawnInterval = 150;
+    } else {
+      // 7:00+ (Endgame swarm)
+      targetPopulation = 145;
+      maxBatchSize = 8;
+      spawnInterval = 140;
     }
 
     const activeCount = this.getActiveEnemyCount?.() ?? this.currentActiveCount;
-    // If population is healthy, check interval
     if (activeCount >= targetPopulation) return;
 
     this.spawnTimer += deltaMs;
-    // Replenish deficit smoothly
     if (this.spawnTimer >= spawnInterval) {
       this.spawnTimer = 0;
       const deficit = targetPopulation - activeCount;
@@ -114,6 +134,97 @@ export class SpawnManager {
         const pos = this.getScreenPerimeterPosition();
         this.spawnCallback(def, pos.x, pos.y, scaling);
       }
+    }
+  }
+
+  private triggerWaveSurge(minutes: number, scaling: EnemyScaling): void {
+    const roll = Math.random();
+
+    if (minutes < 0.7) {
+      // Early surges: Mini-Swarm or Pincer
+      if (roll < 0.5) {
+        this.spawnSwarmRush(FODDER_BAT, 7, scaling);
+      } else {
+        this.spawnPincerSurge(CRAWLER_SWARM, 8, scaling);
+      }
+    } else if (minutes < 2.0) {
+      // Mid-early surges: Ring ambush or Sprinter rush
+      if (roll < 0.45) {
+        this.spawnRingSurge(FODDER_BAT, 12, scaling);
+      } else if (roll < 0.75) {
+        this.spawnPincerSurge(SPRINTER_BUG, 8, scaling);
+      } else {
+        this.spawnSwarmRush(CRAWLER_SWARM, 10, scaling);
+      }
+    } else {
+      // Mid/late surges: Mixed Ring, Sprinter pincer, Exploder rush
+      if (roll < 0.4) {
+        this.spawnRingSurge(CRAWLER_SWARM, 14, scaling);
+      } else if (roll < 0.7) {
+        this.spawnPincerSurge(ARMORED_SLUG, 8, scaling);
+      } else {
+        this.spawnSwarmRush(SPRINTER_BUG, 10, scaling);
+      }
+    }
+  }
+
+  private spawnRingSurge(def: EnemyDefinition, count: number, scaling: EnemyScaling): void {
+    const player = this.getPlayerPosition();
+    const { maxRadius } = this.getViewport();
+    const spawnRadius = maxRadius + 70;
+    const angleStep = (Math.PI * 2) / count;
+    const startAngle = Math.random() * Math.PI;
+
+    for (let i = 0; i < count; i++) {
+      const angle = startAngle + i * angleStep;
+      const x = player.x + Math.cos(angle) * spawnRadius;
+      const y = player.y + Math.sin(angle) * spawnRadius;
+      this.spawnCallback(def, x, y, scaling);
+    }
+  }
+
+  private spawnPincerSurge(def: EnemyDefinition, count: number, scaling: EnemyScaling): void {
+    const player = this.getPlayerPosition();
+    const { halfW, halfH } = this.getViewport();
+    const margin = 100;
+    const isHorizontal = Math.random() < 0.5;
+    const halfCount = Math.floor(count / 2);
+
+    for (let i = 0; i < halfCount; i++) {
+      let x1 = 0;
+      let y1 = 0;
+      let x2 = 0;
+      let y2 = 0;
+      if (isHorizontal) {
+        const offsetY = (Math.random() - 0.5) * halfH * 1.8;
+        x1 = player.x - (halfW + margin);
+        y1 = player.y + offsetY;
+        x2 = player.x + (halfW + margin);
+        y2 = player.y + (Math.random() - 0.5) * halfH * 1.8;
+      } else {
+        const offsetX = (Math.random() - 0.5) * halfW * 1.8;
+        x1 = player.x + offsetX;
+        y1 = player.y - (halfH + margin);
+        x2 = player.x + (Math.random() - 0.5) * halfW * 1.8;
+        y2 = player.y + (halfH + margin);
+      }
+      this.spawnCallback(def, x1, y1, scaling);
+      this.spawnCallback(def, x2, y2, scaling);
+    }
+  }
+
+  private spawnSwarmRush(def: EnemyDefinition, count: number, scaling: EnemyScaling): void {
+    const player = this.getPlayerPosition();
+    const { maxRadius } = this.getViewport();
+    const clusterAngle = Math.random() * Math.PI * 2;
+    const baseDist = maxRadius + 80;
+
+    for (let i = 0; i < count; i++) {
+      const spreadAngle = clusterAngle + (Math.random() - 0.5) * 0.45;
+      const spreadDist = baseDist + (Math.random() - 0.5) * 60;
+      const x = player.x + Math.cos(spreadAngle) * spreadDist;
+      const y = player.y + Math.sin(spreadAngle) * spreadDist;
+      this.spawnCallback(def, x, y, scaling);
     }
   }
 
@@ -136,36 +247,47 @@ export class SpawnManager {
   private selectEnemyDefinition(minutes: number): EnemyDefinition {
     const roll = Math.random();
 
-    // 0:00 - 0:30 (0 - 0.5m): 100% Fodder Bats (warmup XP farm)
-    if (minutes < 0.5) {
-      return FODDER_BAT;
+    // 0:00 - 0:15: 80% Bats, 20% Crawlers
+    if (minutes < 0.25) {
+      return roll < 0.80 ? FODDER_BAT : CRAWLER_SWARM;
     }
 
-    // 0:30 - 1:15 (0.5 - 1.25m): 75% Bats, 25% slow Crawlers
-    if (minutes < 1.25) {
-      return roll < 0.75 ? FODDER_BAT : CRAWLER_SWARM;
-    }
-
-    // 1:15 - 2:00 (1.25 - 2.0m): 45% Bats, 45% Crawlers, 10% Sprinters
-    if (minutes < 2.0) {
-      if (roll < 0.45) return FODDER_BAT;
+    // 0:15 - 0:40: 60% Bats, 30% Crawlers, 10% Sprinters
+    if (minutes < 0.65) {
+      if (roll < 0.60) return FODDER_BAT;
       if (roll < 0.90) return CRAWLER_SWARM;
       return SPRINTER_BUG;
     }
 
-    // 2:00 - 3.5m: 20% Bats, 45% Crawlers, 20% Sprinters, 15% Armored Slugs
-    if (minutes < 3.5) {
+    // 0:40 - 1:15: 40% Bats, 40% Crawlers, 20% Sprinters
+    if (minutes < 1.25) {
+      if (roll < 0.40) return FODDER_BAT;
+      if (roll < 0.80) return CRAWLER_SWARM;
+      return SPRINTER_BUG;
+    }
+
+    // 1:15 - 2:30: 20% Bats, 35% Crawlers, 30% Sprinters, 15% Armored Slugs
+    if (minutes < 2.5) {
       if (roll < 0.20) return FODDER_BAT;
-      if (roll < 0.65) return CRAWLER_SWARM;
+      if (roll < 0.55) return CRAWLER_SWARM;
       if (roll < 0.85) return SPRINTER_BUG;
       return ARMORED_SLUG;
     }
 
-    // 3.5+ min: Full enemy composition (including Exploder Spores)
-    if (roll < 0.15) return FODDER_BAT;
-    if (roll < 0.45) return CRAWLER_SWARM;
-    if (roll < 0.65) return SPRINTER_BUG;
-    if (roll < 0.85) return ARMORED_SLUG;
+    // 2:30 - 4:00: 15% Bats, 25% Crawlers, 25% Sprinters, 25% Slugs, 10% Exploders
+    if (minutes < 4.0) {
+      if (roll < 0.15) return FODDER_BAT;
+      if (roll < 0.40) return CRAWLER_SWARM;
+      if (roll < 0.65) return SPRINTER_BUG;
+      if (roll < 0.90) return ARMORED_SLUG;
+      return EXPLODER_SPORE;
+    }
+
+    // 4.0+ min: Full enemy composition
+    if (roll < 0.10) return FODDER_BAT;
+    if (roll < 0.30) return CRAWLER_SWARM;
+    if (roll < 0.55) return SPRINTER_BUG;
+    if (roll < 0.80) return ARMORED_SLUG;
     return EXPLODER_SPORE;
   }
 
@@ -240,8 +362,28 @@ export class SpawnManager {
     };
   }
 
+  private spawnChampion(minutes: number, scaling: EnemyScaling): void {
+    const pos = this.getScreenPerimeterPosition();
+    if (!pos) return;
+    const def = minutes >= 3.0 ? (Math.random() < 0.6 ? ARMORED_SLUG : SPRINTER_BUG) : (Math.random() < 0.5 ? FODDER_BAT : SPRINTER_BUG);
+    this.spawnCallback(def, pos.x, pos.y, scaling, true);
+  }
+
+  public spawnDirect(def: EnemyDefinition, x: number, y: number, scaling?: Partial<EnemyScaling>, isChampion?: boolean): void {
+    const fullScaling: EnemyScaling = {
+      hpMultiplier: scaling?.hpMultiplier ?? 1.0,
+      speedMultiplier: scaling?.speedMultiplier ?? 1.0,
+      damageMultiplier: scaling?.damageMultiplier ?? 1.0,
+    };
+    this.spawnCallback(def, x, y, fullScaling, isChampion);
+  }
+
   reset(): void {
     this.spawnTimer = 0;
+    this.surgeTimer = 0;
+    this.nextSurgeInterval = 18000;
+    this.championTimer = 0;
+    this.nextChampionInterval = 45000;
     this.currentActiveCount = 0;
     this.miniBossSpawned = false;
     this.bossSpawned = false;

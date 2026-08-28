@@ -5,7 +5,7 @@ import { CarrotBarrageWeapon } from './weapons/CarrotBarrageWeapon';
 import { EggplantRollWeapon } from './weapons/EggplantRollWeapon';
 import { OrbitingFliesWeapon } from './weapons/OrbitingFliesWeapon';
 import { MegaBootWeapon } from './weapons/MegaBootWeapon';
-import { ManholeDropWeapon } from './weapons/ManholeDropWeapon';
+import { PiezoTaserWeapon } from './weapons/PiezoTaserWeapon';
 import { AcidTrailWeapon } from './weapons/AcidTrailWeapon';
 
 export class WeaponManager {
@@ -19,7 +19,7 @@ export class WeaponManager {
       new EggplantRollWeapon(),
       new OrbitingFliesWeapon(),
       new MegaBootWeapon(),
-      new ManholeDropWeapon(),
+      new PiezoTaserWeapon(),
       new AcidTrailWeapon(),
     ];
   }
@@ -44,7 +44,7 @@ export class WeaponManager {
       new EggplantRollWeapon(),
       new OrbitingFliesWeapon(),
       new MegaBootWeapon(),
-      new ManholeDropWeapon(),
+      new PiezoTaserWeapon(),
       new AcidTrailWeapon(),
     ];
   }

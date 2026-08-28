@@ -101,6 +101,8 @@ export interface PlayerModifiers {
 
   // 9. Кровожадность
   healOnKill: number;
+  healOnKillCooldownMs: number;
+  healOnKillTimerMs: number;
   executeFodderChance: number;
   berserkOnKillTimer: number;
 

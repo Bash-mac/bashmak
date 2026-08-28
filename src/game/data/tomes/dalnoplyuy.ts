@@ -10,7 +10,7 @@ export const TOME_AREA: UpgradeDefinition = {
   levels: [
     {
       level: 1,
-      description: ' Радиус и область поражения ВСЕХ атак +12%.',
+      description: 'Радиус и область поражения ВСЕХ атак +12%.',
       apply: (mod) => {
         mod.tomeArea = 1;
         mod.attackAreaBonus += 0.12;
@@ -18,7 +18,7 @@ export const TOME_AREA: UpgradeDefinition = {
     },
     {
       level: 2,
-      description: ' Радиус и область поражения ВСЕХ атак +24%.',
+      description: 'Радиус и область поражения ВСЕХ атак +24%.',
       apply: (mod) => {
         mod.tomeArea = 2;
         mod.attackAreaBonus += 0.12;
@@ -26,7 +26,7 @@ export const TOME_AREA: UpgradeDefinition = {
     },
     {
       level: 3,
-      description: ' Радиус и область поражения ВСЕХ атак +36%.',
+      description: 'Радиус и область поражения ВСЕХ атак +36%.',
       apply: (mod) => {
         mod.tomeArea = 3;
         mod.attackAreaBonus += 0.12;
@@ -34,7 +34,7 @@ export const TOME_AREA: UpgradeDefinition = {
     },
     {
       level: 4,
-      description: ' Радиус и область поражения ВСЕХ атак +48%.',
+      description: 'Радиус и область поражения ВСЕХ атак +48%.',
       apply: (mod) => {
         mod.tomeArea = 4;
         mod.attackAreaBonus += 0.12;
@@ -42,7 +42,7 @@ export const TOME_AREA: UpgradeDefinition = {
     },
     {
       level: 5,
-      description: ' МЕГАФОН ХАОСА: Область атак +70% и сокрушительное отбрасывание врагов (+50%)!',
+      description: 'ДАЛЬНОПЛЮЙ ХАОСА: Область атак +70% и сокрушительное отбрасывание врагов (+50%)!',
       apply: (mod) => {
         mod.tomeArea = 5;
         mod.attackAreaBonus += 0.22;

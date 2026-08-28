@@ -5,7 +5,7 @@ import { WPN_CARROT_BARRAGE } from './carrotBarrage';
 import { WPN_EGGPLANT_ROLL } from './eggplantRoll';
 import { WPN_HOMING_DAGGERS } from './orbitingFlies';
 import { WPN_MEGA_BOOT } from './megaBoot';
-import { WPN_LIGHTNING_ZAP } from './manholeDrop';
+import { WPN_LIGHTNING_ZAP } from './piezoTaser';
 import { WPN_ACID_TRAIL } from './acidTrail';
 
 export { WPN_SLIME_SPIT } from './slimeSpit';
@@ -14,7 +14,7 @@ export { WPN_CARROT_BARRAGE } from './carrotBarrage';
 export { WPN_EGGPLANT_ROLL } from './eggplantRoll';
 export { WPN_HOMING_DAGGERS } from './orbitingFlies';
 export { WPN_MEGA_BOOT } from './megaBoot';
-export { WPN_LIGHTNING_ZAP } from './manholeDrop';
+export { WPN_LIGHTNING_ZAP } from './piezoTaser';
 export { WPN_ACID_TRAIL } from './acidTrail';
 
 export const WEAPON_UPGRADES: UpgradeDefinition[] = [

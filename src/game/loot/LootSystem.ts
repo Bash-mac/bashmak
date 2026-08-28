@@ -7,12 +7,14 @@ import type { DamageNumberPool } from '../combat/DamageNumberPool';
 export class LootSystem {
   public gemsGroup: Phaser.Physics.Arcade.Group;
   public gooDropsGroup: Phaser.Physics.Arcade.Group;
+  public chestsGroup: Phaser.Physics.Arcade.Group;
   private scene: Phaser.Scene;
   private saveManager = SaveManager.getInstance();
   private damageNumbers?: DamageNumberPool;
 
   private gemPool: ObjectPool<Phaser.Types.Physics.Arcade.SpriteWithDynamicBody>;
   private gooPool: ObjectPool<Phaser.Types.Physics.Arcade.SpriteWithDynamicBody>;
+  private chestPool: ObjectPool<Phaser.Types.Physics.Arcade.SpriteWithDynamicBody>;
 
   private static readonly MAX_ACTIVE_GEMS = 90;
 
@@ -21,6 +23,7 @@ export class LootSystem {
     this.damageNumbers = damageNumbers;
     this.gemsGroup = scene.physics.add.group();
     this.gooDropsGroup = scene.physics.add.group();
+    this.chestsGroup = scene.physics.add.group();
 
     // 1. Gem Pool (XP Snots)
     this.gemPool = new ObjectPool<Phaser.Types.Physics.Arcade.SpriteWithDynamicBody>(scene, {
@@ -60,6 +63,24 @@ export class LootSystem {
       maxSize: 80,
     });
     this.gooPool.prewarm(30);
+
+    // 3. Mutant Treasure Chests
+    this.chestPool = new ObjectPool<Phaser.Types.Physics.Arcade.SpriteWithDynamicBody>(scene, {
+      create: () => {
+        const chest = this.chestsGroup.create(0, 0, 'drop_chest') as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
+        chest.setScale(0.75);
+        chest.setCircle(20, 0, 0);
+        chest.setDepth(6);
+        return chest;
+      },
+      onRelease: (chest) => {
+        this.scene.tweens.killTweensOf(chest);
+        chest.clearTint();
+        chest.setScale(0.75);
+      },
+      maxSize: 10,
+    });
+    this.chestPool.prewarm(4);
   }
 
   public setDamageNumberPool(pool: DamageNumberPool): void {
@@ -244,8 +265,39 @@ export class LootSystem {
     }
   }
 
+  public spawnChest(x: number, y: number): void {
+    const chest = this.chestPool.get();
+    chest.setPosition(x, y);
+    chest.setScale(0.1);
+    this.scene.tweens.add({
+      targets: chest,
+      scaleX: 0.75,
+      scaleY: 0.75,
+      duration: 350,
+      ease: 'Back.easeOut',
+      onComplete: () => {
+        if (chest.active) {
+          this.scene.tweens.add({
+            targets: chest,
+            scaleX: 0.84,
+            scaleY: 0.84,
+            duration: 500,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut',
+          });
+        }
+      },
+    });
+  }
+
+  public releaseChest(chest: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody): void {
+    this.chestPool.release(chest);
+  }
+
   public clear(): void {
     this.gemPool.clear();
     this.gooPool.clear();
+    this.chestPool.clear();
   }
 }

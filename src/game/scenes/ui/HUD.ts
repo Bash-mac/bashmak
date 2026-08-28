@@ -4,6 +4,7 @@ import type { GameState } from '../../core/GameState';
 import { ALL_UPGRADES } from '../../data/upgrades';
 import { EVOLUTION_RECIPES } from '../../data/evolutions';
 import { getHeroById } from '../../data/heroes';
+import { createPlatformAdapter } from '../../../platform';
 
 interface HudSlot {
   bg: Phaser.GameObjects.Graphics;
@@ -32,8 +33,13 @@ export class HUD {
   private timerText: Phaser.GameObjects.Text;
   private killsText: Phaser.GameObjects.Text;
 
-  // 4 Slot Mutation Tracker (Using hud_slot_frame & square icons)
-  private slots: HudSlot[] = [];
+  // Pause button (Top Right)
+  private pauseBtn: Phaser.GameObjects.Rectangle;
+  private pauseText: Phaser.GameObjects.Text;
+
+  // Dynamic Weapons & Tomes Build Slots (2 rows: weaponSlots & tomeSlots)
+  private weaponSlots: HudSlot[] = [];
+  private tomeSlots: HudSlot[] = [];
   private lastSlotsChecksum = -1;
 
   private unbinds: Array<() => void> = [];
@@ -61,8 +67,23 @@ export class HUD {
 
     const avatarBadge = scene.add.image(avatarX, avatarY, 'hud_avatar_badge_frame')
       .setScrollFactor(0)
-      .setDepth(9001);
+      .setDepth(9001)
+      .setInteractive({ useHandCursor: false });
     avatarBadge.setDisplaySize(92, 92);
+
+    let avatarTaps = 0;
+    let lastAvatarTapTime = 0;
+    avatarBadge.on('pointerdown', () => {
+      const now = Date.now();
+      if (now - lastAvatarTapTime > 1600) avatarTaps = 0;
+      lastAvatarTapTime = now;
+      avatarTaps++;
+      if (avatarTaps >= 5) {
+        avatarTaps = 0;
+        createPlatformAdapter().vibrate(40);
+        EventBus.getInstance().emit('ui:secret_debug_requested');
+      }
+    });
     this.elements.push(avatarBadge);
 
     // Level Badge attached directly to the avatar frame
@@ -181,53 +202,92 @@ export class HUD {
     }).setOrigin(1, 0).setScrollFactor(0).setDepth(9000);
     this.elements.push(this.killsText);
 
-    // 4. 4 Mutation / Weapon Slots (Bottom Center)
-    const slotSize = 48;
-    const slotSpacing = 8;
-    const totalW = 4 * slotSize + 3 * slotSpacing;
-    const startX = scene.cameras.main.width / 2 - totalW / 2 + slotSize / 2;
-    const slotY = scene.cameras.main.height - 34;
+    // Pause Button (Top Right corner)
+    const pauseX = scene.cameras.main.width - 45;
+    const pauseY = 32;
+    this.pauseBtn = scene.add.rectangle(pauseX, pauseY, 36, 36, 0x0f172a, 0.9)
+      .setStrokeStyle(2, 0xfacc15)
+      .setScrollFactor(0)
+      .setDepth(9005)
+      .setInteractive({ useHandCursor: true });
+    this.pauseBtn.on('pointerdown', () => {
+      EventBus.getInstance().emit('ui:pause_requested');
+    });
+    this.elements.push(this.pauseBtn);
 
-    for (let i = 0; i < 4; i++) {
-      const slotX = Math.round(startX + i * (slotSize + slotSpacing));
+    this.pauseText = scene.add.text(pauseX, pauseY, '||', {
+      fontSize: '15px',
+      fontStyle: 'bold',
+      color: '#facc15',
+      fontFamily: '"Gagalin", "Balsamiq Sans", monospace',
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(9006);
+    this.elements.push(this.pauseText);
 
-      // Clean dark backdrop strictly within the inner frame cutout (no sticking out ears)
-      const innerCutout = slotSize * 0.70;
+    // 4. Dynamic Weapons & Tomes Build Slots (Bottom Center, 2 rows)
+    const state = (scene as any).gameState as GameState | undefined;
+    const maxWpns = state?.maxWeaponSlots ?? 2;
+    const maxTomes = state?.maxTomeSlots ?? 2;
+
+    const slotSize = 34;
+    const slotSpacing = 6;
+    const innerCutout = slotSize * 0.70;
+
+    // Row 1: Weapons
+    const totalWpnW = maxWpns * slotSize + (maxWpns - 1) * slotSpacing;
+    const startWpnX = scene.cameras.main.width / 2 - totalWpnW / 2 + slotSize / 2;
+    const wpnSlotY = scene.cameras.main.height - 48;
+
+    for (let i = 0; i < maxWpns; i++) {
+      const slotX = Math.round(startWpnX + i * (slotSize + slotSpacing));
       const slotBg = scene.add.graphics().setScrollFactor(0).setDepth(9000);
       slotBg.fillStyle(0x060911, 0.95);
-      slotBg.fillRect(Math.round(slotX - innerCutout / 2), Math.round(slotY - innerCutout / 2), innerCutout, innerCutout);
+      slotBg.fillRect(Math.round(slotX - innerCutout / 2), Math.round(wpnSlotY - innerCutout / 2), innerCutout, innerCutout);
       this.elements.push(slotBg);
 
-      const slotIcon = scene.add.image(slotX, slotY, 'icon_weapon_slime_spit')
-        .setScrollFactor(0)
-        .setDepth(9001);
+      const slotIcon = scene.add.image(slotX, wpnSlotY, 'icon_weapon_slime_spit').setScrollFactor(0).setDepth(9001).setVisible(false);
       slotIcon.setDisplaySize(innerCutout, innerCutout);
-      slotIcon.setVisible(false);
       this.elements.push(slotIcon);
 
-      const slotFrame = scene.add.image(slotX, slotY, 'hud_slot_frame')
-        .setScrollFactor(0)
-        .setDepth(9002);
-      slotFrame.setDisplaySize(slotSize, slotSize);
-      slotFrame.setAlpha(0.35);
+      const slotFrame = scene.add.image(slotX, wpnSlotY, 'hud_slot_frame').setScrollFactor(0).setDepth(9002);
+      slotFrame.setDisplaySize(slotSize, slotSize).setAlpha(0.35);
       this.elements.push(slotFrame);
 
-      const slotBadge = scene.add.text(Math.round(slotX + innerCutout / 2 - 1), Math.round(slotY + innerCutout / 2 - 1), 'L1', {
-        fontSize: '10px',
-        color: '#facc15',
-        fontFamily: '"Gagalin", "Balsamiq Sans", monospace',
-        stroke: '#451a03',
-        strokeThickness: 2,
-        resolution: 2,
+      const slotBadge = scene.add.text(Math.round(slotX + innerCutout / 2 - 1), Math.round(wpnSlotY + innerCutout / 2 - 1), 'L1', {
+        fontSize: '9px', color: '#facc15', fontFamily: '"Gagalin", "Balsamiq Sans", monospace',
+        stroke: '#451a03', strokeThickness: 2, resolution: 2,
       }).setOrigin(1, 1).setScrollFactor(0).setDepth(9003).setVisible(false);
       this.elements.push(slotBadge);
 
-      this.slots.push({
-        bg: slotBg,
-        icon: slotIcon,
-        frame: slotFrame,
-        badge: slotBadge,
-      });
+      this.weaponSlots.push({ bg: slotBg, icon: slotIcon, frame: slotFrame, badge: slotBadge });
+    }
+
+    // Row 2: Tomes
+    const totalTomeW = maxTomes * slotSize + (maxTomes - 1) * slotSpacing;
+    const startTomeX = scene.cameras.main.width / 2 - totalTomeW / 2 + slotSize / 2;
+    const tomeSlotY = scene.cameras.main.height - 18;
+
+    for (let i = 0; i < maxTomes; i++) {
+      const slotX = Math.round(startTomeX + i * (slotSize + slotSpacing));
+      const slotBg = scene.add.graphics().setScrollFactor(0).setDepth(9000);
+      slotBg.fillStyle(0x060911, 0.95);
+      slotBg.fillRect(Math.round(slotX - innerCutout / 2), Math.round(tomeSlotY - innerCutout / 2), innerCutout, innerCutout);
+      this.elements.push(slotBg);
+
+      const slotIcon = scene.add.image(slotX, tomeSlotY, 'icon_tome_damage').setScrollFactor(0).setDepth(9001).setVisible(false);
+      slotIcon.setDisplaySize(innerCutout, innerCutout);
+      this.elements.push(slotIcon);
+
+      const slotFrame = scene.add.image(slotX, tomeSlotY, 'hud_slot_frame').setScrollFactor(0).setDepth(9002);
+      slotFrame.setDisplaySize(slotSize, slotSize).setAlpha(0.35);
+      this.elements.push(slotFrame);
+
+      const slotBadge = scene.add.text(Math.round(slotX + innerCutout / 2 - 1), Math.round(tomeSlotY + innerCutout / 2 - 1), 'L1', {
+        fontSize: '9px', color: '#facc15', fontFamily: '"Gagalin", "Balsamiq Sans", monospace',
+        stroke: '#451a03', strokeThickness: 2, resolution: 2,
+      }).setOrigin(1, 1).setScrollFactor(0).setDepth(9003).setVisible(false);
+      this.elements.push(slotBadge);
+
+      this.tomeSlots.push({ bg: slotBg, icon: slotIcon, frame: slotFrame, badge: slotBadge });
     }
 
     this.setupEventListeners();
@@ -334,34 +394,57 @@ export class HUD {
     for (const lvl of state.activeUpgrades.values()) {
       checksum = (checksum * 31 + lvl) | 0;
     }
-
-    if (checksum === this.lastSlotsChecksum) {
-      return;
-    }
+    if (checksum === this.lastSlotsChecksum) return;
     this.lastSlotsChecksum = checksum;
 
-    let idx = 0;
-    for (const [upgId, lvl] of state.activeUpgrades.entries()) {
-      if (idx >= this.slots.length) break;
-      const slot = this.slots[idx];
-      const upgDef = ALL_UPGRADES.find((u) => u.id === upgId);
-      const evoDef = EVOLUTION_RECIPES.find((e) => e.id === upgId);
+    const pool = ALL_UPGRADES;
+    const activeWeapons: { id: string; level: number; icon: string; isMax: boolean }[] = [];
+    const activeTomes: { id: string; level: number; icon: string; isMax: boolean }[] = [];
 
+    for (const [upgId, lvl] of state.activeUpgrades.entries()) {
+      if (lvl <= 0) continue;
+      const upgDef = pool.find((u) => u.id === upgId);
+      const evoDef = EVOLUTION_RECIPES.find((e) => e.id === upgId);
       const iconKey = upgDef?.iconKey || evoDef?.iconKey || 'icon_weapon_slime_spit';
       const isMax = lvl >= 5 || !!evoDef;
 
-      slot.icon.setTexture(iconKey).setVisible(true);
-      slot.frame.setAlpha(1.0);
-      slot.badge.setText(isMax ? 'MAX' : `L${lvl}`).setVisible(true);
-      slot.badge.setColor(isMax ? '#facc15' : '#4ade80');
-      idx++;
+      if (evoDef || upgDef?.category === 'weapon') {
+        activeWeapons.push({ id: upgId, level: lvl, icon: iconKey, isMax });
+      } else if (upgDef?.category === 'tome') {
+        activeTomes.push({ id: upgId, level: lvl, icon: iconKey, isMax });
+      }
     }
 
-    for (let i = idx; i < this.slots.length; i++) {
-      const slot = this.slots[i];
-      slot.icon.setVisible(false);
-      slot.frame.setAlpha(0.35);
-      slot.badge.setVisible(false);
+    // Update weapon slots
+    for (let i = 0; i < this.weaponSlots.length; i++) {
+      const slot = this.weaponSlots[i];
+      if (i < activeWeapons.length) {
+        const item = activeWeapons[i];
+        slot.icon.setTexture(item.icon).setVisible(true);
+        slot.frame.setAlpha(1.0);
+        slot.badge.setText(item.isMax ? 'MAX' : `L${item.level}`).setVisible(true);
+        slot.badge.setColor(item.isMax ? '#facc15' : '#4ade80');
+      } else {
+        slot.icon.setVisible(false);
+        slot.frame.setAlpha(0.35);
+        slot.badge.setVisible(false);
+      }
+    }
+
+    // Update tome slots
+    for (let i = 0; i < this.tomeSlots.length; i++) {
+      const slot = this.tomeSlots[i];
+      if (i < activeTomes.length) {
+        const item = activeTomes[i];
+        slot.icon.setTexture(item.icon).setVisible(true);
+        slot.frame.setAlpha(1.0);
+        slot.badge.setText(item.isMax ? 'MAX' : `L${item.level}`).setVisible(true);
+        slot.badge.setColor(item.isMax ? '#facc15' : '#4ade80');
+      } else {
+        slot.icon.setVisible(false);
+        slot.frame.setAlpha(0.35);
+        slot.badge.setVisible(false);
+      }
     }
   }
 
@@ -370,22 +453,44 @@ export class HUD {
     this.timerText.setX(rightEdge);
     this.killsText.setX(rightEdge);
 
-    const slotSize = 48;
-    const slotSpacing = 8;
-    const totalW = 4 * slotSize + 3 * slotSpacing;
-    const startX = Math.round(width / 2 - totalW / 2 + slotSize / 2);
-    const slotY = Math.round(height - 34);
+    const pauseX = Math.round(width - 45);
+    this.pauseBtn.setPosition(pauseX, 32);
+    this.pauseText.setPosition(pauseX, 32);
 
-    for (let i = 0; i < this.slots.length; i++) {
-      const slot = this.slots[i];
-      const slotX = Math.round(startX + i * (slotSize + slotSpacing));
-      const innerCutout = slotSize * 0.70;
+    const slotSize = 34;
+    const slotSpacing = 6;
+    const innerCutout = slotSize * 0.70;
+
+    // Row 1: Weapons
+    const totalWpnW = this.weaponSlots.length * slotSize + (this.weaponSlots.length - 1) * slotSpacing;
+    const startWpnX = Math.round(width / 2 - totalWpnW / 2 + slotSize / 2);
+    const wpnSlotY = Math.round(height - 48);
+
+    for (let i = 0; i < this.weaponSlots.length; i++) {
+      const slot = this.weaponSlots[i];
+      const slotX = Math.round(startWpnX + i * (slotSize + slotSpacing));
       slot.bg.clear();
       slot.bg.fillStyle(0x060911, 0.95);
-      slot.bg.fillRect(Math.round(slotX - innerCutout / 2), Math.round(slotY - innerCutout / 2), innerCutout, innerCutout);
-      slot.icon.setPosition(slotX, slotY);
-      slot.frame.setPosition(slotX, slotY);
-      slot.badge.setPosition(Math.round(slotX + innerCutout / 2 - 1), Math.round(slotY + innerCutout / 2 - 1));
+      slot.bg.fillRect(Math.round(slotX - innerCutout / 2), Math.round(wpnSlotY - innerCutout / 2), innerCutout, innerCutout);
+      slot.icon.setPosition(slotX, wpnSlotY);
+      slot.frame.setPosition(slotX, wpnSlotY);
+      slot.badge.setPosition(Math.round(slotX + innerCutout / 2 - 1), Math.round(wpnSlotY + innerCutout / 2 - 1));
+    }
+
+    // Row 2: Tomes
+    const totalTomeW = this.tomeSlots.length * slotSize + (this.tomeSlots.length - 1) * slotSpacing;
+    const startTomeX = Math.round(width / 2 - totalTomeW / 2 + slotSize / 2);
+    const tomeSlotY = Math.round(height - 18);
+
+    for (let i = 0; i < this.tomeSlots.length; i++) {
+      const slot = this.tomeSlots[i];
+      const slotX = Math.round(startTomeX + i * (slotSize + slotSpacing));
+      slot.bg.clear();
+      slot.bg.fillStyle(0x060911, 0.95);
+      slot.bg.fillRect(Math.round(slotX - innerCutout / 2), Math.round(tomeSlotY - innerCutout / 2), innerCutout, innerCutout);
+      slot.icon.setPosition(slotX, tomeSlotY);
+      slot.frame.setPosition(slotX, tomeSlotY);
+      slot.badge.setPosition(Math.round(slotX + innerCutout / 2 - 1), Math.round(tomeSlotY + innerCutout / 2 - 1));
     }
   }
 

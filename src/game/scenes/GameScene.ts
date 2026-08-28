@@ -6,6 +6,9 @@ import { InputManager } from '../../input/InputManager';
 import { HUD } from './ui/HUD';
 import { LevelUpModal } from './ui/LevelUpModal';
 import { GameOverModal } from './ui/GameOverModal';
+import { PauseModal } from './ui/PauseModal';
+import { GrimoireModal } from './ui/GrimoireModal';
+import { DebugModal } from './ui/DebugModal';
 import { CombatSystem } from '../combat/CombatSystem';
 import { CollisionManager } from '../combat/CollisionManager';
 import { SpawnManager } from '../spawning/SpawnManager';
@@ -30,6 +33,9 @@ export class GameScene extends Phaser.Scene {
   private hud!: HUD;
   private levelUpModal!: LevelUpModal;
   private gameOverModal!: GameOverModal;
+  private pauseModal!: PauseModal;
+  private grimoireModal!: GrimoireModal;
+  private debugModal!: DebugModal;
   private combatSystem = new CombatSystem();
   private spawnManager!: SpawnManager;
   private weaponManager = new WeaponManager();
@@ -41,20 +47,17 @@ export class GameScene extends Phaser.Scene {
   private damageNumbersPool!: DamageNumberPool;
   private vfxPool!: VfxPool;
   private mapObjects!: MapObjects;
-
   private gameState = GameState.getInstance();
   private saveManager = SaveManager.getInstance();
   private eventBus = EventBus.getInstance();
   private platform = createPlatformAdapter();
   private audio = AudioManager.getInstance();
-
   private playerEntity!: Entity;
   private currentHero!: HeroDefinition;
   private enemiesMap: Map<string, Entity> = new Map();
   private enemyIdCounter = 0;
   private enemiesGroup!: Phaser.Physics.Arcade.Group;
   private playerProjectilesGroup!: Phaser.Physics.Arcade.Group;
-
   private isGamePaused = false;
   private playerIframeTimerMs = 0;
   private isDying = false;
@@ -66,57 +69,58 @@ export class GameScene extends Phaser.Scene {
 
   create(): void {
     const worldSize = 4000;
-    this.physics.resume();
-    this.cameras.main.resetFX();
-    this.gameState.reset();
-    this.weaponManager.reset();
-    this.enemiesMap.clear();
-    this.enemyIdCounter = 0;
-    this.isGamePaused = false;
-    this.playerIframeTimerMs = 0;
-    this.isDying = false;
+    this.physics.resume(); this.cameras.main.resetFX(); this.gameState.reset(); this.weaponManager.reset();
+    this.enemiesMap.clear(); this.enemyIdCounter = 0; this.isGamePaused = false; this.playerIframeTimerMs = 0; this.isDying = false;
 
     this.mapObjects = MapGenerator.createWorld(this, worldSize);
     this.enemiesGroup = this.physics.add.group();
     this.playerProjectilesGroup = this.physics.add.group();
-
     this.damageNumbersPool = new DamageNumberPool(this);
     this.projectilePool = new ProjectilePool(this, this.playerProjectilesGroup);
     this.vfxPool = new VfxPool(this);
     this.lootSystem = new LootSystem(this, this.damageNumbersPool);
 
     const { playerEntity, currentHero } = HeroFactory.createPlayer(this, worldSize / 2, worldSize / 2, this.gameState, this.saveManager);
-    this.playerEntity = playerEntity;
-    this.currentHero = currentHero;
+    this.playerEntity = playerEntity; this.currentHero = currentHero;
 
-    this.inputManager = new InputManager(this);
-    this.inputManager.init();
-    this.hud = new HUD(this);
-    this.hud.updateHp(this.playerEntity.health.currentHp, this.playerEntity.stats.maxHp);
+    this.inputManager = new InputManager(this); this.inputManager.init();
+    this.hud = new HUD(this); this.hud.updateHp(this.playerEntity.health.currentHp, this.playerEntity.stats.maxHp);
     this.gameOverModal = new GameOverModal(this);
+    this.pauseModal = new PauseModal(this);
+    this.grimoireModal = new GrimoireModal(this);
+    this.debugModal = new DebugModal(this);
 
-    this.levelUpModal = new LevelUpModal(
-      this,
-      (upgrade, levelToApply) => {
-        this.gameState.applyUpgrade(upgrade, this.playerEntity.stats, this.playerEntity.health, levelToApply);
-        if (this.gameState.pendingLevelUps > 0) this.levelUpModal.show();
-        else { this.isGamePaused = false; this.physics.resume(); this.inputManager.setEnabled(true); }
-        this.hud.updateHp(this.playerEntity.health.currentHp, this.playerEntity.stats.maxHp);
-      },
-      () => {
-        if (this.gameState.pendingLevelUps > 0) {
-          this.gameState.pendingLevelUps--;
-        }
-        if (this.gameState.pendingLevelUps > 0) this.levelUpModal.show();
-        else { this.isGamePaused = false; this.physics.resume(); this.inputManager.setEnabled(true); }
+    this.input.keyboard?.on('keydown-ESC', () => this.togglePause());
+    this.input.keyboard?.on('keydown-P', () => this.togglePause());
+    const onKey = (e: KeyboardEvent) => {
+      const isF2 = e.key === 'F2';
+      const isTilde = e.code === 'Backquote' || e.key === '`' || e.key === '~' || e.key === 'ё' || e.key === 'Ё';
+      const isCombo = (e.altKey && e.shiftKey && (e.key === 'D' || e.key === 'd' || e.key === 'В' || e.key === 'в')) ||
+                      (e.ctrlKey && e.altKey && (e.key === 'D' || e.key === 'd' || e.key === 'В' || e.key === 'в'));
+      if (isF2 || isTilde || isCombo) {
+        e.preventDefault(); e.stopPropagation(); this.debugModal.toggle(this.getDebugCtx());
       }
+    };
+    window.addEventListener('keydown', onKey);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => window.removeEventListener('keydown', onKey));
+
+    const onLvlDone = () => {
+      if (this.gameState.pendingLevelUps > 0) this.levelUpModal.show();
+      else { this.isGamePaused = false; this.physics.resume(); this.inputManager.setEnabled(true); }
+    };
+    this.levelUpModal = new LevelUpModal(this,
+      (upgrade, lvl) => {
+        this.gameState.applyUpgrade(upgrade, this.playerEntity.stats, this.playerEntity.health, lvl);
+        onLvlDone(); this.hud.updateHp(this.playerEntity.health.currentHp, this.playerEntity.stats.maxHp);
+      },
+      () => { if (this.gameState.pendingLevelUps > 0) this.gameState.pendingLevelUps--; onLvlDone(); }
     );
 
     this.spawnManager = new SpawnManager(
       () => ({ x: this.playerEntity.x, y: this.playerEntity.y, vx: this.playerEntity.sprite?.body?.velocity.x ?? 0, vy: this.playerEntity.sprite?.body?.velocity.y ?? 0 }),
-      (def, x, y, scaling) => {
+      (def, x, y, scaling, isChamp) => {
         const id = `enemy_${++this.enemyIdCounter}`;
-        const enemy = EnemyFactory.createEnemy(this.enemiesGroup, def, x, y, id, scaling);
+        const enemy = EnemyFactory.createEnemy(this.enemiesGroup, def, x, y, id, scaling, isChamp);
         this.enemiesMap.set(id, enemy);
         this.eventBus.emit('enemy:spawned', { id, x, y });
       },
@@ -128,7 +132,6 @@ export class GameScene extends Phaser.Scene {
       this.cameras.main.startFollow(this.playerEntity.sprite, true, 0.1, 0.1);
       this.cameras.main.setBounds(0, 0, worldSize, worldSize);
     }
-
     CollisionManager.setup({
       scene: this, player: this.playerEntity, enemiesMap: this.enemiesMap, enemiesGroup: this.enemiesGroup,
       projectilesGroup: this.playerProjectilesGroup, mapObjects: this.mapObjects, combatSystem: this.combatSystem,
@@ -137,59 +140,92 @@ export class GameScene extends Phaser.Scene {
       vfxPool: this.vfxPool, getPlayerIframeTimer: () => this.playerIframeTimerMs, applyDamageToPlayer: (dmg) => this.applyDamageToPlayer(dmg),
       getHazardCtx: () => this.getHazardCtx(),
     });
-
     this.setupEvents();
     const onResize = (gameSize: Phaser.Structs.Size) => this.hud?.resize(gameSize.width, gameSize.height);
     this.scale.on('resize', onResize);
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
-      this.scale.off('resize', onResize);
-      this.shutdown();
-    });
-
-    this.audio.init();
-    this.audio.startBgm();
-    this.eventBus.emit('run:started');
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => { this.scale.off('resize', onResize); this.shutdown(); });
+    this.audio.init(); this.audio.startBgm(); this.eventBus.emit('run:started');
   }
 
   private setupEvents(): void {
     this.unbindEvents.push(
-      this.eventBus.on('enemy:died', (data) => {
-        const enemy = this.enemiesMap.get(data.id);
-        if (enemy) {
-          if (enemy.definition?.archetype === 'exploder') {
-            this.hazardSystem.detonateExploder(enemy, this.getHazardCtx());
-          } else {
-            const deathScale = (enemy.definition?.displayScale ?? 0.3) * 1.2;
-            this.vfxPool.spawnEnemyDeath(data.x, data.y, deathScale);
-            this.lootSystem.spawnGem(data.x, data.y, data.xpValue, this.playerEntity.x, this.playerEntity.y);
-            if (enemy.definition?.archetype === 'boss') this.lootSystem.spawnGoo(data.x, data.y, 25);
-            else if (enemy.type === 'boss' || (enemy.definition?.stats.maxHp ?? 0) >= 150) this.lootSystem.spawnGoo(data.x, data.y, 5);
-            else if (Math.random() < 0.16) this.lootSystem.spawnGoo(data.x, data.y, 1);
-            if (enemy.sprite) {
-              this.enemiesGroup.remove(enemy.sprite, false, false);
-            }
-            enemy.destroy();
-            this.enemiesMap.delete(data.id);
-          }
-          if (this.gameState.playerModifiers.healOnKill > 0 && this.playerEntity.isAlive) {
-            this.playerEntity.health.heal(this.gameState.playerModifiers.healOnKill);
-            this.hud.updateHp(this.playerEntity.health.currentHp, this.playerEntity.stats.maxHp);
-          }
-          if (this.currentHero?.id === 'hero_markovka') this.heroTraitSystem.onEnemyKilledByMarkovka(this.getTraitCtx());
-        }
-      }),
-      this.eventBus.on('player:levelUp', () => {
-        this.isGamePaused = true;
-        this.physics.pause();
-        this.inputManager.setEnabled(false);
-        this.playerEntity.sprite?.setVelocity(0, 0);
-        (this.enemiesGroup.getChildren() as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody[]).forEach((s) => s.body?.setVelocity(0, 0));
-        (this.playerProjectilesGroup.getChildren() as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody[]).forEach((s) => s.body?.setVelocity(0, 0));
-        this.audio.playLevelUp();
-        this.levelUpModal.show();
-      }),
+      this.eventBus.on('enemy:died', (data) => this.onEnemyDied(data)),
+      this.eventBus.on('ui:pause_requested', () => this.togglePause()),
+      this.eventBus.on('ui:secret_debug_requested', () => this.debugModal.toggle(this.getDebugCtx())),
+      this.eventBus.on('player:levelUp', () => this.onPlayerLevelUp()),
       this.eventBus.on('player:died', () => this.triggerPlayerDeath())
     );
+  }
+
+  private onEnemyDied(data: { id: string; x: number; y: number; xpValue: number }): void {
+    const enemy = this.enemiesMap.get(data.id);
+    if (!enemy) return;
+    if (enemy.definition?.archetype === 'exploder') {
+      this.hazardSystem.detonateExploder(enemy, this.getHazardCtx());
+    } else {
+      this.vfxPool.spawnEnemyDeath(data.x, data.y, (enemy.definition?.displayScale ?? 0.3) * (enemy.isChampion ? 1.8 : 1.2));
+      this.lootSystem.spawnGem(data.x, data.y, enemy.isChampion ? data.xpValue * 3 : data.xpValue, this.playerEntity.x, this.playerEntity.y);
+      if (enemy.isChampion) {
+        this.lootSystem.spawnChest(data.x, data.y);
+        this.lootSystem.spawnGoo(data.x, data.y, 4);
+      } else if (enemy.definition?.archetype === 'boss') this.lootSystem.spawnGoo(data.x, data.y, 25);
+      else if (enemy.type === 'boss' || (enemy.definition?.stats.maxHp ?? 0) >= 150) this.lootSystem.spawnGoo(data.x, data.y, 5);
+      else if (Math.random() < 0.16) this.lootSystem.spawnGoo(data.x, data.y, 1);
+      if (enemy.sprite) this.enemiesGroup.remove(enemy.sprite, false, false);
+      enemy.destroy();
+      this.enemiesMap.delete(data.id);
+    }
+    if (this.gameState.playerModifiers.healOnKill > 0 && this.playerEntity.isAlive && this.playerEntity.health.percent < 1 && this.gameState.playerModifiers.healOnKillTimerMs <= 0) {
+      const healAmt = this.gameState.playerModifiers.healOnKill;
+      this.gameState.playerModifiers.healOnKillTimerMs = this.gameState.playerModifiers.healOnKillCooldownMs || 1000;
+      this.playerEntity.health.heal(healAmt);
+      this.hud.updateHp(this.playerEntity.health.currentHp, this.playerEntity.stats.maxHp);
+      this.eventBus.emit('player:healed', { currentHp: this.playerEntity.health.currentHp, maxHp: this.playerEntity.stats.maxHp, amount: healAmt });
+    }
+    if (this.currentHero?.id === 'hero_markovka') this.heroTraitSystem.onEnemyKilledByMarkovka(this.getTraitCtx());
+  }
+
+  private onPlayerLevelUp(): void {
+    this.isGamePaused = true; this.physics.pause(); this.inputManager.setEnabled(false);
+    this.playerEntity.sprite?.setVelocity(0, 0);
+    (this.enemiesGroup.getChildren() as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody[]).forEach((s) => s.body?.setVelocity(0, 0));
+    (this.playerProjectilesGroup.getChildren() as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody[]).forEach((s) => s.body?.setVelocity(0, 0));
+    this.audio.playLevelUp(); this.levelUpModal.show();
+  }
+
+  private togglePause(): void {
+    if (this.isDying || this.gameOverModal.isVisible || this.levelUpModal.isVisible) return;
+    if (this.grimoireModal.isVisible) { this.grimoireModal.hide(); this.showPauseModal(); return; }
+    if (this.pauseModal.isVisible) this.resumeGame();
+    else this.pauseGame();
+  }
+
+  private pauseGame(): void {
+    this.isGamePaused = true; this.physics.pause(); this.inputManager.setEnabled(false);
+    this.playerEntity.sprite?.setVelocity(0, 0);
+    (this.enemiesGroup.getChildren() as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody[]).forEach((s) => s.body?.setVelocity(0, 0));
+    (this.playerProjectilesGroup.getChildren() as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody[]).forEach((s) => s.body?.setVelocity(0, 0));
+    this.showPauseModal();
+  }
+
+  private showPauseModal(): void {
+    this.pauseModal.show({
+      onResume: () => this.resumeGame(), onGrimoire: () => this.grimoireModal.show(() => this.showPauseModal()),
+      onRestart: () => { this.pauseModal.clear(); this.scene.restart(); }, onMenu: () => { this.pauseModal.clear(); this.scene.start('MenuScene'); },
+    });
+  }
+
+  private resumeGame(): void {
+    this.pauseModal.clear(); this.grimoireModal.hide(); this.isGamePaused = false; this.physics.resume(); this.inputManager.setEnabled(true);
+  }
+
+  private getDebugCtx() {
+    return {
+      scene: this, player: this.playerEntity, gameState: this.gameState, spawnManager: this.spawnManager,
+      lootSystem: this.lootSystem, enemiesMap: this.enemiesMap, combatSystem: this.combatSystem, hud: this.hud,
+      pauseGame: () => { this.isGamePaused = true; this.physics.pause(); this.inputManager.setEnabled(false); },
+      resumeGame: () => { this.isGamePaused = false; this.physics.resume(); this.inputManager.setEnabled(true); },
+    };
   }
 
   private getHazardCtx() {
@@ -197,9 +233,7 @@ export class GameScene extends Phaser.Scene {
       scene: this, player: this.playerEntity, enemiesMap: this.enemiesMap, lootSystem: this.lootSystem,
       applyDamageToPlayer: (dmg: number) => this.applyDamageToPlayer(dmg),
       applyAreaDamageToEnemies: (x: number, y: number, r: number, dmg: number) =>
-        this.combatSystem.applyAreaDamage(this.playerEntity, this.enemiesMap, x, y, r, dmg, undefined, (e) => {
-          if (e.sprite) this.hazardSystem.flashSprite(this, e.sprite, 0xffffff);
-        }),
+        this.combatSystem.applyAreaDamage(this.playerEntity, this.enemiesMap, x, y, r, dmg, undefined, (e) => { if (e.sprite) this.hazardSystem.flashSprite(this, e.sprite, 0xffffff); }),
     };
   }
 
@@ -207,33 +241,27 @@ export class GameScene extends Phaser.Scene {
     return {
       scene: this, player: this.playerEntity, gameState: this.gameState, lootSystem: this.lootSystem,
       applyAreaDamage: (x: number, y: number, r: number, dmg: number) =>
-        this.combatSystem.applyAreaDamage(this.playerEntity, this.enemiesMap, x, y, r, dmg, undefined, (e) => {
-          if (e.sprite) this.hazardSystem.flashSprite(this, e.sprite, 0xffffff);
-        }),
+        this.combatSystem.applyAreaDamage(this.playerEntity, this.enemiesMap, x, y, r, dmg, undefined, (e) => { if (e.sprite) this.hazardSystem.flashSprite(this, e.sprite, 0xffffff); }),
     };
   }
 
   private applyDamageToPlayer(dmg: number): void {
     if (!this.playerEntity.isAlive || this.playerIframeTimerMs > 0 || this.isDying) return;
     this.playerIframeTimerMs = 500;
-    const armor = this.playerEntity.stats.armor || 0;
-    const dmgRed = this.gameState.playerModifiers.damageReductionPercent || 0;
-    const effectiveDmg = Math.max(1, Math.round((dmg - armor) * (1 - dmgRed)));
-    this.playerEntity.health.takeDamage(effectiveDmg);
-    this.audio.playPlayerHurt();
+    const effectiveDmg = Math.max(1, Math.round((dmg - (this.playerEntity.stats.armor || 0)) * (1 - (this.gameState.playerModifiers.damageReductionPercent || 0))));
+    this.playerEntity.health.takeDamage(effectiveDmg); this.audio.playPlayerHurt();
 
     const sprite = this.playerEntity.sprite;
     if (sprite?.active && this.playerEntity.isAlive) {
       const heroPrefix = this.currentHero?.id === 'hero_markovka' ? 'markovka' : 'vypolzok';
-      const hurtAnim = `${heroPrefix}_anim_hurt`;
-      if (this.anims.exists(hurtAnim)) sprite.play(hurtAnim);
+      if (this.anims.exists(`${heroPrefix}_anim_hurt`)) sprite.play(`${heroPrefix}_anim_hurt`);
       sprite.setData('isHurt', true);
       this.time.delayedCall(300, () => {
         if (sprite.active && this.playerEntity.isAlive) {
           sprite.setData('isHurt', false);
           const mv = this.inputManager.getMovementVector();
-          const targetAnim = mv.x !== 0 || mv.y !== 0 ? `${heroPrefix}_anim_run` : `${heroPrefix}_anim_idle`;
-          if (this.anims.exists(targetAnim)) sprite.play(targetAnim, true);
+          const anim = mv.x !== 0 || mv.y !== 0 ? `${heroPrefix}_anim_run` : `${heroPrefix}_anim_idle`;
+          if (this.anims.exists(anim)) sprite.play(anim, true);
         }
       });
     }
@@ -252,7 +280,7 @@ export class GameScene extends Phaser.Scene {
         this.hud.updateHp(this.playerEntity.health.currentHp, this.playerEntity.stats.maxHp);
         this.playerIframeTimerMs = 1500;
         this.hazardSystem.triggerScreenWipeBlast(this, this.playerEntity.x, this.playerEntity.y, this.getHazardCtx());
-        this.lootSystem.showFloatText(this.playerEntity.x, this.playerEntity.y - 30, ' SECOND CHANCE!', '#facc15');
+        this.lootSystem.showFloatText(this.playerEntity.x, this.playerEntity.y - 30, 'ВТОРОЙ ШАНС!', '#facc15');
         return;
       }
       this.triggerPlayerDeath();
@@ -261,35 +289,25 @@ export class GameScene extends Phaser.Scene {
 
   private triggerPlayerDeath(): void {
     if (this.isDying) return;
-    this.isDying = true;
-    this.inputManager?.setEnabled(false);
-    this.audio.stopBgm();
-    this.audio.playPlayerDeath();
-    this.platform.vibrate(250);
-    this.gameState.endRun(false);
+    this.isDying = true; this.inputManager?.setEnabled(false);
+    this.audio.stopBgm(); this.audio.playPlayerDeath(); this.platform.vibrate(250); this.gameState.endRun(false);
 
     try {
       this.saveManager.recordRunResult({
         timeSurvived: Math.floor(this.gameState.runTime), kills: this.gameState.kills,
         score: this.gameState.score, gooEarned: this.gameState.gooCollected, won: false,
       });
-    } catch (e) {
-      console.warn('[GameScene] Error recording run result:', e);
-    }
+    } catch (e) { console.warn('[GameScene] Error recording run result:', e); }
 
     const sprite = this.playerEntity.sprite;
     if (sprite?.active) {
       sprite.setVelocity(0, 0);
       const heroPrefix = this.currentHero?.id === 'hero_markovka' ? 'markovka' : 'vypolzok';
-      const deadAnim = `${heroPrefix}_anim_dead`;
-      if (this.anims.exists(deadAnim)) sprite.play(deadAnim);
+      if (this.anims.exists(`${heroPrefix}_anim_dead`)) sprite.play(`${heroPrefix}_anim_dead`);
       else this.tweens.add({ targets: sprite, angle: 90, scaleX: sprite.scaleX * 1.3, scaleY: sprite.scaleY * 0.6, alpha: 0.5, duration: 350, ease: 'Bounce.easeOut' });
     }
-
-    this.lootSystem.showFloatText(this.playerEntity.x, this.playerEntity.y - 30, ' РАЗДАВЛЕН!', '#ef4444');
-    this.cameras.main.stopFollow();
-    this.cameras.main.shake(350, 0.02);
-    this.physics.pause();
+    this.lootSystem.showFloatText(this.playerEntity.x, this.playerEntity.y - 30, 'РАЗДАВЛЕН!', '#ef4444');
+    this.cameras.main.stopFollow(); this.cameras.main.shake(350, 0.02); this.physics.pause();
     this.time.delayedCall(450, () => this.gameOverModal.show(false));
   }
 
@@ -301,6 +319,7 @@ export class GameScene extends Phaser.Scene {
     this.hud.update(this.gameState);
 
     if (this.playerIframeTimerMs > 0) this.playerIframeTimerMs -= delta;
+    if (this.gameState.playerModifiers.healOnKillTimerMs > 0) this.gameState.playerModifiers.healOnKillTimerMs -= delta;
     if (this.gameState.playerModifiers.hpRegenPerSec > 0 && this.playerEntity.health.percent < 1) {
       this.playerEntity.health.heal(this.gameState.playerModifiers.hpRegenPerSec * deltaSeconds);
       this.hud.updateHp(this.playerEntity.health.currentHp, this.playerEntity.stats.maxHp);
@@ -317,7 +336,6 @@ export class GameScene extends Phaser.Scene {
       } else {
         this.playerEntity.sprite.setVelocity(moveVector.x * speed, moveVector.y * speed);
       }
-
       if (moveVector.x < 0) this.playerEntity.sprite.setFlipX(true);
       else if (moveVector.x > 0) this.playerEntity.sprite.setFlipX(false);
 
@@ -330,7 +348,6 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.heroTraitSystem.update(delta, isMoving, this.getTraitCtx(), this.currentHero?.id || 'hero_vypolzok');
-
     this.enemyAISystem.update(delta, {
       scene: this, player: this.playerEntity, enemiesMap: this.enemiesMap, spawnManager: this.spawnManager,
       onExploderTrigger: (e) => this.hazardSystem.startExploderFuse(e, this, (ex) => this.hazardSystem.detonateExploder(ex, this.getHazardCtx())),
@@ -345,32 +362,18 @@ export class GameScene extends Phaser.Scene {
       spawnAcidPool: (x, y, r, dmg, dur, isP) => this.hazardSystem.spawnAcidPool(this, x, y, r, dmg, dur, isP),
     });
 
-    this.lootSystem.update(
-      deltaSeconds,
-      this.playerEntity.x,
-      this.playerEntity.y,
-      this.gameState.playerModifiers,
-      this.gameState.level,
-      this.playerEntity.effectiveSpeed
-    );
-    this.spawnManager.update(delta, this.gameState.runTime);
+    this.lootSystem.update(deltaSeconds, this.playerEntity.x, this.playerEntity.y, this.gameState.playerModifiers, this.gameState.level, this.playerEntity.effectiveSpeed);
+    if (!this.debugModal?.isSpawnPaused) this.spawnManager.update(delta, this.gameState.runTime);
     this.hazardSystem.update(delta, this.getHazardCtx());
   }
 
   private shutdown(): void {
-    this.unbindEvents.forEach((unbind) => unbind());
+    this.unbindEvents.forEach((u) => u());
     this.unbindEvents = [];
     this.audio.stopBgm();
-    this.hud?.destroy();
-    this.levelUpModal?.destroy();
-    this.gameOverModal?.clear();
-    this.inputManager.destroy();
-    this.lootSystem.clear();
-    this.hazardSystem.clear();
-    this.heroTraitSystem.clear();
-    this.projectilePool?.clear();
-    this.damageNumbersPool?.clear();
-    this.vfxPool?.clear();
-    this.weaponManager.reset();
+    this.hud?.destroy(); this.levelUpModal?.destroy(); this.gameOverModal?.clear(); this.pauseModal?.destroy();
+    this.grimoireModal?.destroy(); this.debugModal?.destroy(); this.inputManager.destroy();
+    this.lootSystem.clear(); this.hazardSystem.clear(); this.heroTraitSystem.clear();
+    this.projectilePool?.clear(); this.damageNumbersPool?.clear(); this.vfxPool?.clear(); this.weaponManager.reset();
   }
 }

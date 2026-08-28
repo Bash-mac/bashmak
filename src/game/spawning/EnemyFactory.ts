@@ -10,13 +10,15 @@ export class EnemyFactory {
     x: number,
     y: number,
     id: string,
-    scaling?: EnemyScaling
+    scaling?: EnemyScaling,
+    isChampion = false
   ): Entity {
     const sprite = enemiesGroup.create(x, y, definition.textureKey) as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
-    const scale = definition.displayScale ?? Math.max(0.2, (definition.size || 16) / 64);
+    const baseScale = definition.displayScale ?? Math.max(0.2, (definition.size || 16) / 64);
+    const scale = isChampion ? baseScale * 1.38 : baseScale;
     sprite.setScale(scale);
 
-    const radius = Math.max(12, (definition.size || 16) * 0.85);
+    const radius = Math.max(12, (definition.size || 16) * 0.85 * (isChampion ? 1.3 : 1.0));
     sprite.setCollideWorldBounds(true);
     if (sprite.body) {
       const texRadius = radius / scale;
@@ -29,21 +31,37 @@ export class EnemyFactory {
       );
     }
     sprite.setData('entityId', id);
-    sprite.setDepth(8);
+    sprite.setDepth(isChampion ? 10 : 8);
 
     if (definition.animKey && sprite.scene.anims.exists(definition.animKey)) {
       sprite.play(definition.animKey);
+    }
+
+    if (isChampion) {
+      sprite.setTint(0xffd700);
+      sprite.scene.tweens.add({
+        targets: sprite,
+        alpha: { from: 0.82, to: 1.0 },
+        duration: 320,
+        repeat: -1,
+        yoyo: true,
+      });
     }
 
     const hpMult = scaling?.hpMultiplier ?? 1.0;
     const dmgMult = scaling?.damageMultiplier ?? 1.0;
     const spdMult = scaling?.speedMultiplier ?? 1.0;
 
-    const scaledMaxHp = Math.round(definition.stats.maxHp * hpMult);
-    const scaledDamage = Math.round(definition.stats.damage * dmgMult);
-    const scaledSpeed = Math.round(definition.stats.speed * spdMult);
+    const isBoss = definition.archetype === 'boss' || definition.archetype === 'miniboss';
+    const speedJitter = isBoss ? 1.0 : 0.88 + Math.random() * 0.24;
+    const champHpMult = isChampion ? 4.2 : 1.0;
+    const champDmgMult = isChampion ? 1.25 : 1.0;
 
-    return new Entity({
+    const scaledMaxHp = Math.round(definition.stats.maxHp * hpMult * champHpMult);
+    const scaledDamage = Math.round(definition.stats.damage * dmgMult * champDmgMult);
+    const scaledSpeed = Math.round(definition.stats.speed * spdMult * speedJitter);
+
+    const entity = new Entity({
       id,
       type: definition.archetype === 'boss' ? 'boss' : 'enemy',
       stats: {
@@ -55,5 +73,7 @@ export class EnemyFactory {
       sprite,
       definition,
     });
+    entity.isChampion = isChampion;
+    return entity;
   }
 }

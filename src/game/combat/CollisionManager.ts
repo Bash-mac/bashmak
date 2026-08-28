@@ -11,6 +11,7 @@ import type { AudioManager } from '../audio/AudioManager';
 import type { ProjectilePool } from './ProjectilePool';
 import type { DamageNumberPool } from './DamageNumberPool';
 import type { VfxPool } from './VfxPool';
+import { getReadyEvolution } from '../data/evolutions';
 
 export interface CollisionContext {
   scene: Phaser.Scene;
@@ -172,6 +173,30 @@ export class CollisionManager {
       gameState.addGoo(val);
       lootSystem.showFloatText(gx, gy, `+${val} GOO`);
       audio.playGooPickup();
+    });
+
+    scene.physics.add.overlap(player.sprite!, lootSystem.chestsGroup, (_p, chestObj) => {
+      const chest = chestObj as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
+      if (!chest.active) return;
+      const cx = chest.x;
+      const cy = chest.y;
+      lootSystem.releaseChest(chest);
+
+      const readyEvo = getReadyEvolution(gameState);
+      if (readyEvo) {
+        readyEvo.apply(gameState);
+        audio.playLevelUp();
+        lootSystem.showFloatText(cx, cy - 25, `${readyEvo.name.toUpperCase()}!`, '#facc15');
+        hazardSystem.triggerScreenWipeBlast(scene, cx, cy, ctx.getHazardCtx());
+      } else {
+        gameState.pendingLevelUps++;
+        eventBus.emit('player:levelUp', { newLevel: gameState.level });
+        lootSystem.showFloatText(cx, cy - 25, 'СУНДУК МУТАЦИИ!', '#facc15');
+      }
+
+      const gooCount = Phaser.Math.Between(3, 5);
+      lootSystem.spawnGoo(cx, cy, gooCount);
+      gameState.addXp(50);
     });
   }
 }

@@ -1,4 +1,5 @@
 import { EventBus } from './EventBus';
+import { SaveManager } from './SaveManager';
 import type { PlayerModifiers, UpgradeDefinition } from '../data/definitions';
 import type { StatsComponent } from '../entities/components/StatsComponent';
 import type { HealthComponent } from '../entities/components/HealthComponent';
@@ -17,6 +18,10 @@ export class GameState {
   public level = 1;
   public currentXp = 0;
   public nextLevelXp = 5; // Level 2 requires 5 XP
+
+  // Dynamic weapon & tome slots (from SaveManager meta-upgrades)
+  public maxWeaponSlots = 2;
+  public maxTomeSlots = 2;
 
   // Selected upgrades in current run (activeUpgrades maps upgradeId -> current level 1..5)
   public activeUpgrades: Map<string, number> = new Map();
@@ -72,6 +77,8 @@ export class GameState {
       hpRegenPerSec: 0,
       chitinShieldOnHit: false,
       healOnKill: 0,
+      healOnKillCooldownMs: 0,
+      healOnKillTimerMs: 0,
       executeFodderChance: 0,
       berserkOnKillTimer: 0,
       lowHpDmgThreshold: 0.5,
@@ -207,6 +214,9 @@ export class GameState {
   }
 
   reset(): void {
+    const saveManager = SaveManager.getInstance();
+    this.maxWeaponSlots = saveManager.getMaxWeaponSlots();
+    this.maxTomeSlots = saveManager.getMaxTomeSlots();
     this.runTime = 0;
     this.kills = 0;
     this.score = 0;
@@ -221,6 +231,34 @@ export class GameState {
     this.pendingLevelUps = 0;
     this.rerollsRemaining = 2;
     this.skipsRemaining = 2;
+  }
+
+  public getActiveWeapons(pool: UpgradeDefinition[]): string[] {
+    const list: string[] = [];
+    for (const [id, lvl] of this.activeUpgrades.entries()) {
+      if (lvl > 0 && pool.find((u) => u.id === id)?.category === 'weapon') {
+        list.push(id);
+      }
+    }
+    return list;
+  }
+
+  public getActiveTomes(pool: UpgradeDefinition[]): string[] {
+    const list: string[] = [];
+    for (const [id, lvl] of this.activeUpgrades.entries()) {
+      if (lvl > 0 && pool.find((u) => u.id === id)?.category === 'tome') {
+        list.push(id);
+      }
+    }
+    return list;
+  }
+
+  public isWeaponSlotsFull(pool: UpgradeDefinition[]): boolean {
+    return this.getActiveWeapons(pool).length >= this.maxWeaponSlots;
+  }
+
+  public isTomeSlotsFull(pool: UpgradeDefinition[]): boolean {
+    return this.getActiveTomes(pool).length >= this.maxTomeSlots;
   }
 
   /**
@@ -269,7 +307,8 @@ export class GameState {
     const consumables = pool.filter((u) => u.isConsumable);
 
     const eligible: { upgrade: UpgradeDefinition; levelToApply: number }[] = [];
-    const isSlotLimitReached = this.activeUpgrades.size >= 4;
+    const isWpnFull = this.isWeaponSlotsFull(pool);
+    const isTomeFull = this.isTomeSlotsFull(pool);
 
     for (const upg of normalMutations) {
       // Class exclusivity check
@@ -281,10 +320,10 @@ export class GameState {
       if (currentLvl >= upg.maxLevel) continue; // MAX level reached
 
       if (currentLvl === 0) {
-        // New mutation: allowed ONLY if slots limit (4) is not reached
-        if (!isSlotLimitReached) {
-          eligible.push({ upgrade: upg, levelToApply: 1 });
-        }
+        // New item: respect specific category slot cap
+        if (upg.category === 'weapon' && isWpnFull) continue;
+        if (upg.category === 'tome' && isTomeFull) continue;
+        eligible.push({ upgrade: upg, levelToApply: 1 });
       } else {
         // Upgrade existing mutation
         eligible.push({ upgrade: upg, levelToApply: currentLvl + 1 });

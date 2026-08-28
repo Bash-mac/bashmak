@@ -10,6 +10,8 @@ export interface GameEvents {
   'xp:gained': { amount: number; totalXp: number; level: number; nextLevelXp: number };
   'goo:gained': { amount: number; totalRunGoo: number };
   'player:levelUp': { newLevel: number };
+  'ui:pause_requested': void;
+  'ui:secret_debug_requested': void;
   'run:started': void;
   'run:ended': { won: boolean; timeSurvived: number; kills: number; level: number; score?: number; gooCollected?: number };
 }

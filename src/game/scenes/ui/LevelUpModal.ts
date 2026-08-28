@@ -114,7 +114,7 @@ export class LevelUpModal {
       .setDepth(10005);
 
     const rerollText = this.scene.add
-      .text(rerollX, btnBarY, ` РЕРОЛЛ (${gameState.rerollsRemaining})`, {
+      .text(rerollX, btnBarY, `РЕРОЛЛ (${gameState.rerollsRemaining})`, {
         fontSize: width < 700 ? '12px' : '13px',
         fontStyle: 'bold',
         color: canReroll ? '#fde047' : '#64748b',
@@ -146,7 +146,7 @@ export class LevelUpModal {
       .setDepth(10005);
 
     const skipText = this.scene.add
-      .text(skipX, btnBarY, `⏭ ПРОПУСК (${gameState.skipsRemaining})`, {
+      .text(skipX, btnBarY, `ПРОПУСК (${gameState.skipsRemaining})`, {
         fontSize: width < 700 ? '12px' : '13px',
         fontStyle: 'bold',
         color: canSkip ? '#93c5fd' : '#64748b',
@@ -357,14 +357,14 @@ export class LevelUpModal {
     let badgeColor = '#4ade80';
 
     if (isConsumable) {
-      badgeText = ' РАСХОДНИК';
+      badgeText = 'РАСХОДНИК';
       badgeColor = '#60a5fa';
     } else if (isNew) {
-      badgeText = isWeapon ? '️ НОВОЕ ОРУЖИЕ' : ' НОВАЯ ЖИЖА';
+      badgeText = isWeapon ? 'НОВОЕ ОРУЖИЕ' : 'НОВЫЙ ТОМ';
       badgeColor = isWeapon ? '#4ade80' : '#38bdf8';
     } else {
-      const typeStr = isWeapon ? '️ ОРУЖИЕ' : ' ЖИЖА';
-      badgeText = `${typeStr} • УР. ${levelToApply - 1}  ${levelToApply}`;
+      const typeStr = isWeapon ? 'ОРУЖИЕ' : 'ТОМ';
+      badgeText = `${typeStr} • УР. ${levelToApply - 1} -> ${levelToApply}`;
       badgeColor = '#facc15';
     }
 

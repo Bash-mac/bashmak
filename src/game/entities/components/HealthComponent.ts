@@ -1,6 +1,7 @@
 export class HealthComponent {
   public currentHp: number;
   public maxHp: number;
+  public isInvulnerable = false;
 
   constructor(maxHp: number) {
     this.maxHp = maxHp;
@@ -16,7 +17,7 @@ export class HealthComponent {
   }
 
   takeDamage(amount: number): number {
-    if (!this.isAlive) return 0;
+    if (!this.isAlive || this.isInvulnerable) return 0;
     const actualDamage = Math.max(0, amount);
     this.currentHp = Math.max(0, this.currentHp - actualDamage);
     return actualDamage;

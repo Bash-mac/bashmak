@@ -25,6 +25,8 @@ export class EnemyAISystem {
     this.isBossDashing = false;
     this.isBossVulnerable = false;
     this.bossTelegraphGfx?.clear();
+    this.bossTelegraphGfx?.destroy();
+    this.bossTelegraphGfx = undefined;
     for (const bucket of this.spatialGrid.values()) {
       bucket.length = 0;
       this.bucketPool.push(bucket);
@@ -43,7 +45,7 @@ export class EnemyAISystem {
     }
     this.spatialGrid.clear();
 
-    const CELL = 48; // px, slightly larger than separationRadius=42
+    const CELL = 64; // px, slightly larger than separationRadius=58
     const cellKey = (cx: number, cy: number) => cx * 100003 + cy;
 
     for (const e of ctx.enemiesMap.values()) {
@@ -91,7 +93,7 @@ export class EnemyAISystem {
       // Flocking Separation Force — only check 3x3 neighboring cells (O(k) per enemy)
       let sepX = 0;
       let sepY = 0;
-      const separationRadius = 42;
+      const separationRadius = 58;
       const separationRadiusSq = separationRadius * separationRadius;
       const ecx = Math.floor(enemy.x / CELL);
       const ecy = Math.floor(enemy.y / CELL);
@@ -107,15 +109,15 @@ export class EnemyAISystem {
             const distSq = ox * ox + oy * oy;
             if (distSq < separationRadiusSq && distSq > 0.01) {
               const d = Math.sqrt(distSq);
-              const force = (separationRadius - d) / separationRadius;
-              sepX += (ox / d) * force * 55;
-              sepY += (oy / d) * force * 55;
+              const force = Math.pow((separationRadius - d) / separationRadius, 1.2);
+              sepX += (ox / d) * force * 70;
+              sepY += (oy / d) * force * 70;
             }
           }
         }
       }
 
-      const maxSep = spd * 0.75;
+      const maxSep = spd * 0.9;
       const sepLen = Math.sqrt(sepX * sepX + sepY * sepY);
       if (sepLen > maxSep && sepLen > 0) {
         sepX = (sepX / sepLen) * maxSep;
@@ -125,8 +127,15 @@ export class EnemyAISystem {
       if (def?.archetype === 'boss') {
         this.handleBossAI(enemy, delta, angleToPlayer, ctx);
       } else {
-        const vx = Math.cos(angleToPlayer) * spd + sepX;
-        const vy = Math.sin(angleToPlayer) * spd + sepY;
+        // Encircle & flank bias when outside melee distance
+        let moveAngle = angleToPlayer;
+        if (distToPlayer > 75) {
+          const blend = Math.min(1.0, (distToPlayer - 75) / 220);
+          moveAngle += (enemy.flankOffset ?? 0) * blend;
+        }
+
+        const vx = Math.cos(moveAngle) * spd + sepX;
+        const vy = Math.sin(moveAngle) * spd + sepY;
         enemy.sprite.setVelocity(vx, vy);
         enemy.sprite.setFlipX(vx < 0);
         enemy.sprite.rotation = 0;
@@ -155,6 +164,7 @@ export class EnemyAISystem {
     if (this.bossDashTimer >= 4000 && !this.isBossDashing) {
       this.bossDashTimer = 0;
       this.isBossDashing = true;
+      boss.sprite?.setVelocity(0, 0);
 
       if (!this.bossTelegraphGfx) {
         this.bossTelegraphGfx = ctx.scene.add.graphics().setDepth(6);
@@ -165,8 +175,11 @@ export class EnemyAISystem {
       this.bossTelegraphGfx.lineBetween(boss.x, boss.y, ctx.player.x, ctx.player.y);
 
       ctx.scene.time.delayedCall(600, () => {
-        if (!boss.isAlive || !boss.sprite) return;
         this.bossTelegraphGfx?.clear();
+        if (!boss.isAlive || !boss.sprite) {
+          this.isBossDashing = false;
+          return;
+        }
 
         const dashAngle = Phaser.Math.Angle.Between(boss.x, boss.y, ctx.player.x, ctx.player.y);
         const dashVx = Math.cos(dashAngle) * 450;
@@ -175,9 +188,10 @@ export class EnemyAISystem {
         boss.sprite.rotation = 0;
 
         ctx.scene.time.delayedCall(800, () => {
-          if (!boss.isAlive || !boss.sprite) return;
           this.isBossDashing = false;
+          if (!boss.isAlive || !boss.sprite) return;
           this.isBossVulnerable = true;
+          boss.sprite.setVelocity(0, 0);
           if (ctx.flashSprite) ctx.flashSprite(boss.sprite, 0xfacc15);
 
           ctx.scene.time.delayedCall(1500, () => {

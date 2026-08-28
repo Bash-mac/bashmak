@@ -154,7 +154,6 @@ export class BootScene extends Phaser.Scene {
     this.load.image('icon_weapon_carrot_barrage', '/assets/ui/icons/icon_weapon_carrot_barrage.webp');
     this.load.image('icon_weapon_lace_whip', '/assets/ui/icons/icon_weapon_lace_whip.webp');
     this.load.image('icon_weapon_mega_boot', '/assets/ui/icons/icon_weapon_mega_boot.webp');
-    this.load.image('icon_weapon_manhole_drop', '/assets/ui/icons/icon_weapon_manhole_drop.webp');
     this.load.image('icon_weapon_eggplant_roll', '/assets/ui/icons/icon_weapon_eggplant_roll.webp');
     this.load.image('icon_weapon_acid_trail', '/assets/ui/icons/icon_weapon_acid_trail.webp');
     this.load.image('icon_weapon_orbiting_flies', '/assets/ui/icons/icon_weapon_orbiting_flies.webp');

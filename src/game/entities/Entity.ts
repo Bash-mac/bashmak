@@ -41,6 +41,10 @@ export class Entity {
   // Boss state
   public bossPhase = 1;
 
+  // Flanking angle offset (radians) for natural arc spreading
+  public flankOffset = (Math.random() - 0.5) * 0.7;
+  public isChampion = false;
+
   constructor(config: EntityConfig) {
     this.id = config.id;
     this.type = config.type;
@@ -89,11 +93,13 @@ export class Entity {
   }
 
   applyKnockback(vx: number, vy: number, durationMs = 120): void {
-    this.knockbackVx = vx;
-    this.knockbackVy = vy;
+    const mass = this.definition?.mass ?? 1;
+    const factor = mass > 1 ? Math.max(0.1, 1 / Math.sqrt(mass)) : 1;
+    this.knockbackVx = vx * factor;
+    this.knockbackVy = vy * factor;
     this.knockbackTimer = durationMs;
     if (this.sprite?.body) {
-      this.sprite.body.setVelocity(vx, vy);
+      this.sprite.body.setVelocity(this.knockbackVx, this.knockbackVy);
     }
   }
 

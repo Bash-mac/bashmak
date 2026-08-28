@@ -47,5 +47,47 @@ export class PlaceholderTextures {
     eggGfx.fillTriangle(16, 2, 12, 8, 20, 8);
     eggGfx.generateTexture('tex_eggplant_ball', 32, 32);
     eggGfx.destroy();
+
+    // 5. Mutant Treasure Chest
+    const chestGfx = scene.make.graphics({ x: 0, y: 0 });
+    // Chest base (toxic-dark metal)
+    chestGfx.fillStyle(0x1e293b, 1);
+    chestGfx.fillRoundedRect(2, 6, 36, 28, 5);
+    chestGfx.lineStyle(2, 0xfacc15, 1);
+    chestGfx.strokeRoundedRect(2, 6, 36, 28, 5);
+    // Gold trim band & lid
+    chestGfx.fillStyle(0xeab308, 1);
+    chestGfx.fillRect(4, 8, 32, 7);
+    chestGfx.fillStyle(0xfef08a, 1);
+    chestGfx.fillRect(16, 12, 8, 12);
+    // Neon green glowing keyhole/core
+    chestGfx.fillStyle(0x22c55e, 1);
+    chestGfx.fillCircle(20, 18, 3);
+    chestGfx.generateTexture('drop_chest', 40, 40);
+    chestGfx.destroy();
+
+    // 6. Piezo-Taser Icon (Junk piezo lighter with electric spark)
+    const taserGfx = scene.make.graphics({ x: 0, y: 0 });
+    // Dark background
+    taserGfx.fillStyle(0x0f172a, 1);
+    taserGfx.fillRoundedRect(4, 4, 56, 56, 10);
+    taserGfx.lineStyle(2, 0xfacc15, 1);
+    taserGfx.strokeRoundedRect(4, 4, 56, 56, 10);
+    // Lighter body (red/orange plastic)
+    taserGfx.fillStyle(0xd97706, 1);
+    taserGfx.fillRoundedRect(16, 22, 20, 32, 4);
+    taserGfx.fillStyle(0x475569, 1);
+    taserGfx.fillRect(18, 14, 16, 10);
+    // Wire & copper needle
+    taserGfx.lineStyle(3, 0xf59e0b, 1);
+    taserGfx.lineBetween(26, 14, 38, 10);
+    taserGfx.lineBetween(38, 10, 44, 16);
+    // Electric Spark / Lightning bolt
+    taserGfx.fillStyle(0x22c55e, 1);
+    taserGfx.fillTriangle(44, 8, 38, 20, 48, 18);
+    taserGfx.fillStyle(0xfef08a, 1);
+    taserGfx.fillTriangle(48, 16, 42, 28, 52, 22);
+    taserGfx.generateTexture('icon_weapon_piezo_taser', 64, 64);
+    taserGfx.destroy();
   }
 }

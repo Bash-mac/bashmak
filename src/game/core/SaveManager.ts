@@ -145,6 +145,14 @@ export class SaveManager {
     return this.data.powerUps[id] || 0;
   }
 
+  public getMaxWeaponSlots(): number {
+    return Math.min(5, 2 + this.getPowerUpLevel('power_weapon_slots'));
+  }
+
+  public getMaxTomeSlots(): number {
+    return Math.min(5, 2 + this.getPowerUpLevel('power_tome_slots'));
+  }
+
   public buyPowerUp(id: string): boolean {
     const def = META_POWERUPS.find((p) => p.id === id);
     if (!def) return false;

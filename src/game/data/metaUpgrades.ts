@@ -1,4 +1,4 @@
-﻿export interface MetaPowerUpDefinition {
+export interface MetaPowerUpDefinition {
   id: string;
   name: string;
   comicName: string;
@@ -122,6 +122,38 @@ export const META_POWERUPS: MetaPowerUpDefinition[] = [
     },
     getBonusText(lvl: number) {
       return lvl > 0 ? '1 Воскрешение' : 'Не куплено';
+    },
+  },
+  {
+    id: 'power_weapon_slots',
+    name: 'Оружейный пояс',
+    comicName: 'WEAPON SLOTS',
+    description: '+1 дополнительный слот под активное оружие.',
+    icon: '',
+    maxLevel: 3,
+    baseCost: 180,
+    costMultiplier: 2.0,
+    getCost(lvl: number) {
+      return Math.round(this.baseCost * Math.pow(this.costMultiplier, lvl));
+    },
+    getBonusText(lvl: number) {
+      return `Слотов оружия: ${2 + lvl} (макс. 5)`;
+    },
+  },
+  {
+    id: 'power_tome_slots',
+    name: 'Сумка мутаций',
+    comicName: 'TOME SLOTS',
+    description: '+1 дополнительный слот под пассивные фолианты.',
+    icon: '',
+    maxLevel: 3,
+    baseCost: 150,
+    costMultiplier: 2.0,
+    getCost(lvl: number) {
+      return Math.round(this.baseCost * Math.pow(this.costMultiplier, lvl));
+    },
+    getBonusText(lvl: number) {
+      return `Слотов томов: ${2 + lvl} (макс. 5)`;
     },
   },
 ];
