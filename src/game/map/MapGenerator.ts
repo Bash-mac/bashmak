@@ -19,6 +19,7 @@ export class MapGenerator {
   ];
   private static readonly PROP_FRAMES = ['decal_11', 'decal_12', 'decal_19'];
   private static readonly GROUT_RGB = [0x2a, 0x2a, 0x22];
+  private static readonly BAKE_CHUNK = 2048; // safe max-texture size on every GPU
 
   public static createWorld(scene: Phaser.Scene, worldSize = 4000): MapObjects {
     // 1. World Bounds & Baked Brick Floor
@@ -61,13 +62,8 @@ export class MapGenerator {
       }
     }
 
-    MapGenerator.bakeFloor(scene, worldSize, clusterPts);
-
-    const pillarsGroup = scene.physics.add.staticGroup();
-    const barrelsGroup = scene.physics.add.staticGroup();
-    const shrinesGroup = scene.physics.add.group();
-
-    // Rare full-alpha props (manhole / grate / wheel): 2-3 per arena, never at spawn
+    // Rare full-alpha props (manhole / grate / wheel): 2-3 per arena, never at spawn.
+    // Computed up front so the bake can draw them into the floor texture.
     const propCells = new Map<string, string>();
     while (propCells.size < Phaser.Math.Between(2, 3)) {
       const pgx = Phaser.Math.Between(0, gridSize - 1);
@@ -78,55 +74,17 @@ export class MapGenerator {
       }
     }
 
-    // Pre-allocated sector coordinates for 6 Shrines across the map
+    MapGenerator.bakeFloor(scene, worldSize, clusterPts, propCells);
+
+    const pillarsGroup = scene.physics.add.staticGroup();
+    const barrelsGroup = scene.physics.add.staticGroup();
+    const shrinesGroup = scene.physics.add.group();
+
     for (let gx = 0; gx < gridSize; gx++) {
       for (let gy = 0; gy < gridSize; gy++) {
         const cellCenterX = gx * cellSize + cellSize / 2;
         const cellCenterY = gy * cellSize + cellSize / 2;
         const distToSpawn = Phaser.Math.Distance.Between(cellCenterX, cellCenterY, spawnCenterX, spawnCenterY);
-
-        // 2.1 Flat Ground Decals (cracks): denser around landmarks, sparse in running lanes
-        const decalX = cellCenterX + Phaser.Math.Between(-180, 180);
-        const decalY = cellCenterY + Phaser.Math.Between(-180, 180);
-        const nearCluster = clusterPts.some((c) => Phaser.Math.Distance.Between(decalX, decalY, c.x, c.y) < c.r);
-        if (Math.random() < (nearCluster ? 0.65 : 0.25)) {
-          const decal = scene.add.image(decalX, decalY, 'atlas_floor_decals', Phaser.Utils.Array.GetRandom(MapGenerator.DECAL_FLAT));
-          decal.setDepth(1);
-          decal.setRotation(Phaser.Math.FloatBetween(0, Math.PI * 2));
-          decal.setScale(Phaser.Math.FloatBetween(0.8, 1.2));
-          decal.setAlpha(Phaser.Math.FloatBetween(0.45, 0.6));
-        }
-
-        // Loose stones half-sunk into the pavement, clustered the same way
-        if (Math.random() < (nearCluster ? 0.85 : 0.3)) {
-          const stone = scene.add.image(
-            cellCenterX + Phaser.Math.Between(-200, 200),
-            cellCenterY + Phaser.Math.Between(-200, 200),
-            'atlas_floor_decals',
-            Phaser.Utils.Array.GetRandom(MapGenerator.DECAL_STONES),
-          );
-          stone.setDepth(1);
-          stone.setRotation(Phaser.Math.FloatBetween(0, Math.PI * 2));
-          stone.setScale(Phaser.Math.FloatBetween(0.8, 1.15));
-          stone.setAlpha(0.95);
-        }
-
-        // 2.2 Rare Architectural Props (manhole / grate / wheel, ~76px, full alpha)
-        const propFrame = propCells.get(`${gx},${gy}`);
-        if (propFrame) {
-          const prop = scene.add.image(
-            cellCenterX + Phaser.Math.Between(-120, 120),
-            cellCenterY + Phaser.Math.Between(-120, 120),
-            'atlas_floor_decals',
-            propFrame,
-          );
-          prop.setDepth(2);
-          prop.setDisplaySize(76, 76);
-          prop.setAlpha(0.9);
-          if (propFrame === 'decal_19') {
-            prop.setRotation(Phaser.Math.FloatBetween(0, Math.PI * 2));
-          }
-        }
 
         // Skip physical obstacles in player's immediate spawn zone
         if (distToSpawn < spawnSafeRadius) continue;
@@ -233,25 +191,6 @@ export class MapGenerator {
       }
     }
 
-    // 3. Perimeter Rubble Ring: dense rubble hugs the arena border, signaling the boundary
-    const step = 320;
-    const inset = 110;
-    for (let d = step / 2; d < worldSize; d += step) {
-      const spots: Array<[number, number]> = [
-        [d + Phaser.Math.Between(-90, 90), Phaser.Math.Between(30, inset)],
-        [d + Phaser.Math.Between(-90, 90), worldSize - Phaser.Math.Between(30, inset)],
-        [Phaser.Math.Between(30, inset), d + Phaser.Math.Between(-90, 90)],
-        [worldSize - Phaser.Math.Between(30, inset), d + Phaser.Math.Between(-90, 90)],
-      ];
-      for (const [rx, ry] of spots) {
-        const rubble = scene.add.image(rx, ry, 'atlas_floor_decals', Phaser.Utils.Array.GetRandom(MapGenerator.DECAL_RUBBLE));
-        rubble.setDepth(2);
-        rubble.setRotation(Phaser.Math.FloatBetween(0, Math.PI * 2));
-        rubble.setScale(Phaser.Math.FloatBetween(0.9, 1.5));
-        rubble.setAlpha(0.95);
-      }
-    }
-
     return { pillarsGroup, barrelsGroup, shrinesGroup };
   }
 
@@ -259,41 +198,75 @@ export class MapGenerator {
   private static readonly PLANTED_CELL = 24;
 
   /**
-   * Bakes the brick pavement once into a single canvas texture (one static image at runtime).
-   * Structure copied from the reference: dense horizontal courses of small stones with thin
-   * uniform grout, wide tonal blotches on top, then moss planted pixel-exactly into the joints
-   * and clustered around the given landmark points.
+   * Bakes the whole arena floor into 2x2 chunk textures of 2048px (safe on every GPU).
+   * Bricks, tonal blotches, moss, cracks, stones, props and border rubble all end up baked
+   * into the chunks: at runtime the floor is just 4 static images and zero extra objects.
    */
   private static bakeFloor(
     scene: Phaser.Scene,
     worldSize: number,
     clusters: Array<{ x: number; y: number; r: number }>,
+    propCells: Map<string, string>,
   ): void {
-    if (scene.textures.exists('baked_floor')) scene.textures.remove('baked_floor');
-    const canvasTex = scene.textures.createCanvas('baked_floor', worldSize, worldSize);
-    if (!canvasTex) return;
-    const ctx = canvasTex.getContext();
-    const grout = MapGenerator.GROUT_RGB;
-    ctx.fillStyle = `rgb(${grout[0]},${grout[1]},${grout[2]})`;
-    ctx.fillRect(0, 0, worldSize, worldSize);
+    const chunkCount = Math.ceil(worldSize / MapGenerator.BAKE_CHUNK);
+    const chunks: Array<{ ox: number; oy: number; w: number; h: number; tex: Phaser.Textures.CanvasTexture; ctx: CanvasRenderingContext2D }> = [];
+    for (let iy = 0; iy < chunkCount; iy++) {
+      for (let ix = 0; ix < chunkCount; ix++) {
+        const key = `baked_floor_${ix}_${iy}`;
+        if (scene.textures.exists(key)) scene.textures.remove(key);
+        const w = Math.min(MapGenerator.BAKE_CHUNK, worldSize - ix * MapGenerator.BAKE_CHUNK);
+        const h = Math.min(MapGenerator.BAKE_CHUNK, worldSize - iy * MapGenerator.BAKE_CHUNK);
+        const tex = scene.textures.createCanvas(key, w, h);
+        if (!tex) continue;
+        const ctx = tex.getContext();
+        const [gr, gg, gb] = MapGenerator.GROUT_RGB;
+        ctx.fillStyle = `rgb(${gr},${gg},${gb})`;
+        ctx.fillRect(0, 0, w, h);
+        chunks.push({ ox: ix * MapGenerator.BAKE_CHUNK, oy: iy * MapGenerator.BAKE_CHUNK, w, h, tex, ctx });
+      }
+    }
+    if (chunks.length === 0) return;
 
     const bricksTex = scene.textures.get('atlas_floor_bricks');
     const decalsTex = scene.textures.get('atlas_floor_decals');
     const bricksImg = bricksTex.getSourceImage() as CanvasImageSource;
     const decalsImg = decalsTex.getSourceImage() as CanvasImageSource;
 
-    const stampFrame = (
+    // Draws one frame in world coordinates into every chunk it touches (1-2 typically)
+    const stampWorld = (
       img: CanvasImageSource, tex: Phaser.Textures.Texture, frame: string,
       x: number, y: number, angleDeg: number, scale: number, alpha = 1,
     ): void => {
       const f = tex.get(frame);
-      ctx.save();
-      ctx.globalAlpha = alpha;
-      ctx.translate(x, y);
-      ctx.rotate(Phaser.Math.DegToRad(angleDeg));
-      ctx.scale(scale, scale);
-      ctx.drawImage(img, f.cutX, f.cutY, f.cutWidth, f.cutHeight, -f.cutWidth / 2, -f.cutHeight / 2, f.cutWidth, f.cutHeight);
-      ctx.restore();
+      const rad = Phaser.Math.DegToRad(angleDeg);
+      const cos = Math.abs(Math.cos(rad));
+      const sin = Math.abs(Math.sin(rad));
+      const extW = (f.cutWidth * cos + f.cutHeight * sin) * scale;
+      const extH = (f.cutWidth * sin + f.cutHeight * cos) * scale;
+      for (const ch of chunks) {
+        if (x + extW / 2 <= ch.ox || x - extW / 2 >= ch.ox + ch.w) continue;
+        if (y + extH / 2 <= ch.oy || y - extH / 2 >= ch.oy + ch.h) continue;
+        ch.ctx.save();
+        ch.ctx.globalAlpha = alpha;
+        ch.ctx.translate(x - ch.ox, y - ch.oy);
+        ch.ctx.rotate(rad);
+        ch.ctx.scale(scale, scale);
+        ch.ctx.drawImage(img, f.cutX, f.cutY, f.cutWidth, f.cutHeight, -f.cutWidth / 2, -f.cutHeight / 2, f.cutWidth, f.cutHeight);
+        ch.ctx.restore();
+      }
+    };
+
+    // Soft radial tint blotch in world coordinates
+    const blotchWorld = (bx: number, by: number, r: number, inner: string): void => {
+      for (const ch of chunks) {
+        if (bx + r <= ch.ox || bx - r >= ch.ox + ch.w) continue;
+        if (by + r <= ch.oy || by - r >= ch.oy + ch.h) continue;
+        const g = ch.ctx.createRadialGradient(bx - ch.ox, by - ch.oy, 0, bx - ch.ox, by - ch.oy, r);
+        g.addColorStop(0, inner);
+        g.addColorStop(1, 'rgba(0,0,0,0)');
+        ch.ctx.fillStyle = g;
+        ch.ctx.fillRect(bx - r - ch.ox, by - r - ch.oy, r * 2, r * 2);
+      }
     };
 
     // Brick inventory bucketed by height so each course picks stones of near-equal height
@@ -325,12 +298,12 @@ export class MapGenerator {
         const frameName = Phaser.Utils.Array.GetRandom(pool);
         const f = bricksTex.get(frameName);
         const s = Phaser.Math.Clamp(rowH / f.height, 0.82, 1.1);
-        stampFrame(bricksImg, bricksTex, frameName, x + (f.width * s) / 2, y + rowH / 2, Phaser.Math.RND.pick([0, 180]), s);
+        stampWorld(bricksImg, bricksTex, frameName, x + (f.width * s) / 2, y + rowH / 2, Phaser.Math.RND.pick([0, 180]), s);
         x += f.width * s;
         // frequent double-length stones: break the vertical joint rhythm of the bond
         if (Math.random() < 0.3) {
           const w2 = f.width * s - 1;
-          stampFrame(bricksImg, bricksTex, frameName, x + w2 / 2 + 1, y + rowH / 2, Phaser.Math.RND.pick([0, 180]), s);
+          stampWorld(bricksImg, bricksTex, frameName, x + w2 / 2 + 1, y + rowH / 2, Phaser.Math.RND.pick([0, 180]), s);
           x += w2 + 1;
         }
         x += Phaser.Math.Between(2, 5);
@@ -345,25 +318,22 @@ export class MapGenerator {
       const bx = Phaser.Math.Between(0, worldSize);
       const by = Phaser.Math.Between(0, worldSize);
       const r = Phaser.Math.Between(220, 520);
-      const dark = Math.random() < 0.55;
-      const g = ctx.createRadialGradient(bx, by, 0, bx, by, r);
-      g.addColorStop(0, dark ? 'rgba(10,12,8,0.05)' : 'rgba(190,200,170,0.04)');
-      g.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = g;
-      ctx.fillRect(bx - r, by - r, r * 2, r * 2);
+      blotchWorld(bx, by, r, Math.random() < 0.55 ? 'rgba(10,12,8,0.05)' : 'rgba(190,200,170,0.04)');
     }
 
     // Plant moss exactly where bare grout shows through, clustered near landmarks.
     // Pass 1 fills the cluster zones densely; pass 2 dusts the remaining lanes sparsely.
+    // The grout scan runs per chunk, capping the pixel-buffer peak at ~16 MB.
     MapGenerator.plantedCells.clear();
-    const gaps = MapGenerator.findGroutGaps(ctx, worldSize);
     const clusterMoss: Array<[number, number]> = [];
     const laneMoss: Array<[number, number]> = [];
-    for (const [px, py] of gaps) {
-      if (clusters.some((c) => (px - c.x) * (px - c.x) + (py - c.y) * (py - c.y) < c.r * c.r)) {
-        clusterMoss.push([px, py]);
-      } else {
-        laneMoss.push([px, py]);
+    for (const ch of chunks) {
+      for (const [px, py] of MapGenerator.findGroutGaps(ch.ctx, ch.w, ch.h, ch.ox, ch.oy)) {
+        if (clusters.some((c) => (px - c.x) * (px - c.x) + (py - c.y) * (py - c.y) < c.r * c.r)) {
+          clusterMoss.push([px, py]);
+        } else {
+          laneMoss.push([px, py]);
+        }
       }
     }
     Phaser.Utils.Array.Shuffle(clusterMoss);
@@ -373,7 +343,7 @@ export class MapGenerator {
       if (planted >= 1250) break;
       if (MapGenerator.tooCloseToPlanted(px, py, 22)) continue;
       MapGenerator.markPlanted(px, py, 22);
-      stampFrame(decalsImg, decalsTex, Phaser.Utils.Array.GetRandom(MapGenerator.DECAL_MOSS),
+      stampWorld(decalsImg, decalsTex, Phaser.Utils.Array.GetRandom(MapGenerator.DECAL_MOSS),
         px, py, Phaser.Math.FloatBetween(0, 360), Phaser.Math.FloatBetween(0.5, 0.95), Phaser.Math.FloatBetween(0.85, 1));
       planted++;
     }
@@ -381,26 +351,76 @@ export class MapGenerator {
       if (planted >= 1750) break;
       if (MapGenerator.tooCloseToPlanted(px, py, 40)) continue;
       MapGenerator.markPlanted(px, py, 40);
-      stampFrame(decalsImg, decalsTex, Phaser.Utils.Array.GetRandom(MapGenerator.DECAL_MOSS),
+      stampWorld(decalsImg, decalsTex, Phaser.Utils.Array.GetRandom(MapGenerator.DECAL_MOSS),
         px, py, Phaser.Math.FloatBetween(0, 360), Phaser.Math.FloatBetween(0.32, 0.5), Phaser.Math.FloatBetween(0.75, 0.9));
       planted++;
     }
 
-    canvasTex.refresh();
-    scene.add.image(0, 0, 'baked_floor').setOrigin(0, 0).setDepth(0);
+    // Cracks and loose stones baked in, clustered around the same landmarks
+    const gs = 8;
+    const cs = worldSize / gs;
+    for (let gx = 0; gx < gs; gx++) {
+      for (let gy = 0; gy < gs; gy++) {
+        const cx = gx * cs + cs / 2;
+        const cy = gy * cs + cs / 2;
+        const dx = cx + Phaser.Math.Between(-180, 180);
+        const dy = cy + Phaser.Math.Between(-180, 180);
+        const nearCluster = clusters.some((c) => Phaser.Math.Distance.Between(dx, dy, c.x, c.y) < c.r);
+        if (Math.random() < (nearCluster ? 0.65 : 0.25)) {
+          stampWorld(decalsImg, decalsTex, Phaser.Utils.Array.GetRandom(MapGenerator.DECAL_FLAT),
+            dx, dy, Phaser.Math.FloatBetween(0, 360), Phaser.Math.FloatBetween(0.8, 1.2), Phaser.Math.FloatBetween(0.45, 0.6));
+        }
+        if (Math.random() < (nearCluster ? 0.85 : 0.3)) {
+          stampWorld(decalsImg, decalsTex, Phaser.Utils.Array.GetRandom(MapGenerator.DECAL_STONES),
+            cx + Phaser.Math.Between(-200, 200), cy + Phaser.Math.Between(-200, 200),
+            Phaser.Math.FloatBetween(0, 360), Phaser.Math.FloatBetween(0.8, 1.15), 0.95);
+        }
+      }
+    }
+
+    // Rare architectural props (manhole / grate / wheel), ~76px, full alpha
+    for (const [cellKey, propFrame] of propCells) {
+      const [pgx, pgy] = cellKey.split(',').map(Number);
+      const angle = propFrame === 'decal_19' ? Phaser.Math.FloatBetween(0, 360) : 0;
+      const f = decalsTex.get(propFrame);
+      stampWorld(decalsImg, decalsTex, propFrame,
+        pgx * cs + cs / 2 + Phaser.Math.Between(-120, 120), pgy * cs + cs / 2 + Phaser.Math.Between(-120, 120),
+        angle, 76 / Math.max(f.width, f.height), 0.9);
+    }
+
+    // Perimeter rubble ring hugging the arena border, baked in as well
+    const step = 320;
+    const inset = 110;
+    for (let d = step / 2; d < worldSize; d += step) {
+      const spots: Array<[number, number]> = [
+        [d + Phaser.Math.Between(-90, 90), Phaser.Math.Between(30, inset)],
+        [d + Phaser.Math.Between(-90, 90), worldSize - Phaser.Math.Between(30, inset)],
+        [Phaser.Math.Between(30, inset), d + Phaser.Math.Between(-90, 90)],
+        [worldSize - Phaser.Math.Between(30, inset), d + Phaser.Math.Between(-90, 90)],
+      ];
+      for (const [rx, ry] of spots) {
+        stampWorld(decalsImg, decalsTex, Phaser.Utils.Array.GetRandom(MapGenerator.DECAL_RUBBLE),
+          rx, ry, Phaser.Math.FloatBetween(0, 360), Phaser.Math.FloatBetween(0.9, 1.5), 0.95);
+      }
+    }
+
+    for (const ch of chunks) {
+      ch.tex.refresh();
+      scene.add.image(ch.ox, ch.oy, ch.tex.key).setOrigin(0, 0).setDepth(0);
+    }
   }
 
-  /** Samples the buffer on a coarse grid and returns coordinates where bare grout is exposed. */
-  private static findGroutGaps(ctx: CanvasRenderingContext2D, worldSize: number): Array<[number, number]> {
+  /** Samples a chunk buffer on a coarse grid; returns world coordinates of bare grout. */
+  private static findGroutGaps(ctx: CanvasRenderingContext2D, w: number, h: number, ox: number, oy: number): Array<[number, number]> {
     const STEP = 7;
-    const data = ctx.getImageData(0, 0, worldSize, worldSize).data;
+    const data = ctx.getImageData(0, 0, w, h).data;
     const [gr, gg, gb] = MapGenerator.GROUT_RGB;
     const gaps: Array<[number, number]> = [];
-    for (let py = 0; py < worldSize; py += STEP) {
-      for (let px = 0; px < worldSize; px += STEP) {
-        const i = (py * worldSize + px) * 4;
+    for (let ly = 0; ly < h; ly += STEP) {
+      for (let lx = 0; lx < w; lx += STEP) {
+        const i = (ly * w + lx) * 4;
         if (Math.abs(data[i] - gr) <= 3 && Math.abs(data[i + 1] - gg) <= 3 && Math.abs(data[i + 2] - gb) <= 3) {
-          gaps.push([px, py]);
+          gaps.push([ox + lx, oy + ly]);
         }
       }
     }
