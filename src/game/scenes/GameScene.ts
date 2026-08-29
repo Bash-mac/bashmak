@@ -269,7 +269,7 @@ export class GameScene extends Phaser.Scene {
     this.eventBus.emit('player:damaged', { currentHp: this.playerEntity.health.currentHp, maxHp: this.playerEntity.stats.maxHp, damage: dmg });
     if (sprite) {
       this.hazardSystem.flashSprite(this, sprite, 0xff4444);
-      this.tweens.add({ targets: sprite, alpha: { from: 0.4, to: 1.0 }, duration: 70, repeat: 3, yoyo: true });
+      this.tweens.add({ targets: sprite, alpha: { from: 1.0, to: 0.4 }, duration: 65, repeat: 9, yoyo: true });
     }
     this.platform.vibrate(50);
 
