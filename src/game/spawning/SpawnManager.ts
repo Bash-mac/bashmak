@@ -45,10 +45,10 @@ export class SpawnManager {
   update(deltaMs: number, runTimeSeconds: number): void {
     const minutes = runTimeSeconds / 60;
 
-    // Time scaling multipliers: HP +22%/min, Speed +5%/min, Damage +15%/min
+    // Time scaling multipliers: HP +22%/min, Speed +3%/min (capped 1.25), Damage +15%/min
     const scaling: EnemyScaling = {
       hpMultiplier: 1 + 0.22 * minutes,
-      speedMultiplier: 1 + 0.05 * minutes,
+      speedMultiplier: Math.min(1.25, 1 + 0.03 * minutes),
       damageMultiplier: 1 + 0.15 * minutes,
     };
 
@@ -65,7 +65,7 @@ export class SpawnManager {
       this.championTimer += deltaMs;
       if (this.championTimer >= this.nextChampionInterval) {
         this.championTimer = 0;
-        this.nextChampionInterval = 45000 + Math.random() * 20000;
+        this.nextChampionInterval = 65000 + Math.random() * 20000;
         this.spawnChampion(minutes, scaling);
       }
     }
@@ -74,7 +74,7 @@ export class SpawnManager {
     this.surgeTimer += deltaMs;
     if (this.surgeTimer >= this.nextSurgeInterval) {
       this.surgeTimer = 0;
-      this.nextSurgeInterval = 20000 + Math.random() * 6000;
+      this.nextSurgeInterval = 32000 + Math.random() * 8000;
       this.triggerWaveSurge(minutes, scaling);
     }
 
@@ -85,38 +85,38 @@ export class SpawnManager {
 
     if (minutes < 0.5) {
       // 0:00 - 0:30 (Energetic start)
-      targetPopulation = 18;
+      targetPopulation = 16;
       maxBatchSize = 3;
       spawnInterval = 450;
     } else if (minutes < 1.0) {
       // 0:30 - 1:00 (Ramping up)
-      targetPopulation = 32;
+      targetPopulation = 24;
       maxBatchSize = 4;
       spawnInterval = 350;
     } else if (minutes < 2.0) {
       // 1:00 - 2:00
-      targetPopulation = 55;
+      targetPopulation = 40;
       maxBatchSize = 5;
       spawnInterval = 260;
     } else if (minutes < 3.5) {
       // 2:00 - 3:30
-      targetPopulation = 80;
+      targetPopulation = 55;
       maxBatchSize = 6;
       spawnInterval = 200;
     } else if (minutes < 5.0) {
       // 3:30 - 5:00
-      targetPopulation = 105;
+      targetPopulation = 72;
       maxBatchSize = 6;
       spawnInterval = 170;
     } else if (minutes < 7.0) {
       // 5:00 - 7:00
-      targetPopulation = 125;
+      targetPopulation = 85;
       maxBatchSize = 7;
       spawnInterval = 150;
     } else {
       // 7:00+ (Endgame swarm)
-      targetPopulation = 145;
-      maxBatchSize = 8;
+      targetPopulation = 100;
+      maxBatchSize = 7;
       spawnInterval = 140;
     }
 
@@ -143,27 +143,27 @@ export class SpawnManager {
     if (minutes < 0.7) {
       // Early surges: Mini-Swarm or Pincer
       if (roll < 0.5) {
-        this.spawnSwarmRush(FODDER_BAT, 7, scaling);
+        this.spawnSwarmRush(FODDER_BAT, 6, scaling);
       } else {
-        this.spawnPincerSurge(CRAWLER_SWARM, 8, scaling);
+        this.spawnPincerSurge(CRAWLER_SWARM, 6, scaling);
       }
     } else if (minutes < 2.0) {
-      // Mid-early surges: Ring ambush or Sprinter rush
-      if (roll < 0.45) {
-        this.spawnRingSurge(FODDER_BAT, 12, scaling);
-      } else if (roll < 0.75) {
-        this.spawnPincerSurge(SPRINTER_BUG, 8, scaling);
+      // Mid-early surges: Sprinter rush, Swarm or (rare) Ring ambush
+      if (roll < 0.35) {
+        this.spawnRingSurge(FODDER_BAT, 9, scaling);
+      } else if (roll < 0.70) {
+        this.spawnPincerSurge(SPRINTER_BUG, 6, scaling);
       } else {
-        this.spawnSwarmRush(CRAWLER_SWARM, 10, scaling);
+        this.spawnSwarmRush(CRAWLER_SWARM, 8, scaling);
       }
     } else {
-      // Mid/late surges: Mixed Ring, Sprinter pincer, Exploder rush
-      if (roll < 0.4) {
-        this.spawnRingSurge(CRAWLER_SWARM, 14, scaling);
-      } else if (roll < 0.7) {
-        this.spawnPincerSurge(ARMORED_SLUG, 8, scaling);
+      // Mid/late surges: Mixed Swarm, Sprinter pincer, (rare) broken Ring
+      if (roll < 0.30) {
+        this.spawnRingSurge(CRAWLER_SWARM, 10, scaling);
+      } else if (roll < 0.70) {
+        this.spawnPincerSurge(ARMORED_SLUG, 6, scaling);
       } else {
-        this.spawnSwarmRush(SPRINTER_BUG, 10, scaling);
+        this.spawnSwarmRush(SPRINTER_BUG, 8, scaling);
       }
     }
   }
@@ -172,8 +172,16 @@ export class SpawnManager {
     const player = this.getPlayerPosition();
     const { maxRadius } = this.getViewport();
     const spawnRadius = maxRadius + 70;
-    const angleStep = (Math.PI * 2) / count;
-    const startAngle = Math.random() * Math.PI;
+
+    // Open a ~110° escape corridor toward the player's movement direction
+    let gapAngle = Math.atan2(player.vy, player.vx);
+    if (player.vx === 0 && player.vy === 0) {
+      gapAngle = Math.random() * Math.PI * 2;
+    }
+    const gapSize = Math.PI * 0.6;
+    const arc = Math.PI * 2 - gapSize;
+    const startAngle = gapAngle + gapSize / 2 + Math.random() * 0.3;
+    const angleStep = arc / (count - 1);
 
     for (let i = 0; i < count; i++) {
       const angle = startAngle + i * angleStep;
@@ -381,7 +389,7 @@ export class SpawnManager {
   reset(): void {
     this.spawnTimer = 0;
     this.surgeTimer = 0;
-    this.nextSurgeInterval = 18000;
+    this.nextSurgeInterval = 32000;
     this.championTimer = 0;
     this.nextChampionInterval = 45000;
     this.currentActiveCount = 0;
