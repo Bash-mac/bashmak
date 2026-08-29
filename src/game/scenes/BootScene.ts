@@ -95,6 +95,9 @@ export class BootScene extends Phaser.Scene {
     this.load.spritesheet('vfx_toilet_lid_spin', '/assets/sprites/vfx/vfx_toilet_lid_spin.png', { frameWidth: 160, frameHeight: 160 });
     this.load.spritesheet('vfx_toilet_lid_spin_slime', '/assets/sprites/vfx/vfx_toilet_lid_spin_slime.png', { frameWidth: 200, frameHeight: 160 });
     this.load.spritesheet('vfx_toilet_lid_impact', '/assets/sprites/vfx/vfx_toilet_lid_impact.png', { frameWidth: 256, frameHeight: 256 });
+    this.load.spritesheet('vfx_sock_stench', '/assets/sprites/vfx/vfx_sock_stench.png', { frameWidth: 256, frameHeight: 256 });
+    this.load.spritesheet('vfx_boot_stomp', '/assets/sprites/vfx/vfx_boot_stomp.png', { frameWidth: 256, frameHeight: 256 });
+    this.load.spritesheet('vfx_orbit_fly', '/assets/sprites/vfx/vfx_orbit_fly.png', { frameWidth: 64, frameHeight: 102 });
 
     // Map Floor Tiles & Decals
     this.load.image('tex_floor', '/assets/sprites/map/tex_floor.webp');
@@ -167,6 +170,7 @@ export class BootScene extends Phaser.Scene {
     this.load.image('icon_weapon_acid_trail', '/assets/ui/icons/icon_weapon_acid_trail.webp');
     this.load.image('icon_weapon_orbiting_flies', '/assets/ui/icons/icon_weapon_orbiting_flies.webp');
     this.load.image('icon_weapon_toilet_lid', '/assets/ui/icons/icon_weapon_toilet_lid.webp');
+    this.load.image('icon_weapon_piezo_taser', '/assets/ui/icons/icon_weapon_piezo_taser.webp');
 
     this.load.image('icon_tome_area', '/assets/ui/icons/icon_tome_area.webp');
     this.load.image('icon_tome_armor', '/assets/ui/icons/icon_tome_armor.webp');
@@ -183,6 +187,14 @@ export class BootScene extends Phaser.Scene {
     this.load.image('icon_evo_typhoon_flail', '/assets/ui/icons/icon_evo_typhoon_flail.webp');
     this.load.image('icon_evo_gatling_carrot', '/assets/ui/icons/icon_evo_gatling_carrot.webp');
     this.load.image('icon_evo_planetary_cataclysm', '/assets/ui/icons/icon_evo_planetary_cataclysm.webp');
+
+    // 5b. Grimoire UI Modular Frame & Row Assets
+    this.load.image('grimoire_frame', '/assets/ui/grimoire/grimoire_frame.webp');
+    this.load.image('grimoire_bg_brick', '/assets/ui/grimoire/grimoire_bg_brick.webp');
+    this.load.image('grimoire_row_acid', '/assets/ui/grimoire/grimoire_row_acid.webp');
+    this.load.image('grimoire_row_electric', '/assets/ui/grimoire/grimoire_row_electric.webp');
+    this.load.image('grimoire_row_fire', '/assets/ui/grimoire/grimoire_row_fire.webp');
+    this.load.image('grimoire_row_void', '/assets/ui/grimoire/grimoire_row_void.webp');
 
     // 6. Enemy Sprites & Death VFX
     for (let i = 1; i <= 3; i++) {
@@ -242,12 +254,8 @@ export class BootScene extends Phaser.Scene {
   private createVypolzokAnimations(): void {
     // 1. Idle (drinking soda, scratching belly, smug grin)
     const idleFrames = [
-      { key: 'vypolzok_idle_1' },
-      { key: 'vypolzok_idle_2' },
-      { key: 'vypolzok_idle_3' },
-      { key: 'vypolzok_idle_4' },
-      { key: 'vypolzok_idle_3' },
-      { key: 'vypolzok_idle_2' },
+      { key: 'vypolzok_idle_1' }, { key: 'vypolzok_idle_2' }, { key: 'vypolzok_idle_3' },
+      { key: 'vypolzok_idle_4' }, { key: 'vypolzok_idle_3' }, { key: 'vypolzok_idle_2' },
     ];
     this.anims.create({
       key: 'vypolzok_anim_idle',
@@ -318,10 +326,7 @@ export class BootScene extends Phaser.Scene {
     this.anims.create({
       key: 'vfx_anim_acid_pool',
       frames: [
-        { key: 'vfx_acid_pool_1' },
-        { key: 'vfx_acid_pool_2' },
-        { key: 'vfx_acid_pool_3' },
-        { key: 'vfx_acid_pool_4' },
+        { key: 'vfx_acid_pool_1' }, { key: 'vfx_acid_pool_2' }, { key: 'vfx_acid_pool_3' }, { key: 'vfx_acid_pool_4' },
       ],
       frameRate: 8,
       repeat: -1,
@@ -331,10 +336,7 @@ export class BootScene extends Phaser.Scene {
     this.anims.create({
       key: 'vfx_anim_impact_splat',
       frames: [
-        { key: 'vfx_impact_splat_1' },
-        { key: 'vfx_impact_splat_2' },
-        { key: 'vfx_impact_splat_3' },
-        { key: 'vfx_impact_splat_4' },
+        { key: 'vfx_impact_splat_1' }, { key: 'vfx_impact_splat_2' }, { key: 'vfx_impact_splat_3' }, { key: 'vfx_impact_splat_4' },
       ],
       frameRate: 14,
       repeat: 0,
@@ -344,15 +346,9 @@ export class BootScene extends Phaser.Scene {
     this.anims.create({
       key: 'vfx_anim_spit_proj',
       frames: [
-        { key: 'vfx_spit_proj_1' },
-        { key: 'vfx_spit_proj_2' },
-        { key: 'vfx_spit_proj_3' },
-        { key: 'vfx_spit_proj_4' },
-        { key: 'vfx_spit_proj_5' },
-        { key: 'vfx_spit_proj_6' },
-        { key: 'vfx_spit_proj_7' },
-        { key: 'vfx_spit_proj_8' },
-        { key: 'vfx_spit_proj_9' },
+        { key: 'vfx_spit_proj_1' }, { key: 'vfx_spit_proj_2' }, { key: 'vfx_spit_proj_3' },
+        { key: 'vfx_spit_proj_4' }, { key: 'vfx_spit_proj_5' }, { key: 'vfx_spit_proj_6' },
+        { key: 'vfx_spit_proj_7' }, { key: 'vfx_spit_proj_8' }, { key: 'vfx_spit_proj_9' },
       ],
       frameRate: 16,
       repeat: -1,
@@ -425,9 +421,7 @@ export class BootScene extends Phaser.Scene {
     this.anims.create({
       key: 'vfx_anim_carrot_fly',
       frames: [
-        { key: 'vfx_carrot_fly_1' },
-        { key: 'vfx_carrot_fly_2' },
-        { key: 'vfx_carrot_fly_3' },
+        { key: 'vfx_carrot_fly_1' }, { key: 'vfx_carrot_fly_2' }, { key: 'vfx_carrot_fly_3' },
       ],
       frameRate: 12,
       repeat: -1,
@@ -437,10 +431,7 @@ export class BootScene extends Phaser.Scene {
     this.anims.create({
       key: 'vfx_anim_carrot_splat',
       frames: [
-        { key: 'vfx_carrot_splat_1' },
-        { key: 'vfx_carrot_splat_2' },
-        { key: 'vfx_carrot_splat_3' },
-        { key: 'vfx_carrot_splat_4' },
+        { key: 'vfx_carrot_splat_1' }, { key: 'vfx_carrot_splat_2' }, { key: 'vfx_carrot_splat_3' }, { key: 'vfx_carrot_splat_4' },
       ],
       frameRate: 14,
       repeat: 0,
@@ -482,6 +473,24 @@ export class BootScene extends Phaser.Scene {
       frames: this.anims.generateFrameNumbers('vfx_toilet_lid_impact', { start: 0, end: 5 }),
       frameRate: 18,
       repeat: 0,
+    });
+    this.anims.create({
+      key: 'vfx_anim_sock_stench',
+      frames: this.anims.generateFrameNumbers('vfx_sock_stench', { start: 0, end: 11 }),
+      frameRate: 26,
+      repeat: 0,
+    });
+    this.anims.create({
+      key: 'vfx_anim_boot_stomp',
+      frames: this.anims.generateFrameNumbers('vfx_boot_stomp', { start: 0, end: 11 }),
+      frameRate: 30,
+      repeat: 0,
+    });
+    this.anims.create({
+      key: 'anim_orbit_fly_buzz',
+      frames: this.anims.generateFrameNumbers('vfx_orbit_fly', { start: 0, end: 3 }),
+      frameRate: 18,
+      repeat: -1,
     });
   }
 }

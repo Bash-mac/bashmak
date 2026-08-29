@@ -9,6 +9,8 @@ export class VfxPool {
   private piezoMuzzlePool: ObjectPool<Phaser.GameObjects.Sprite>;
   private piezoHitPool: ObjectPool<Phaser.GameObjects.Sprite>;
   private toiletLidImpactPool: ObjectPool<Phaser.GameObjects.Sprite>;
+  private sockStenchPool: ObjectPool<Phaser.GameObjects.Sprite>;
+  private bootStompPool: ObjectPool<Phaser.GameObjects.Sprite>;
   private proceduralLightningPool: ObjectPool<Phaser.GameObjects.Graphics>;
   private scene: Phaser.Scene;
 
@@ -115,6 +117,38 @@ export class VfxPool {
       maxSize: 30,
     });
     this.toiletLidImpactPool.prewarm(10);
+
+    this.sockStenchPool = new ObjectPool<Phaser.GameObjects.Sprite>(scene, {
+      create: () => {
+        const spr = scene.add.sprite(0, 0, 'vfx_sock_stench')
+          .setDepth(6)
+          .setBlendMode(Phaser.BlendModes.NORMAL);
+        return spr;
+      },
+      onRelease: (spr) => {
+        spr.stop();
+        spr.setScale(1);
+        spr.setAlpha(1);
+      },
+      maxSize: 20,
+    });
+    this.sockStenchPool.prewarm(8);
+
+    this.bootStompPool = new ObjectPool<Phaser.GameObjects.Sprite>(scene, {
+      create: () => {
+        const spr = scene.add.sprite(0, 0, 'vfx_boot_stomp')
+          .setDepth(7)
+          .setBlendMode(Phaser.BlendModes.NORMAL);
+        return spr;
+      },
+      onRelease: (spr) => {
+        spr.stop();
+        spr.setScale(1);
+        spr.setAlpha(1);
+      },
+      maxSize: 20,
+    });
+    this.bootStompPool.prewarm(8);
 
     this.proceduralLightningPool = new ObjectPool<Phaser.GameObjects.Graphics>(scene, {
       create: () => {
@@ -239,6 +273,38 @@ export class VfxPool {
     } else {
       this.scene.time.delayedCall(160, () => {
         this.toiletLidImpactPool.release(spr);
+      });
+    }
+  }
+
+  public spawnSockStench(x: number, y: number, scale = 1): void {
+    const spr = this.sockStenchPool.get();
+    spr.setPosition(x, y);
+    spr.setScale(scale);
+
+    if (this.scene.anims.exists('vfx_anim_sock_stench')) {
+      spr.play('vfx_anim_sock_stench').once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+        this.sockStenchPool.release(spr);
+      });
+    } else {
+      this.scene.time.delayedCall(450, () => {
+        this.sockStenchPool.release(spr);
+      });
+    }
+  }
+
+  public spawnBootStomp(x: number, y: number, scale = 1): void {
+    const spr = this.bootStompPool.get();
+    spr.setPosition(x, y);
+    spr.setScale(scale);
+
+    if (this.scene.anims.exists('vfx_anim_boot_stomp')) {
+      spr.play('vfx_anim_boot_stomp').once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+        this.bootStompPool.release(spr);
+      });
+    } else {
+      this.scene.time.delayedCall(380, () => {
+        this.bootStompPool.release(spr);
       });
     }
   }

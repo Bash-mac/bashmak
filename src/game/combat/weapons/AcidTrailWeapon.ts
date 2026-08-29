@@ -1,4 +1,3 @@
-import Phaser from 'phaser';
 import type { IWeapon, WeaponContext } from './IWeapon';
 
 export class AcidTrailWeapon implements IWeapon {
@@ -6,17 +5,11 @@ export class AcidTrailWeapon implements IWeapon {
   readonly name = 'Дырявый Носок';
 
   private stinkAuraTimer = 0;
-  private auraGfx?: Phaser.GameObjects.Graphics;
 
   update(delta: number, ctx: WeaponContext): void {
     const mods = ctx.gameState.playerModifiers;
     const level = mods.acidTrailLevel ?? 0;
-    if (level <= 0) {
-      if (this.auraGfx) {
-        this.auraGfx.clear();
-      }
-      return;
-    }
+    if (level <= 0) return;
 
     this.stinkAuraTimer += delta;
     if (this.stinkAuraTimer >= 450) {
@@ -29,32 +22,12 @@ export class AcidTrailWeapon implements IWeapon {
     const px = ctx.player.x;
     const py = ctx.player.y;
     const mods = ctx.gameState.playerModifiers;
-    const auraRadius = (70 + (level - 1) * 12) * (1 + mods.attackAreaBonus);
+    const auraRadius = (110 + (level - 1) * 18) * (1 + mods.attackAreaBonus);
     const damage = Math.round((5 + ctx.player.stats.damage * 0.5 + (level - 1) * 6) * (1 + mods.damagePercentBonus));
 
-    // Stinky Sock Placeholder VFX: translucent green pulsing stench radius
-    if (!this.auraGfx) {
-      this.auraGfx = ctx.scene.add.graphics().setDepth(7);
-    }
-    ctx.scene.tweens.killTweensOf(this.auraGfx);
-    this.auraGfx.clear();
-    this.auraGfx.setAlpha(1);
-    this.auraGfx.lineStyle(2, 0x84cc16, 0.4);
-    this.auraGfx.fillStyle(0xa3e635, 0.08);
-    this.auraGfx.fillCircle(px, py, auraRadius);
-    this.auraGfx.strokeCircle(px, py, auraRadius);
-
-    ctx.scene.tweens.add({
-      targets: this.auraGfx,
-      alpha: 0,
-      duration: 380,
-      onComplete: () => {
-        if (this.auraGfx) {
-          this.auraGfx.clear();
-          this.auraGfx.setAlpha(1);
-        }
-      },
-    });
+    // Stench Aura VFX from ArcadaEffector (calibrated to true 140px visual content diameter)
+    const vfxScale = (auraRadius * 2) / 140;
+    ctx.vfxPool?.spawnSockStench(px, py, vfxScale);
 
     // Damage enemies directly inside stench aura
     const auraRadiusSq = auraRadius * auraRadius;

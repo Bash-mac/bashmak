@@ -15,6 +15,7 @@ export class ProjectilePool {
     this.getPoolForTexture('tex_homing_dagger', 20);
     this.getPoolForTexture('tex_eggplant_ball', 10);
     this.getPoolForTexture('vfx_toilet_lid_spin', 10);
+    this.getPoolForTexture('vfx_orbit_fly', 10);
   }
 
   private getPoolForTexture(

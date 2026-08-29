@@ -22,6 +22,7 @@ export class HeroFactory {
     const scale = isMarkovka ? 0.20 : 0.72;
 
     const sprite = scene.physics.add.sprite(x, y, textureKey);
+    sprite.setName('hero');
     sprite.setScale(scale).setCollideWorldBounds(true).setDepth(10);
 
     const targetRadius = isMarkovka ? 14 : 18;

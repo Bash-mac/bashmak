@@ -140,8 +140,10 @@ export class MenuScene extends Phaser.Scene {
       });
     });
 
-    // 4. Modals
     this.grimoireModal = new GrimoireModal(this);
+    if (typeof window !== 'undefined' && window.location.search.includes('grimoire=1')) {
+      this.time.delayedCall(300, () => this.grimoireModal.show());
+    }
     this.heroSelectModal = new HeroSelectModal(this, (hero) => {
       if (this.selectedHeroText) {
         this.selectedHeroText.setText(`[ ${hero.name.toUpperCase()} ]`);

@@ -56,7 +56,7 @@ const HERO_DOSSIER_DATA: Record<string, HeroDossierExtra> = {
     weaponDesc: 'Скоростной веерный залп острых морковок с пробитием целей.',
     traitName: 'ЖАЖДА СКОРОСТИ',
     traitDesc: 'Убийства дают стаки скорости. При 10 стаках — следующая атака наносит 2× урон.',
-    favorites: 'УЛИЧНЫЕ ДРАКИ\nИРОКЕЗЫ\nХАОС И СКОРОСТЬ',
+    favorites: 'УЛИЧНЫЕ ДРАКИ\nХАОС И СКОРОСТЬ\nВОРЧАТЬ И БУБНЕТЬ\nТРЯСТИ ДРУЗЕЙ',
   },
   hero_baklazhan: {
     aka: 'ТАРАН',
@@ -315,9 +315,9 @@ export class HeroSelectModal {
     const titleText = this.scene.add
       .text(0, 0, hero.name.toUpperCase(), {
         fontSize: '30px',
-        color: '#15803d',
+        color: '#7f1d1d',
         fontFamily: 'Gagalin',
-        stroke: '#052e16',
+        stroke: '#450a0a',
         strokeThickness: 3.5,
       })
       .setOrigin(0, 0.5);
@@ -481,7 +481,7 @@ export class HeroSelectModal {
     const stickyHeader = this.scene.add
       .text(4, 12, 'ЛЮБИТ: ', {
         fontSize: '13px',
-        color: '#14532d',
+        color: '#7f1d1d',
         fontFamily: 'Gagalin',
         stroke: '#000000',
         strokeThickness: 2,

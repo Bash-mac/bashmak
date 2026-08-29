@@ -11,6 +11,7 @@ export interface EvolutionRecipe {
   requiredTomeId: string;
   requiredTomeName: string;
   iconKey?: string;
+  rowBgKey?: string;
   apply: (gameState: GameState) => void;
 }
 
@@ -19,13 +20,14 @@ export const EVOLUTION_RECIPES: EvolutionRecipe[] = [
   {
     id: EVOLUTION_IDS.ACID_TSUNAMI,
     name: 'Кислотный Цунами',
-    comicTitle: ' ACID TSUNAMI ',
+    comicTitle: 'ACID TSUNAMI',
     description: 'Плевок выпускает огромные токсичные волны слизи на весь экран с перманентным DoT и замедлением врагов на 60%!',
     baseWeaponId: WEAPON_IDS.SLIME_SPIT,
     baseWeaponName: 'Слизеплюй (Lv.5)',
     requiredTomeId: TOME_IDS.MAGNET,
-    requiredTomeName: '«Липкая Жвачка» (Lv.5)',
+    requiredTomeName: 'Липкая Жвачка (Lv.5)',
     iconKey: 'icon_evo_acid_tsunami',
+    rowBgKey: 'grimoire_row_acid',
     apply: (gameState: GameState) => {
       const mod = gameState.playerModifiers;
       mod.isAcidTsunamiEvolved = true;
@@ -43,13 +45,14 @@ export const EVOLUTION_RECIPES: EvolutionRecipe[] = [
   {
     id: EVOLUTION_IDS.TYPHOON_FLAIL,
     name: 'Тифонный Цеп',
-    comicTitle: ' TYPHOON FLAIL ',
+    comicTitle: 'TYPHOON FLAIL',
     description: '4 стальных шнурка непрерывно вращаются на 360° вокруг Башмака, затягивая мобов в воронку и расплющивая их!',
     baseWeaponId: WEAPON_IDS.LACE_WHIP,
     baseWeaponName: 'Шнуровой Кнут (Lv.5)',
     requiredTomeId: TOME_IDS.QUANTITY,
-    requiredTomeName: '«Двойной Зоб» (Lv.5)',
+    requiredTomeName: 'Двойной Зоб (Lv.5)',
     iconKey: 'icon_evo_typhoon_flail',
+    rowBgKey: 'grimoire_row_electric',
     apply: (gameState: GameState) => {
       const mod = gameState.playerModifiers;
       mod.isTyphoonFlailEvolved = true;
@@ -65,13 +68,14 @@ export const EVOLUTION_RECIPES: EvolutionRecipe[] = [
   {
     id: EVOLUTION_IDS.GATLING_CARROT,
     name: 'Гатлинг-Морковка',
-    comicTitle: ' GATLING CARROT ',
+    comicTitle: 'GATLING CARROT',
     description: 'Лазерный шквал из 20 сверхзвуковых бумерангов-пил в секунду со 100% шансом критического взрыва!',
     baseWeaponId: WEAPON_IDS.CARROT_BARRAGE,
     baseWeaponName: 'Морковный Град (Lv.5)',
     requiredTomeId: TOME_IDS.ATTACK_SPEED,
-    requiredTomeName: '«Энергетик» (Lv.5)',
+    requiredTomeName: 'Энергетик (Lv.5)',
     iconKey: 'icon_evo_gatling_carrot',
+    rowBgKey: 'grimoire_row_fire',
     apply: (gameState: GameState) => {
       const mod = gameState.playerModifiers;
       mod.isGatlingCarrotEvolved = true;
@@ -88,13 +92,14 @@ export const EVOLUTION_RECIPES: EvolutionRecipe[] = [
   {
     id: EVOLUTION_IDS.PLANETARY_ROLL,
     name: 'Планетарный Катаклизм',
-    comicTitle: ' PLANETARY ROLL ',
+    comicTitle: 'PLANETARY ROLL',
     description: 'Баклажан превращается в колоссальную сферу-рикошет, сминающую боссов и вызывающую сейсмические взрывы на каждом метре!',
     baseWeaponId: WEAPON_IDS.EGGPLANT_ROLL,
     baseWeaponName: 'Фиолетовый Шар (Lv.5)',
     requiredTomeId: TOME_IDS.DAMAGE,
-    requiredTomeName: '«Слизь-Кола» (Lv.5)',
+    requiredTomeName: 'Слизь-Кола (Lv.5)',
     iconKey: 'icon_evo_planetary_cataclysm',
+    rowBgKey: 'grimoire_row_void',
     apply: (gameState: GameState) => {
       const mod = gameState.playerModifiers;
       mod.isPlanetaryRollEvolved = true;

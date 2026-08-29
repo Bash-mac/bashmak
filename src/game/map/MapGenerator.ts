@@ -163,12 +163,13 @@ export class MapGenerator {
           const pillar = pillarsGroup.create(px, py, 'tex_prop_pillar') as Phaser.Types.Physics.Arcade.SpriteWithStaticBody;
           pillar.setDisplaySize(115, 135);
           pillar.setDepth(8);
-          pillar.setSize(pillar.width * 0.75, pillar.height * 0.5);
-          pillar.setOffset(pillar.width * 0.125, pillar.height * 0.45);
+          // Collision covers only the foot of the column so characters can step behind it
           pillar.refreshBody();
+          pillar.body.setSize(78, 54);
+          pillar.body.setOffset((115 - 78) / 2, 135 - 54 - 4);
         }
 
-        // 2.5 Breakable Barrels (Tier 3: Compact loot crates, size 44x50px, tight clusters)
+    // 2.5 Breakable Barrels (Tier 3: Compact loot crates, size 44x50px, tight clusters)
         if ((gx * 2 + gy * 7) % 5 < 2) {
           const stashX = cellCenterX + Phaser.Math.Between(-140, 140);
           const stashY = cellCenterY + Phaser.Math.Between(-140, 140);
@@ -190,6 +191,23 @@ export class MapGenerator {
         }
       }
     }
+
+    // 3. Pseudo-3D occlusion: a column covers characters standing behind it and yields
+    // to those in front. Cheap per-frame Y swap, no allocations.
+    let heroSprite: Phaser.GameObjects.Sprite | null = null;
+    const occlusionHandler = () => {
+      if (!heroSprite || !heroSprite.active) heroSprite = (scene.children.getByName('hero') as Phaser.GameObjects.Sprite) || null;
+      if (!heroSprite) return;
+      const heroY = heroSprite.y;
+      pillarsGroup.getChildren().forEach((p) => {
+        const pillar = p as Phaser.GameObjects.Sprite;
+        pillar.setDepth(heroY < pillar.y + 36 ? 11 : 8);
+      });
+    };
+    scene.events.on(Phaser.Scenes.Events.UPDATE, occlusionHandler);
+    scene.events.on(Phaser.Scenes.Events.SHUTDOWN, () => {
+      scene.events.off(Phaser.Scenes.Events.UPDATE, occlusionHandler);
+    });
 
     return { pillarsGroup, barrelsGroup, shrinesGroup };
   }

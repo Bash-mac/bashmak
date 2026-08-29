@@ -78,10 +78,10 @@ export class OrbitingFliesWeapon implements IWeapon {
         const distSq = dx * dx + dy * dy;
         if (distSq <= hitRadiusSq) {
           ctx.combatSystem.applyDamage(ctx.player, enemy, damage);
-          this.hitCooldowns.set(enemy.id, 280);
+          this.hitCooldowns.set(enemy.id, 350);
 
           const pushAngle = Math.atan2(ey - py, ex - px);
-          enemy.applyKnockback(Math.cos(pushAngle) * 160, Math.sin(pushAngle) * 160, 100);
+          enemy.applyKnockback(Math.cos(pushAngle) * 130, Math.sin(pushAngle) * 130, 90);
 
           if (ctx.vfxPool) {
             ctx.vfxPool.spawnImpactSplat(fx, fy, 0.6);
@@ -110,12 +110,15 @@ export class OrbitingFliesWeapon implements IWeapon {
     // 2. Spawn missing flies
     while (this.flies.length < targetCount) {
       const spr = ctx.projectilePool
-        ? ctx.projectilePool.getProjectile('tex_homing_dagger', ctx.player.x, ctx.player.y)
-        : (ctx.projectilesGroup.create(ctx.player.x, ctx.player.y, 'tex_homing_dagger') as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody);
+        ? ctx.projectilePool.getProjectile('vfx_orbit_fly', ctx.player.x, ctx.player.y)
+        : (ctx.projectilesGroup.create(ctx.player.x, ctx.player.y, 'vfx_orbit_fly') as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody);
 
-      spr.setScale(1.1);
-      spr.setTint(0x4ade80); // Toxic green fly
+      spr.setScale(0.42);
+      spr.clearTint();
       spr.setDepth(9);
+      if (ctx.scene.anims.exists('anim_orbit_fly_buzz')) {
+        spr.play('anim_orbit_fly_buzz');
+      }
       if (spr.body) {
         spr.body.enable = false; // Managed directly via orbital positions
       }

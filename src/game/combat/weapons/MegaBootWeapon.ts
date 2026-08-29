@@ -48,13 +48,15 @@ export class MegaBootWeapon implements IWeapon {
     const stompX = px + Math.cos(stompAngle) * stompDist;
     const stompY = py + Math.sin(stompAngle) * stompDist;
 
-    // Visual Cartoon Comic Stomp VFX
-    this.spawnStompVFX(ctx.scene, stompX, stompY, baseRadius);
-
     // Apply Damage and Knockback in radius
-    const hitRadius = lvl >= 5 ? baseRadius * 1.5 : baseRadius; // L5 = 360 circle
-    const hitX = lvl >= 5 ? px : stompX;
-    const hitY = lvl >= 5 ? py : stompY;
+    const isLvl5 = lvl >= 5;
+    const hitRadius = isLvl5 ? baseRadius * 1.5 : baseRadius; // L5 = 360 circle
+    const hitX = isLvl5 ? px : stompX;
+    const hitY = isLvl5 ? py : stompY;
+
+    // Visual ArcadaEffector Seismic Stomp VFX (calibrated to 160px content diameter)
+    const mainScale = (hitRadius * 2) / 160;
+    ctx.vfxPool?.spawnBootStomp(hitX, hitY, mainScale);
 
     ctx.enemiesMap.forEach((enemy) => {
       if (!enemy.isAlive || enemy.isExploding) return;
@@ -76,12 +78,14 @@ export class MegaBootWeapon implements IWeapon {
     if (lvl >= 3 && lvl < 5) {
       const backX = px - Math.cos(stompAngle) * stompDist;
       const backY = py - Math.sin(stompAngle) * stompDist;
-      this.spawnStompVFX(ctx.scene, backX, backY, baseRadius * 0.85);
+      const backRadius = baseRadius * 0.85;
+      const backScale = (backRadius * 2) / 160;
+      ctx.vfxPool?.spawnBootStomp(backX, backY, backScale);
 
       ctx.enemiesMap.forEach((enemy) => {
         if (!enemy.isAlive || enemy.isExploding) return;
         const dist = Phaser.Math.Distance.Between(backX, backY, enemy.x, enemy.y);
-        if (dist <= baseRadius * 0.85) {
+        if (dist <= backRadius) {
           ctx.combatSystem.applyDamage(ctx.player, enemy, Math.round(baseDamage * 0.7));
           const kbAngle = Phaser.Math.Angle.Between(px, py, enemy.x, enemy.y);
           enemy.applyKnockback(Math.cos(kbAngle) * 280, Math.sin(kbAngle) * 280, 180);
@@ -93,46 +97,6 @@ export class MegaBootWeapon implements IWeapon {
     AudioManager.getInstance().playBashStomp();
     ctx.scene.cameras.main.shake(120, 0.005);
     ctx.vibrate?.(45);
-  }
-
-  private spawnStompVFX(scene: Phaser.Scene, x: number, y: number, radius: number): void {
-    const stompGfx = scene.add.graphics().setDepth(11);
-    stompGfx.fillStyle(0xfacc15, 0.85);
-    stompGfx.fillCircle(x, y, radius);
-    stompGfx.lineStyle(4, 0x78350f, 1);
-    stompGfx.strokeCircle(x, y, radius);
-
-    // Comic impact shockwave ring
-    scene.tweens.add({
-      targets: stompGfx,
-      scaleX: 1.35,
-      scaleY: 1.35,
-      alpha: 0,
-      duration: 260,
-      ease: 'Quad.easeOut',
-      onComplete: () => stompGfx.destroy(),
-    });
-
-    // Comic "POW!" text popup
-    const powText = scene.add.text(x, y - 10, 'BASH!', {
-      fontSize: `${Math.round(radius * 0.45)}px`,
-      fontStyle: 'bold',
-      color: '#fef08a',
-      fontFamily: 'monospace',
-      stroke: '#451a03',
-      strokeThickness: 5,
-    }).setOrigin(0.5).setDepth(20);
-
-    scene.tweens.add({
-      targets: powText,
-      y: y - 35,
-      scaleX: 1.3,
-      scaleY: 1.3,
-      alpha: 0,
-      duration: 320,
-      ease: 'Back.easeOut',
-      onComplete: () => powText.destroy(),
-    });
   }
 
   private findNearestEnemy(ctx: WeaponContext): Entity | null {
