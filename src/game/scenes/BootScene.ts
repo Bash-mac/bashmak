@@ -101,6 +101,8 @@ export class BootScene extends Phaser.Scene {
     this.load.image('floor_cracked', '/assets/sprites/map/floor_cracked.webp');
     this.load.image('floor_sewage', '/assets/sprites/map/floor_sewage.webp');
     this.load.image('floor_graffiti', '/assets/sprites/map/floor_graffiti.webp');
+    this.load.atlas('atlas_floor_bricks', '/assets/sprites/map/atlas_floor_bricks.webp', '/assets/sprites/map/atlas_floor_bricks.json');
+    this.load.atlas('atlas_floor_decals', '/assets/sprites/map/atlas_floor_decals.webp', '/assets/sprites/map/atlas_floor_decals.json');
 
     // Map Architecture & Interactive Props
     this.load.image('tex_prop_pillar', '/assets/sprites/map/props/tex_prop_pillar.webp');
