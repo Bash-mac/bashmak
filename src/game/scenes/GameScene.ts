@@ -106,7 +106,7 @@ export class GameScene extends Phaser.Scene {
 
     const onLvlDone = () => {
       if (this.gameState.pendingLevelUps > 0) this.levelUpModal.show();
-      else { this.isGamePaused = false; this.physics.resume(); this.inputManager.setEnabled(true); }
+      else { this.isGamePaused = false; this.physics.resume(); this.inputManager.setEnabled(true); this.playerIframeTimerMs = 650; }
     };
     this.levelUpModal = new LevelUpModal(this,
       (upgrade, lvl) => {
