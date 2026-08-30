@@ -1,14 +1,27 @@
 import Phaser from 'phaser';
 import { SaveManager } from '../core/SaveManager';
-import { META_POWERUPS, type MetaPowerUpDefinition } from '../data/metaUpgrades';
 import { createPlatformAdapter } from '../../platform';
+import { type ShopItemMock, SHOP_MOCK_CATALOG } from '../data/shopCatalog';
 
 export class UpgradesScene extends Phaser.Scene {
   private saveManager = SaveManager.getInstance();
   private platform = createPlatformAdapter();
+  private rootContainer!: Phaser.GameObjects.Container;
+  private selectedCategory = 'МУТАЦИИ';
+  private selectedItem: ShopItemMock | null = null;
+
+  private categoryButtons: { tab: string; container: Phaser.GameObjects.Container; bg: Phaser.GameObjects.Image; text: Phaser.GameObjects.Text; w: number; h: number }[] = [];
+  private slotContainers: Phaser.GameObjects.Container[] = [];
+  private rightDetailContainer!: Phaser.GameObjects.Container;
+  private detailTitleText!: Phaser.GameObjects.Text;
+  private detailStatsText!: Phaser.GameObjects.Text;
+  private detailDescText!: Phaser.GameObjects.Text;
+  private detailPips: Phaser.GameObjects.Rectangle[] = [];
+  private actionButtonBg!: Phaser.GameObjects.Image;
+  private actionButtonText!: Phaser.GameObjects.Text;
   private gooText!: Phaser.GameObjects.Text;
-  private cardsContainer!: Phaser.GameObjects.Container;
-  private maxScrollY = 0;
+
+  private itemsCatalog: ShopItemMock[] = [...SHOP_MOCK_CATALOG];
 
   constructor() {
     super({ key: 'UpgradesScene' });
@@ -18,287 +31,322 @@ export class UpgradesScene extends Phaser.Scene {
     const width = this.scale.width;
     const height = this.scale.height;
 
-    // 1. Background
-    const bgScale = Math.max(width / 1280, height / 720);
-    if (this.textures.exists('menu_bg')) {
-      const bg = this.add.image(width / 2, height / 2, 'menu_bg').setScale(bgScale);
-      bg.setTint(0x475569); // Darker tint for lab feel
-    } else {
-      this.add.rectangle(0, 0, width, height, 0x090d16).setOrigin(0, 0);
-    }
+    this.add.rectangle(width / 2, height / 2, width, height, 0x070a0f);
 
-    // Dark overlay
-    this.add.rectangle(0, 0, width, height, 0x050811, 0.75).setOrigin(0, 0);
+    const uiScale = Math.min(width / 1280, height / 720);
+    this.rootContainer = this.add.container(width / 2, height / 2).setScale(uiScale);
 
-    // 2. Top Header Bar
-    const headerY = 50;
+    const onResize = (gameSize: Phaser.Structs.Size) => {
+      this.rootContainer.setPosition(gameSize.width / 2, gameSize.height / 2).setScale(Math.min(gameSize.width / 1280, gameSize.height / 720));
+    };
+    this.scale.on('resize', onResize);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.scale.off('resize', onResize));
 
-    // Title
-    const title = this.add.text(width / 2, headerY, 'MUTATION LAB', {
-      fontSize: width < 600 ? '26px' : '36px',
-      fontStyle: 'bold',
-      color: '#facc15',
-      fontFamily: 'monospace',
-      stroke: '#451a03',
-      strokeThickness: 5,
-    }).setOrigin(0.5);
+    const roomBg = this.add.image(0, 0, 'shop_room_bg').setDisplaySize(1280, 720);
+    const sign = this.add.image(175 - 640, 98 - 360, 'shop_sign').setDisplaySize(390, 155);
+    const leftFrame = this.add.image(-525, 2, 'shop_left_frame').setDisplaySize(200, 480);
+    const board = this.add.image(485 - 640, 370 - 360, 'shop_board_slots').setDisplaySize(580, 440);
+    const topBar = this.add.image(960 - 640, 62 - 360, 'shop_top_bar').setDisplaySize(490, 102);
+    const sellerDesk = this.add.image(990 - 640, 370 - 360, 'shop_seller_desk').setDisplaySize(535, 645);
+    this.rootContainer.add([roomBg, sign, leftFrame, board, topBar, sellerDesk]);
 
-    this.tweens.add({
-      targets: title,
-      scaleX: 1.03,
-      scaleY: 0.98,
-      duration: 1600,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut',
-    });
+    this.createHeader();
+    this.createTopResources();
+    this.createCategoryTabs();
+    this.createSlotsGrid();
+    this.createRightDetails();
+    this.createBottomBar();
 
-    // Subtitle
-    this.add.text(width / 2, headerY + 32, 'ПОСТОЯННЫЕ МУТАЦИИ ЗА ТОКСИЧНУЮ СЛИЗЬ', {
-      fontSize: width < 600 ? '11px' : '14px',
-      color: '#94a3b8',
-      fontFamily: 'monospace',
-    }).setOrigin(0.5);
-
-    // GOO Balance Badge (Top Right or Center Top)
-    const gooBadgeX = width / 2;
-    const gooBadgeY = headerY + 68;
-
-    const gooBg = this.add.rectangle(gooBadgeX, gooBadgeY, 220, 36, 0x14532d, 0.9);
-    gooBg.setStrokeStyle(2, 0x4ade80);
-
-    this.gooText = this.add.text(gooBadgeX, gooBadgeY, ` GOO: ${this.saveManager.getGoo()}`, {
-      fontSize: '18px',
-      fontStyle: 'bold',
-      color: '#4ade80',
-      fontFamily: 'monospace',
-    }).setOrigin(0.5);
-
-    // 3. PowerUps Cards List (Scrollable Container)
-    const listTopY = headerY + 100;
-    const listBottomY = height - 85;
-    const listHeight = listBottomY - listTopY;
-
-    this.cardsContainer = this.add.container(0, 0);
-    this.renderPowerUpCards(width, listTopY);
-
-    // Mask for scrolling
-    const shape = this.make.graphics({ x: 0, y: 0 });
-    shape.fillRect(0, listTopY, width, listHeight);
-    const mask = shape.createGeometryMask();
-    this.cardsContainer.setMask(mask);
-
-    // Touch / Wheel Drag Scroll
-    this.input.on('wheel', (_pointer: any, _gameObjects: any, _deltaX: number, deltaY: number) => {
-      this.scroll(deltaY * 0.8);
-    });
-
-    let dragStartY = 0;
-    let containerStartY = 0;
-    let isDragging = false;
-
-    this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-      if (pointer.y >= listTopY && pointer.y <= listBottomY) {
-        isDragging = true;
-        dragStartY = pointer.y;
-        containerStartY = this.cardsContainer.y;
-      }
-    });
-
-    this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
-      if (isDragging) {
-        const delta = pointer.y - dragStartY;
-        this.setScroll(containerStartY + delta);
-      }
-    });
-
-    this.input.on('pointerup', () => {
-      isDragging = false;
-    });
-
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
-      this.input.removeAllListeners();
-    });
-
-    // 4. Bottom Footer (Action Buttons)
-    const footerY = height - 42;
-
-    // Refund All Button
-    const refundBtn = this.add.rectangle(width * 0.3, footerY, width < 600 ? 140 : 200, 44, 0x7f1d1d).setInteractive({ useHandCursor: true });
-    refundBtn.setStrokeStyle(2, 0xef4444);
-
-    this.add.text(width * 0.3, footerY, ' 100% СБРОС', {
-      fontSize: width < 600 ? '12px' : '14px',
-      fontStyle: 'bold',
-      color: '#fecaca',
-      fontFamily: 'monospace',
-    }).setOrigin(0.5);
-
-    refundBtn.on('pointerdown', () => {
-      this.platform.vibrate(40);
-      const refunded = this.saveManager.refundAll();
-      this.refreshUI();
-      this.showFloatingNotice(`Возвращено: +${refunded} GOO!`, 0x4ade80);
-    });
-
-    // Back to Menu Button
-    const backBtn = this.add.rectangle(width * 0.7, footerY, width < 600 ? 140 : 200, 44, 0x1e293b).setInteractive({ useHandCursor: true });
-    backBtn.setStrokeStyle(2, 0x64748b);
-
-    this.add.text(width * 0.7, footerY, ' В МЕНЮ', {
-      fontSize: width < 600 ? '13px' : '15px',
-      fontStyle: 'bold',
-      color: '#ffffff',
-      fontFamily: 'monospace',
-    }).setOrigin(0.5);
-
-    backBtn.on('pointerdown', () => {
-      this.platform.vibrate(30);
-      this.scene.start('MenuScene');
-    });
+    this.selectItem(this.itemsCatalog[0]);
   }
 
-  private renderPowerUpCards(width: number, startY: number): void {
-    this.cardsContainer.removeAll(true);
-
-    const cardWidth = Math.min(width - 32, 680);
-    const cardHeight = 84;
-    const cardSpacing = 12;
-    let currentY = startY;
-
-    META_POWERUPS.forEach((powerUp) => {
-      const card = this.createCard(width / 2, currentY + cardHeight / 2, cardWidth, cardHeight, powerUp);
-      this.cardsContainer.add(card);
-      currentY += cardHeight + cardSpacing;
-    });
-
-    const totalContentHeight = currentY - startY;
-    const visibleHeight = this.scale.height - startY - 85;
-    this.maxScrollY = Math.max(0, totalContentHeight - visibleHeight);
-    this.cardsContainer.y = 0;
+  private createHeader(): void {
+    const title = this.add.text(175 - 640, 98 - 360, 'ЛАВКА БАКЛАЖАНА', {
+      fontFamily: 'Gagalin, monospace', fontSize: '24px', color: '#facc15', stroke: '#3b0764', strokeThickness: 4,
+    }).setOrigin(0.5);
+    this.tweens.add({ targets: title, scaleX: 1.03, scaleY: 0.97, duration: 1800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    this.rootContainer.add(title);
   }
 
-  private createCard(
-    x: number,
-    y: number,
-    w: number,
-    h: number,
-    powerUp: MetaPowerUpDefinition
-  ): Phaser.GameObjects.Container {
-    const cardContainer = this.add.container(x, y);
+  private createTopResources(): void {
+    const resY = 62 - 360;
+    const font = { fontFamily: 'Gagalin, monospace', fontSize: '18px' };
+    this.gooText = this.add.text(905 - 640, resY, `${this.saveManager.getGoo()}`, { ...font, color: '#4ade80', stroke: '#052e16', strokeThickness: 3 }).setOrigin(0.5);
+    const crystals = this.add.text(1050 - 640, resY, '42', { ...font, color: '#c084fc', stroke: '#3b0764', strokeThickness: 3 }).setOrigin(0.5);
+    const scrap = this.add.text(1195 - 640, resY, '12', { ...font, color: '#facc15', stroke: '#713f12', strokeThickness: 3 }).setOrigin(0.5);
+    this.rootContainer.add([this.gooText, crystals, scrap]);
+  }
 
-    const currentLvl = this.saveManager.getPowerUpLevel(powerUp.id);
-    const isMax = currentLvl >= powerUp.maxLevel;
-    const cost = powerUp.getCost(currentLvl);
-    const canAfford = !isMax && this.saveManager.getGoo() >= cost;
+  private createCategoryTabs(): void {
+    const categories = [
+      { tab: 'МУТАЦИИ', relX: -525, relY: -133, w: 194, h: 44 },
+      { tab: 'ОРУЖИЕ', relX: -525, relY: -80, w: 194, h: 44 },
+      { tab: 'ПАССИВКИ', relX: -525, relY: -26, w: 194, h: 44 },
+      { tab: 'ТОВАРЫ', relX: -525, relY: 28, w: 194, h: 44 },
+      { tab: 'СБРОС', relX: -525, relY: 83, w: 194, h: 44 },
+      { tab: 'УЙТИ', relX: -525, relY: 138, w: 194, h: 44 },
+    ];
+    this.categoryButtons = [];
 
-    // Card BG
-    const cardBg = this.add.rectangle(0, 0, w, h, 0x111827, 0.9);
-    cardBg.setStrokeStyle(2, isMax ? 0xfacc15 : (canAfford ? 0x22c55e : 0x374151));
+    categories.forEach(({ tab, relX, relY, w, h }) => {
+      const container = this.add.container(relX, relY);
+      const isSelected = tab === this.selectedCategory;
 
-    // Icon
-    const iconText = this.add.text(-w / 2 + 28, 0, powerUp.icon, {
-      fontSize: '28px',
-    }).setOrigin(0.5);
+      const tex = isSelected ? 'btn_shop_tab_active' : 'btn_shop_tab_inactive';
+      const bg = this.add.image(0, 0, tex).setDisplaySize(w, h).setInteractive({ useHandCursor: true });
 
-    // Title & Comic tag
-    const titleX = -w / 2 + 60;
-    const titleText = this.add.text(titleX, -22, powerUp.name, {
-      fontSize: w < 500 ? '14px' : '16px',
-      fontStyle: 'bold',
-      color: '#f8fafc',
-      fontFamily: 'monospace',
-    }).setOrigin(0, 0.5);
+      const text = this.add.text(0, -1, tab, {
+        fontFamily: 'Gagalin, monospace',
+        fontSize: '15px',
+        color: isSelected ? '#ffffff' : '#94a3b8',
+        stroke: isSelected ? '#3b0764' : '#0f172a',
+        strokeThickness: 3,
+      }).setOrigin(0.5);
 
-    // Description & Bonus
-    const descText = this.add.text(titleX, 2, powerUp.description, {
-      fontSize: w < 500 ? '10px' : '12px',
-      color: '#94a3b8',
-      fontFamily: 'monospace',
-    }).setOrigin(0, 0.5);
-
-    // Level pips (e.g. ● ● ○ ○ ○)
-    let pipsStr = '';
-    for (let i = 0; i < powerUp.maxLevel; i++) {
-      pipsStr += i < currentLvl ? '● ' : '○ ';
-    }
-    const bonusStr = currentLvl > 0 ? `(${powerUp.getBonusText(currentLvl)})` : '';
-    const pipsText = this.add.text(titleX, 24, `${pipsStr} ${bonusStr}`, {
-      fontSize: '12px',
-      fontStyle: 'bold',
-      color: isMax ? '#facc15' : '#4ade80',
-      fontFamily: 'monospace',
-    }).setOrigin(0, 0.5);
-
-    // Buy Button
-    const btnW = w < 500 ? 95 : 125;
-    const btnH = 46;
-    const btnX = w / 2 - btnW / 2 - 12;
-
-    const btnBg = this.add.rectangle(btnX, 0, btnW, btnH, isMax ? 0x334155 : (canAfford ? 0x15803d : 0x1f2937)).setInteractive({ useHandCursor: canAfford });
-    btnBg.setStrokeStyle(2, isMax ? 0x475569 : (canAfford ? 0x4ade80 : 0x374151));
-
-    const btnLabel = isMax ? 'MAX' : ` ${cost}`;
-    const btnText = this.add.text(btnX, 0, btnLabel, {
-      fontSize: w < 500 ? '12px' : '15px',
-      fontStyle: 'bold',
-      color: isMax ? '#94a3b8' : (canAfford ? '#ffffff' : '#64748b'),
-      fontFamily: 'monospace',
-    }).setOrigin(0.5);
-
-    if (canAfford) {
-      btnBg.on('pointerdown', () => {
-        this.platform.vibrate(30);
-        if (this.saveManager.buyPowerUp(powerUp.id)) {
-          this.refreshUI();
-          this.showFloatingNotice(`+1 ${powerUp.name}!`, 0x4ade80);
+      bg.on('pointerover', () => {
+        if (this.selectedCategory !== tab) {
+          bg.setTint(0xe2e8f0);
+          text.setColor('#e2e8f0');
         }
       });
+      bg.on('pointerout', () => {
+        if (this.selectedCategory !== tab) {
+          bg.clearTint();
+          text.setColor('#94a3b8');
+        }
+      });
+      bg.on('pointerdown', () => {
+        this.platform.vibrate(25);
+        this.switchCategory(tab);
+      });
+
+      container.add([bg, text]);
+      this.rootContainer.add(container);
+      this.categoryButtons.push({ tab, container, bg, text, w, h });
+    });
+  }
+
+  private switchCategory(newCategory: string): void {
+    if (newCategory === 'УЙТИ') {
+      this.platform.vibrate(30);
+      this.scene.start('MenuScene');
+      return;
     }
 
-    cardContainer.add([cardBg, iconText, titleText, descText, pipsText, btnBg, btnText]);
-    return cardContainer;
-  }
+    if (newCategory === 'СБРОС') {
+      const refunded = this.saveManager.refundAll();
+      this.gooText.setText(`${this.saveManager.getGoo()}`);
+      this.showNotice(`Возвращено: +${refunded} GOO!`);
+      return;
+    }
 
-  private refreshUI(): void {
-    this.gooText.setText(` GOO: ${this.saveManager.getGoo()}`);
-    this.tweens.add({
-      targets: this.gooText,
-      scaleX: 1.2,
-      scaleY: 1.2,
-      duration: 100,
-      yoyo: true,
-      ease: 'Back.easeOut',
+    this.selectedCategory = newCategory;
+    this.categoryButtons.forEach(({ tab, bg, text, w, h }) => {
+      const isSelected = tab === newCategory;
+      bg.setTexture(isSelected ? 'btn_shop_tab_active' : 'btn_shop_tab_inactive').setDisplaySize(w, h);
+      bg.clearTint();
+      text.setColor(isSelected ? '#ffffff' : '#94a3b8');
+      text.setStroke(isSelected ? '#3b0764' : '#0f172a', 3);
     });
-    this.renderPowerUpCards(this.scale.width, 150);
+
+    this.refreshSlots();
   }
 
-  private scroll(deltaY: number): void {
-    this.setScroll(this.cardsContainer.y - deltaY);
+  private createSlotsGrid(): void {
+    const colCenters = [318 - 640, 483 - 640, 648 - 640];
+    const rowCenters = [312 - 360, 482 - 360];
+    this.slotContainers = [];
+
+    for (let r = 0; r < 2; r++) {
+      for (let c = 0; c < 3; c++) {
+        const slot = this.createSlotItem(colCenters[c], rowCenters[r], r * 3 + c);
+        this.slotContainers.push(slot);
+        this.rootContainer.add(slot);
+      }
+    }
+    this.refreshSlots();
   }
 
-  private setScroll(y: number): void {
-    const clampedY = Phaser.Math.Clamp(y, -this.maxScrollY, 0);
-    this.cardsContainer.y = clampedY;
+  private createSlotItem(x: number, y: number, index: number): Phaser.GameObjects.Container {
+    const container = this.add.container(x, y);
+    const hitArea = this.add.rectangle(0, 0, 140, 156, 0x000000, 0.01).setInteractive({ useHandCursor: true });
+
+    const selectFrame = this.add.rectangle(0, 0, 142, 158, 0x000000, 0).setName('selectFrame');
+    const iconPlaceholder = this.add.circle(0, -22, 34, 0x16a34a, 0.85).setName('iconBg');
+    iconPlaceholder.setStrokeStyle(2, 0x86efac);
+
+    const iconSymbol = this.add.text(0, -22, '!', { fontSize: '28px', color: '#ffffff', fontFamily: 'Gagalin, monospace' }).setOrigin(0.5);
+    const badgeBg = this.add.rectangle(0, 53, 110, 24, 0x0f172a, 0.9);
+    badgeBg.setStrokeStyle(1.5, 0x4ade80);
+
+    const badgeText = this.add.text(0, 53, '150 GOO', { fontFamily: 'Gagalin, monospace', fontSize: '13px', color: '#4ade80' }).setOrigin(0.5).setName('badgeText');
+    const levelText = this.add.text(0, 20, 'LVL 1/5', { fontFamily: 'Balsamiq Sans, monospace', fontSize: '11px', fontStyle: 'bold', color: '#cbd5e1' }).setOrigin(0.5).setName('levelText');
+
+    hitArea.on('pointerover', () => {
+      this.tweens.add({ targets: container, scaleX: 1.03, scaleY: 1.03, duration: 80, ease: 'Sine.easeOut' });
+    });
+    hitArea.on('pointerout', () => {
+      this.tweens.add({ targets: container, scaleX: 1.0, scaleY: 1.0, duration: 80, ease: 'Sine.easeOut' });
+    });
+    hitArea.on('pointerdown', () => {
+      this.platform.vibrate(20);
+      const item = this.itemsCatalog[index];
+      if (item) this.selectItem(item);
+    });
+
+    container.add([hitArea, selectFrame, iconPlaceholder, iconSymbol, levelText, badgeBg, badgeText]);
+    return container;
   }
 
-  private showFloatingNotice(text: string, color: number): void {
-    const notice = this.add.text(this.scale.width / 2, this.scale.height / 2, text, {
-      fontSize: '20px',
-      fontStyle: 'bold',
-      color: `#${color.toString(16)}`,
-      fontFamily: 'monospace',
-      stroke: '#000000',
-      strokeThickness: 4,
+  private refreshSlots(): void {
+    this.slotContainers.forEach((container, idx) => {
+      const item = this.itemsCatalog[idx];
+      const selectFrame = container.getByName('selectFrame') as Phaser.GameObjects.Rectangle;
+      const iconBg = container.getByName('iconBg') as Phaser.GameObjects.Shape;
+      const badgeText = container.getByName('badgeText') as Phaser.GameObjects.Text;
+      const levelText = container.getByName('levelText') as Phaser.GameObjects.Text;
+
+      if (item) {
+        container.setVisible(true);
+        badgeText.setText(`${item.price} GOO`);
+        levelText.setText(`УР. ${item.level}/${item.maxLevel}`);
+        if (item.iconColor) iconBg.setFillStyle(item.iconColor, 0.85);
+        const isSelected = this.selectedItem?.id === item.id;
+        selectFrame.setStrokeStyle(3, 0x4ade80, isSelected ? 1 : 0);
+      } else {
+        container.setVisible(false);
+      }
+    });
+  }
+
+  private selectItem(item: ShopItemMock): void {
+    this.selectedItem = item;
+    this.refreshSlots();
+
+    this.detailTitleText.setText(item.name);
+    this.detailStatsText.setText(item.stats);
+    this.detailDescText.setText(item.description);
+
+    this.detailPips.forEach((pip, idx) => {
+      if (idx < item.maxLevel) {
+        pip.setVisible(true);
+        const isBought = idx < item.level;
+        pip.setFillStyle(isBought ? 0x22c55e : 0x1e293b, 0.95);
+        pip.setStrokeStyle(1.5, isBought ? 0x86efac : 0x475569);
+      } else {
+        pip.setVisible(false);
+      }
+    });
+
+    const isMax = item.level >= item.maxLevel;
+    const canAfford = this.saveManager.getGoo() >= item.price;
+    const btnW = 345;
+    const btnH = 76;
+
+    if (isMax) {
+      this.actionButtonText.setText('МАКСИМУМ');
+      this.actionButtonBg.setTexture('btn_shop_buy_dark').setDisplaySize(btnW, btnH);
+    } else if (canAfford) {
+      this.actionButtonText.setText(`КУПИТЬ ЗА ${item.price} GOO`);
+      this.actionButtonBg.setTexture('btn_shop_buy_green').setDisplaySize(btnW, btnH);
+    } else {
+      this.actionButtonText.setText(`НЕДОСТАТОЧНО GOO (${item.price})`);
+      this.actionButtonBg.setTexture('btn_shop_buy_red').setDisplaySize(btnW, btnH);
+    }
+  }
+
+  private createRightDetails(): void {
+    const cardCenterX = 992 - 640;
+    const infoCenterY = 530 - 360;
+    this.rightDetailContainer = this.add.container(cardCenterX, infoCenterY).setAngle(-0.6);
+
+    this.detailTitleText = this.add.text(0, -52, '', {
+      fontFamily: 'Gagalin, monospace', fontSize: '24px', color: '#1c1917', stroke: '#fef3c7', strokeThickness: 2,
     }).setOrigin(0.5);
 
-    this.tweens.add({
-      targets: notice,
-      y: notice.y - 60,
-      alpha: 0,
-      duration: 1000,
-      ease: 'Power2',
-      onComplete: () => notice.destroy(),
+    this.detailStatsText = this.add.text(0, -26, '', {
+      fontFamily: 'Gagalin, monospace', fontSize: '16px', color: '#16a34a', stroke: '#dcfce7', strokeThickness: 1,
+    }).setOrigin(0.5);
+
+    this.detailDescText = this.add.text(0, 0, '', {
+      fontFamily: 'Balsamiq Sans, monospace', fontSize: '14px', fontStyle: 'bold', color: '#0f172a', align: 'center', wordWrap: { width: 380 },
+    }).setOrigin(0.5);
+
+    this.detailPips = [];
+    const pipsStartX = -(5 * 24) / 2 + 12;
+    for (let i = 0; i < 5; i++) {
+      const pip = this.add.rectangle(pipsStartX + i * 24, 26, 18, 8, 0x334155, 0.9);
+      pip.setStrokeStyle(1.5, 0x475569);
+      this.detailPips.push(pip);
+    }
+
+    const btnRelY = 70;
+    const btnW = 345;
+    const btnH = 76;
+    this.actionButtonBg = this.add.image(0, btnRelY, 'btn_shop_buy_green').setDisplaySize(btnW, btnH).setInteractive({ useHandCursor: true });
+    this.actionButtonText = this.add.text(0, btnRelY, 'КУПИТЬ', {
+      fontFamily: 'Gagalin, monospace', fontSize: '16px', color: '#ffffff', stroke: '#000000', strokeThickness: 3,
+    }).setOrigin(0.5);
+
+    this.actionButtonBg.on('pointerdown', () => { this.platform.vibrate(35); this.onActionButtonClick(); });
+    this.actionButtonBg.on('pointerover', () => {
+      this.actionButtonBg.setDisplaySize(btnW * 1.025, btnH * 1.025);
+      this.actionButtonText.setScale(1.025);
     });
+    this.actionButtonBg.on('pointerout', () => {
+      this.actionButtonBg.setDisplaySize(btnW, btnH);
+      this.actionButtonText.setScale(1.0);
+    });
+
+    this.rightDetailContainer.add([
+      this.detailTitleText, this.detailStatsText, this.detailDescText,
+      ...this.detailPips, this.actionButtonBg, this.actionButtonText,
+    ]);
+    this.rootContainer.add(this.rightDetailContainer);
+  }
+
+  private onActionButtonClick(): void {
+    if (!this.selectedItem) return;
+    if (this.selectedItem.level >= this.selectedItem.maxLevel) {
+      this.showNotice('Достигнут максимальный уровень!');
+      return;
+    }
+    const currentGoo = this.saveManager.getGoo();
+    if (currentGoo < this.selectedItem.price) {
+      this.showNotice('Недостаточно слизи!');
+      return;
+    }
+    this.selectedItem.level++;
+    this.showNotice(`Куплено: ${this.selectedItem.name}!`);
+    this.selectItem(this.selectedItem);
+  }
+
+  private createBottomBar(): void {
+    const slotCentersX = [83 - 640, 226 - 640, 369 - 640, 512 - 640];
+    const bottomY = 654 - 360;
+
+    slotCentersX.forEach((x, idx) => {
+      const slot = this.add.container(x, bottomY);
+      const hit = this.add.rectangle(0, 0, 130, 70, 0x000000, 0.01);
+      const label = this.add.text(0, 0, `СЛОТ ${idx + 1}`, { fontFamily: 'Gagalin, monospace', fontSize: '12px', color: '#475569' }).setOrigin(0.5);
+      slot.add([hit, label]);
+      this.rootContainer.add(slot);
+    });
+
+    const exitX = 630 - 640;
+    const exitBtn = this.add.rectangle(exitX, bottomY, 95, 65, 0x000000, 0.01).setInteractive({ useHandCursor: true });
+    const exitText = this.add.text(exitX, bottomY, 'НАЗАД', { fontFamily: 'Gagalin, monospace', fontSize: '18px', color: '#451a03', stroke: '#fef08a', strokeThickness: 2 }).setOrigin(0.5);
+
+    exitBtn.on('pointerover', () => exitText.setScale(1.08));
+    exitBtn.on('pointerout', () => exitText.setScale(1.0));
+    exitBtn.on('pointerdown', () => { this.platform.vibrate(30); this.scene.start('MenuScene'); });
+
+    this.rootContainer.add([exitBtn, exitText]);
+  }
+
+  private showNotice(text: string): void {
+    const notice = this.add.text(0, -220, text, { fontFamily: 'Gagalin, monospace', fontSize: '20px', color: '#facc15', stroke: '#000000', strokeThickness: 4 }).setOrigin(0.5);
+    this.rootContainer.add(notice);
+    this.tweens.add({ targets: notice, y: -245, alpha: { from: 1, to: 0 }, duration: 1100, onComplete: () => notice.destroy() });
   }
 }

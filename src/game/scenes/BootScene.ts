@@ -23,11 +23,18 @@ export class BootScene extends Phaser.Scene {
     this.load.image('social_buttons', '/assets/menu/social_buttons.webp');
     this.load.image('char_worm', '/assets/menu/char_worm.webp');
     this.load.image('char_rat', '/assets/menu/char_rat.webp');
-
-
-
-
-
+    this.load.image('shop_room_bg', '/assets/menu/shop/shop_room_bg.webp');
+    this.load.image('shop_sign', '/assets/menu/shop/shop_sign.png');
+    this.load.image('shop_left_frame', '/assets/menu/shop/shop_left_frame.png');
+    this.load.image('shop_board_slots', '/assets/menu/shop/shop_board_slots.png');
+    this.load.image('shop_seller_desk', '/assets/menu/shop/shop_seller_desk.png');
+    this.load.image('shop_top_bar', '/assets/menu/shop/shop_top_bar.png');
+    this.load.image('shop_exit_note', '/assets/menu/shop/shop_exit_note.png');
+    this.load.image('btn_shop_tab_active', '/assets/menu/btn_shop_tab_active.png');
+    this.load.image('btn_shop_tab_inactive', '/assets/menu/btn_shop_tab_inactive.png');
+    this.load.image('btn_shop_buy_green', '/assets/menu/shop/btn_shop_buy_green.png');
+    this.load.image('btn_shop_buy_red', '/assets/menu/shop/btn_shop_buy_red.png');
+    this.load.image('btn_shop_buy_dark', '/assets/menu/shop/btn_shop_buy_dark.png');
     // Vypolzok Assets & UI
     this.load.image('vypolzok_portrait', '/assets/sprites/vypolzok/ui/portrait_vypolzok.webp');
     this.load.image('hud_face_smug', '/assets/sprites/vypolzok/ui/hud_face_smug.webp');
@@ -225,23 +232,15 @@ export class BootScene extends Phaser.Scene {
   }
 
   private createEnemyAnimations(): void {
-    const enemies = [
+    [
       { key: 'anim_fodder_run', prefix: 'tex_fodder_run_', count: 3, rate: 8 },
-      { key: 'anim_crawler_run', prefix: 'tex_crawler_run_', count: 3, rate: 6 },
-      { key: 'anim_sprinter_run', prefix: 'tex_sprinter_run_', count: 4, rate: 12 },
-      { key: 'anim_tank_run', prefix: 'tex_tank_run_', count: 3, rate: 6 },
+      { key: 'anim_crawler_run', prefix: 'tex_crawler_run_', count: 4, rate: 8 },
+      { key: 'anim_spitter_run', prefix: 'tex_spitter_run_', count: 4, rate: 8 },
+      { key: 'anim_charger_run', prefix: 'tex_charger_run_', count: 4, rate: 8 },
       { key: 'anim_exploder_run', prefix: 'tex_exploder_run_', count: 4, rate: 8 },
       { key: 'anim_miniboss_run', prefix: 'tex_miniboss_run_', count: 4, rate: 8 },
       { key: 'anim_boss_run', prefix: 'tex_boss_run_', count: 4, rate: 8 },
-    ];
-    for (const e of enemies) {
-      this.anims.create({
-        key: e.key,
-        frames: Array.from({ length: e.count }, (_, i) => ({ key: `${e.prefix}${i + 1}` })),
-        frameRate: e.rate,
-        repeat: -1,
-      });
-    }
+    ].forEach(e => this.anims.create({ key: e.key, frames: Array.from({ length: e.count }, (_, i) => ({ key: `${e.prefix}${i + 1}` })), frameRate: e.rate, repeat: -1 }));
 
     this.anims.create({
       key: 'vfx_anim_enemy_dead',
