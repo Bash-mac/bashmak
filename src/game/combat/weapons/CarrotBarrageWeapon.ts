@@ -34,7 +34,7 @@ export class CarrotBarrageWeapon implements IWeapon {
     const carrotLevel = mods.carrotBarrageLevel;
 
     const baseSpeed = (ctx.player.stats.attackSpeed ?? 1.4) * (1 + mods.attackSpeedBonus);
-    const baseInterval = 650 / baseSpeed;
+    const baseInterval = 1000 / baseSpeed;
 
     this.attackTimer += delta;
     if (this.attackTimer < baseInterval) return;
@@ -44,7 +44,7 @@ export class CarrotBarrageWeapon implements IWeapon {
 
     this.attackTimer = 0;
 
-    let damage = ctx.player.stats.damage * (1 + mods.damagePercentBonus);
+    let damage = Math.round(ctx.player.stats.damage * 0.75) * (1 + mods.damagePercentBonus);
 
     // 10 Stacks Kill-Streak Mega Shot
     let isSuperCrit = false;
@@ -71,16 +71,21 @@ export class CarrotBarrageWeapon implements IWeapon {
       }
     }
 
-    const carrotsCount = 2 + (carrotLevel >= 3 ? 1 : 0) + (carrotLevel >= 5 ? 2 : 0) + (mods.multishotCount > 1 ? mods.multishotCount - 1 : 0);
+    const carrotsCount = 1 + (carrotLevel >= 3 ? 2 : 0) + (carrotLevel >= 5 ? 2 : 0) + (mods.multishotCount > 1 ? mods.multishotCount - 1 : 0);
     const spreadAngle = 0.24;
     const startAngle = -((carrotsCount - 1) * spreadAngle) / 2;
+    const repeatInterval = 60;
 
     for (let i = 0; i < carrotsCount; i++) {
-      const angle = Phaser.Math.Angle.Between(ctx.player.x, ctx.player.y, primaryTarget.x, primaryTarget.y) + startAngle + i * spreadAngle;
-      this.fireCarrotBoomerang(ctx, angle, damage, isSuperCrit, 2 + (carrotLevel >= 4 ? 2 : 0) + (mods.pierceCount || 0));
+      ctx.scene.time.delayedCall(i * repeatInterval, () => {
+        if (!ctx.player.isAlive || !ctx.player.sprite?.active) return;
+        const freshTarget = this.findClosestEnemy(ctx.player, ctx.enemiesMap, 420) || primaryTarget;
+        const baseAngle = Phaser.Math.Angle.Between(ctx.player.x, ctx.player.y, freshTarget.x, freshTarget.y);
+        const angle = baseAngle + startAngle + i * spreadAngle;
+        this.fireCarrotBoomerang(ctx, angle, damage, isSuperCrit, 2 + (carrotLevel >= 4 ? 2 : 0) + (mods.pierceCount || 0));
+        if (i === 0) AudioManager.getInstance().playClick();
+      });
     }
-
-    AudioManager.getInstance().playClick();
   }
 
   private fireCarrotBoomerang(ctx: WeaponContext, angle: number, damage: number, isSuperCrit: boolean, pierce: number): void {

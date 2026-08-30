@@ -15,14 +15,14 @@ export const MARKOVKA_HERO: HeroDefinition = {
   posterKey: 'hero_card_markovka',
   stats: {
     maxHp: 75,
-    speed: 250,
+    speed: 185,
     damage: 14,
     armor: 0,
     attackSpeed: 1.4,
   },
   attackIntervalMs: 550,
   attackRange: 340,
-  projectileSpeed: 640,
+  projectileSpeed: 480,
   projectileSize: 8,
   startingWeaponId: 'weapon_carrot_barrage',
   trait: {

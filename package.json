@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "check:arch": "node scripts/check-architecture.mjs",
+    "sim:balance": "tsx scripts/balance_sim.ts",
     "build": "node scripts/check-architecture.mjs && tsc && vite build",
     "preview": "npm run build && wrangler pages dev dist",
     "deploy": "npm run build && wrangler pages deploy dist --project-name bashmak"
@@ -13,6 +14,7 @@
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.53.1",
     "playwright": "^1.62.1",
+    "tsx": "^4.23.13",
     "typescript": "~6.0.2",
     "vite": "^8.2.0",
     "wrangler": "^4.125.0"

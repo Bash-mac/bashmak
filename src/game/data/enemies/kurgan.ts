@@ -11,7 +11,7 @@ export const BOSS_KURGAN: EnemyDefinition = {
   mass: 15,
   stats: {
     maxHp: 1100,
-    speed: 120,
+    speed: 85,
     damage: 22,
     armor: 2,
   },

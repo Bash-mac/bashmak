@@ -184,37 +184,34 @@ export class HazardSystem {
       ctx.lootSystem.spawnGoo(x, y, 1);
     }
 
-    // 3. Spawn residual acid hazard pool
-    this.spawnAcidPool(ctx.scene, x, y, blastRadius, 6, 3500, false);
-
-    // 4. Explosion visual blast effect
+    // 3. Explosion visual blast effect (lightweight flash circle)
     const blastGfx = ctx.scene.add.graphics();
     blastGfx.setPosition(x, y);
-    blastGfx.lineStyle(3, 0xef4444, 1);
-    blastGfx.fillStyle(0xdc2626, 0.5);
+    blastGfx.fillStyle(0xef4444, 0.45);
     blastGfx.fillCircle(0, 0, blastRadius);
+    blastGfx.lineStyle(2, 0xfacc15, 0.9);
     blastGfx.strokeCircle(0, 0, blastRadius);
 
     ctx.scene.tweens.add({
       targets: blastGfx,
       alpha: 0,
-      scaleX: 1.3,
-      scaleY: 1.3,
-      duration: 300,
+      scaleX: 1.25,
+      scaleY: 1.25,
+      duration: 220,
       onComplete: () => blastGfx.destroy(),
     });
 
-    // 5. Blast damage to player (with knockback) and neighboring enemies
+    // 4. Blast damage to player (with knockback) and neighboring enemies
     const distToPlayer = Phaser.Math.Distance.Between(ctx.player.x, ctx.player.y, x, y);
     if (distToPlayer <= blastRadius) {
       ctx.applyDamageToPlayer(blastDmg);
       const angle = Phaser.Math.Angle.Between(x, y, ctx.player.x, ctx.player.y);
-      ctx.player.applyKnockback(Math.cos(angle) * 320, Math.sin(angle) * 320, 200);
+      ctx.player.applyKnockback(Math.cos(angle) * 260, Math.sin(angle) * 260, 160);
     }
 
-    ctx.applyAreaDamageToEnemies(x, y, blastRadius, blastDmg * 1.5);
+    ctx.applyAreaDamageToEnemies(x, y, blastRadius, blastDmg * 0.75);
     this.audio.playExplosion();
-    this.platform.vibrate(40);
+    this.platform.vibrate(30);
   }
 
   public triggerScreenWipeBlast(scene: Phaser.Scene, x: number, y: number, ctx: HazardContext): void {

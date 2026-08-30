@@ -121,6 +121,9 @@ function runSingleMatch(
   };
   const stats = {
     modifyMaxHp: (val: number) => { maxHpDynamic += val; playerHp += val; },
+    modifySpeed: (_val: number) => {},
+    modifyDamage: (_val: number) => {},
+    modifyArmor: (_val: number) => {},
     maxHp: maxHpDynamic,
   };
 
@@ -383,25 +386,20 @@ function runSingleMatch(
       let chosen: UpgradeDefinition | null = null;
       if (pool.length > 0) {
         if (strategy === 'vypolzok_homing_spam') {
-          // Priority to slime spit, attack interval, attack speed, movement speed
-          const spit = shopUpgrades.find((u) => u.id === 'weapon_slime_spit');
-          const attackSpeed = shopUpgrades.find((u) => u.id === 'stat_attack_speed');
-          const attackInterval = shopUpgrades.find((u) => u.id === 'stat_attack_interval');
-          const moveSpeed = shopUpgrades.find((u) => u.id === 'stat_speed');
-
-          if (spit) chosen = spit;
-          else if (attackInterval) chosen = attackInterval;
-          else if (attackSpeed) chosen = attackSpeed;
-          else if (moveSpeed) chosen = moveSpeed;
+          chosen =
+            pool.find((u) => u.id === 'weapon_slime_spit') ||
+            pool.find((u) => u.id === 'tome_attack_speed') ||
+            pool.find((u) => u.id === 'tome_speed') ||
+            pool[0];
         } else if (strategy === 'tesla_zap') {
-          chosen = pool.find((u) => ['wpn_lightning_zap', 'wpn_acid_trail', 'tome_speed', 'tome_vitality'].includes(u.id)) || pool[0];
+          chosen = pool.find((u) => ['wpn_piezo_taser', 'weapon_acid_trail', 'tome_speed', 'tome_hp_regen'].includes(u.id)) || pool[0];
         } else if (strategy === 'tank_bones') {
-          chosen = pool.find((u) => ['wpn_bouncing_bones', 'wpn_acid_trail', 'tome_vitality', 'tome_quantity', 'tome_crit_size'].includes(u.id)) || pool[0];
+          chosen = pool.find((u) => ['weapon_toilet_lid', 'weapon_acid_trail', 'tome_armor', 'tome_quantity', 'tome_crit'].includes(u.id)) || pool[0];
         } else {
-          // 4th Archetype: Hybrid (Daggers + Acid Trail + Vitality + Quantity)
+          // 4th Archetype: Hybrid
           chosen =
             pool.find((u) =>
-              ['wpn_homing_daggers', 'wpn_acid_trail', 'tome_vitality', 'tome_quantity'].includes(u.id)
+              ['weapon_slime_spit', 'weapon_acid_trail', 'tome_armor', 'tome_quantity'].includes(u.id)
             ) || pool[0];
         }
 

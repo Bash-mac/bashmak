@@ -28,7 +28,7 @@ export const WPN_SLIME_SPIT: UpgradeDefinition = {
     },
     {
       level: 3,
-      description: ' ЕДКИЙ ЗАЛП: 3 сгустка слизи с увеличенной скоростью полета.',
+      description: 'ЕДКИЙ ЗАЛП: 3 сгустка слизи с увеличенной скоростью полета.',
       apply: (mod) => {
         mod.slimeSpitLevel = 3;
         mod.multishotCount += 1;
@@ -45,7 +45,7 @@ export const WPN_SLIME_SPIT: UpgradeDefinition = {
     },
     {
       level: 5,
-      description: ' ТОКСИЧЕСКИЙ ГЕЙЗЕР: 5 огромных сгустков со взрывным кислотным сплэшем!',
+      description: 'ТОКСИЧЕСКИЙ ГЕЙЗЕР: 5 огромных сгустков со взрывным кислотным сплэшем!',
       apply: (mod) => {
         mod.slimeSpitLevel = 5;
         mod.multishotCount += 2;

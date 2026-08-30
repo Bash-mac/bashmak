@@ -89,5 +89,63 @@ export class PlaceholderTextures {
     taserGfx.fillTriangle(48, 16, 42, 28, 52, 22);
     taserGfx.generateTexture('icon_weapon_piezo_taser', 64, 64);
     taserGfx.destroy();
+
+    // 7. Consumable: Nuke Bomb (drop_nuke)
+    const nukeGfx = scene.make.graphics({ x: 0, y: 0 });
+    nukeGfx.fillStyle(0xef4444, 1);
+    nukeGfx.fillCircle(18, 18, 16);
+    nukeGfx.lineStyle(2, 0xfacc15, 1);
+    nukeGfx.strokeCircle(18, 18, 16);
+    nukeGfx.fillStyle(0xfef08a, 1);
+    nukeGfx.fillCircle(18, 18, 7);
+    nukeGfx.fillStyle(0x000000, 1);
+    nukeGfx.fillTriangle(18, 6, 14, 14, 22, 14);
+    nukeGfx.fillTriangle(18, 30, 14, 22, 22, 22);
+    nukeGfx.fillTriangle(6, 18, 14, 14, 14, 22);
+    nukeGfx.fillTriangle(30, 18, 22, 14, 22, 22);
+    nukeGfx.generateTexture('drop_nuke', 36, 36);
+    nukeGfx.destroy();
+
+    // 8. Consumable: Slime Magnet (drop_magnet)
+    const magnetGfx = scene.make.graphics({ x: 0, y: 0 });
+    magnetGfx.fillStyle(0x3b82f6, 1);
+    magnetGfx.fillCircle(18, 18, 16);
+    magnetGfx.lineStyle(2, 0x60a5fa, 1);
+    magnetGfx.strokeCircle(18, 18, 16);
+    magnetGfx.lineStyle(5, 0xef4444, 1);
+    magnetGfx.beginPath();
+    magnetGfx.arc(18, 18, 9, Phaser.Math.DegToRad(180), Phaser.Math.DegToRad(360), false);
+    magnetGfx.strokePath();
+    magnetGfx.fillStyle(0xe2e8f0, 1);
+    magnetGfx.fillRect(9, 17, 5, 6);
+    magnetGfx.fillRect(22, 17, 5, 6);
+    magnetGfx.generateTexture('drop_magnet', 36, 36);
+    magnetGfx.destroy();
+
+    // 9. Consumable: Freeze Cryo (drop_freeze)
+    const freezeGfx = scene.make.graphics({ x: 0, y: 0 });
+    freezeGfx.fillStyle(0x06b6d4, 1);
+    freezeGfx.fillCircle(18, 18, 16);
+    freezeGfx.lineStyle(2, 0x67e8f9, 1);
+    freezeGfx.strokeCircle(18, 18, 16);
+    freezeGfx.fillStyle(0xffffff, 1);
+    freezeGfx.fillRect(16, 6, 4, 24);
+    freezeGfx.fillRect(6, 16, 24, 4);
+    freezeGfx.fillCircle(18, 18, 5);
+    freezeGfx.generateTexture('drop_freeze', 36, 36);
+    freezeGfx.destroy();
+
+    // 10. Consumable: Frenzy Stim (drop_frenzy)
+    const frenzyGfx = scene.make.graphics({ x: 0, y: 0 });
+    frenzyGfx.fillStyle(0xf59e0b, 1);
+    frenzyGfx.fillCircle(18, 18, 16);
+    frenzyGfx.lineStyle(2, 0xfde047, 1);
+    frenzyGfx.strokeCircle(18, 18, 16);
+    frenzyGfx.fillStyle(0xef4444, 1);
+    frenzyGfx.fillTriangle(18, 6, 10, 26, 26, 26);
+    frenzyGfx.fillStyle(0xfef08a, 1);
+    frenzyGfx.fillTriangle(18, 12, 14, 24, 22, 24);
+    frenzyGfx.generateTexture('drop_frenzy', 36, 36);
+    frenzyGfx.destroy();
   }
 }

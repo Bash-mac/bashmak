@@ -20,12 +20,15 @@ export class SpawnManager {
   private spawnCallback: (definition: EnemyDefinition, x: number, y: number, scaling: EnemyScaling, isChampion?: boolean) => void;
   private getActiveEnemyCount?: () => number;
   private getViewportExtents?: () => { halfW: number; halfH: number };
+  private getPowerScore?: () => number;
 
   private spawnTimer = 0;
   private surgeTimer = 0;
   private nextSurgeInterval = 18000;
   private championTimer = 0;
   private nextChampionInterval = 45000;
+  private directorTimer = 0;
+  private cachedPowerScore = 1;
   private currentActiveCount = 0;
   public miniBossSpawned = false;
   public bossSpawned = false;
@@ -34,22 +37,34 @@ export class SpawnManager {
     getPlayerPosition: () => { x: number; y: number; vx: number; vy: number },
     spawnCallback: (definition: EnemyDefinition, x: number, y: number, scaling: EnemyScaling, isChampion?: boolean) => void,
     getViewportExtents?: () => { halfW: number; halfH: number },
-    getActiveEnemyCount?: () => number
+    getActiveEnemyCount?: () => number,
+    getPowerScore?: () => number
   ) {
     this.getPlayerPosition = getPlayerPosition;
     this.spawnCallback = spawnCallback;
     this.getViewportExtents = getViewportExtents;
     this.getActiveEnemyCount = getActiveEnemyCount;
+    this.getPowerScore = getPowerScore;
   }
 
   update(deltaMs: number, runTimeSeconds: number): void {
     const minutes = runTimeSeconds / 60;
 
-    // Time scaling multipliers: HP +22%/min, Speed +3%/min (capped 1.25), Damage +15%/min
+    // 0. Stepped Director Power Sampling (every 35s to preserve Power Fantasy window)
+    this.directorTimer += deltaMs;
+    if (this.directorTimer >= 35000 || this.cachedPowerScore <= 1) {
+      this.directorTimer = 0;
+      this.cachedPowerScore = this.getPowerScore ? this.getPowerScore() : 1;
+    }
+
+    // Sub-linear Power Scaling (< 1.0 exponent) ensures player DPS always outpaces mob HP
+    const powerHpFactor = 1 + Math.pow(Math.max(0, this.cachedPowerScore - 1), 0.85) * 0.07;
+    const timeHpFactor = 1 + 0.12 * minutes;
+
     const scaling: EnemyScaling = {
-      hpMultiplier: 1 + 0.22 * minutes,
-      speedMultiplier: Math.min(1.25, 1 + 0.03 * minutes),
-      damageMultiplier: 1 + 0.15 * minutes,
+      hpMultiplier: timeHpFactor * powerHpFactor,
+      speedMultiplier: Math.min(1.22, 1 + 0.02 * minutes),
+      damageMultiplier: 1 + 0.08 * minutes,
     };
 
     // 1. Timed Boss Spawns
@@ -78,62 +93,98 @@ export class SpawnManager {
       this.triggerWaveSurge(minutes, scaling);
     }
 
-    // 3. Dynamic Target Population Curve
-    let targetPopulation = 18;
-    let maxBatchSize = 3;
-    let spawnInterval = 450;
+    // 4. Dynamic Directional Squad Waves (Pacing, Formations & Density Scaling)
+    const powerSquadBonus = Math.floor((this.cachedPowerScore - 1) * 0.35);
+    const powerPopBonus = Math.floor((this.cachedPowerScore - 1) * 1.5);
+
+    let targetPopulation = 20 + powerPopBonus;
+    let squadSize = 6 + powerSquadBonus;
+    let waveInterval = 2400; // ms between directional squad spawns
 
     if (minutes < 0.5) {
-      // 0:00 - 0:30 (Energetic start)
-      targetPopulation = 16;
-      maxBatchSize = 3;
-      spawnInterval = 450;
-    } else if (minutes < 1.0) {
-      // 0:30 - 1:00 (Ramping up)
-      targetPopulation = 24;
-      maxBatchSize = 4;
-      spawnInterval = 350;
-    } else if (minutes < 2.0) {
-      // 1:00 - 2:00
-      targetPopulation = 40;
-      maxBatchSize = 5;
-      spawnInterval = 260;
-    } else if (minutes < 3.5) {
-      // 2:00 - 3:30
-      targetPopulation = 55;
-      maxBatchSize = 6;
-      spawnInterval = 200;
+      // 0:00 - 0:30 (Tutorial / early pacing)
+      targetPopulation = 18 + powerPopBonus;
+      squadSize = 5 + powerSquadBonus;
+      waveInterval = 2500;
+    } else if (minutes < 1.5) {
+      // 0:30 - 1:30
+      targetPopulation = 28 + powerPopBonus;
+      squadSize = 7 + powerSquadBonus;
+      waveInterval = 2200;
+    } else if (minutes < 3.0) {
+      // 1:30 - 3:00
+      targetPopulation = 45 + powerPopBonus;
+      squadSize = 9 + powerSquadBonus;
+      waveInterval = 1900;
     } else if (minutes < 5.0) {
-      // 3:30 - 5:00
-      targetPopulation = 72;
-      maxBatchSize = 6;
-      spawnInterval = 170;
+      // 3:00 - 5:00
+      targetPopulation = 65 + powerPopBonus;
+      squadSize = 12 + powerSquadBonus;
+      waveInterval = 1700;
     } else if (minutes < 7.0) {
       // 5:00 - 7:00
-      targetPopulation = 85;
-      maxBatchSize = 7;
-      spawnInterval = 150;
+      targetPopulation = 85 + powerPopBonus;
+      squadSize = 14 + powerSquadBonus;
+      waveInterval = 1500;
     } else {
       // 7:00+ (Endgame swarm)
-      targetPopulation = 100;
-      maxBatchSize = 7;
-      spawnInterval = 140;
+      targetPopulation = 100 + powerPopBonus;
+      squadSize = 16 + powerSquadBonus;
+      waveInterval = 1300;
     }
 
     const activeCount = this.getActiveEnemyCount?.() ?? this.currentActiveCount;
     if (activeCount >= targetPopulation) return;
 
     this.spawnTimer += deltaMs;
-    if (this.spawnTimer >= spawnInterval) {
+    if (this.spawnTimer >= waveInterval) {
       this.spawnTimer = 0;
       const deficit = targetPopulation - activeCount;
-      const batchSize = Math.min(maxBatchSize, deficit);
+      const countToSpawn = Math.min(squadSize, deficit);
 
-      for (let i = 0; i < batchSize; i++) {
-        const def = this.selectEnemyDefinition(minutes);
-        const pos = this.getScreenPerimeterPosition();
-        this.spawnCallback(def, pos.x, pos.y, scaling);
+      // Spawn a homogeneous directional squad from one distinct flank/angle
+      const def = this.selectEnemyDefinition(minutes);
+      this.spawnDirectionalSquad(def, countToSpawn, scaling);
+    }
+  }
+
+  private spawnDirectionalSquad(def: EnemyDefinition, count: number, scaling: EnemyScaling): void {
+    if (count <= 0) return;
+    const player = this.getPlayerPosition();
+    const { maxRadius } = this.getViewport();
+    const baseDist = maxRadius + 70;
+
+    // Pick a distinct flank/sector (ahead/flank/behind)
+    let baseAngle = Math.random() * Math.PI * 2;
+    if (player.vx !== 0 || player.vy !== 0) {
+      const moveAngle = Math.atan2(player.vy, player.vx);
+      const roll = Math.random();
+      if (roll < 0.45) {
+        // Intercept ahead (cone +/- 35 deg)
+        baseAngle = moveAngle + (Math.random() - 0.5) * 0.7;
+      } else if (roll < 0.80) {
+        // Flank perpendicular (left or right)
+        baseAngle = moveAngle + (Math.random() < 0.5 ? Math.PI / 2 : -Math.PI / 2) + (Math.random() - 0.5) * 0.4;
+      } else {
+        // Pursue from rear
+        baseAngle = moveAngle + Math.PI + (Math.random() - 0.5) * 0.6;
       }
+    }
+
+    // Spread the squad tightly in a directional wedge (arc ~25-35 deg)
+    const wedgeSpread = Math.min(0.55, 0.08 * count);
+    const startAngle = baseAngle - wedgeSpread / 2;
+    const angleStep = count > 1 ? wedgeSpread / (count - 1) : 0;
+
+    for (let i = 0; i < count; i++) {
+      const angle = startAngle + i * angleStep;
+      const depthOffset = (Math.random() - 0.5) * 45 + (i % 2 === 0 ? 0 : 30);
+      const dist = baseDist + depthOffset;
+      const x = player.x + Math.cos(angle) * dist;
+      const y = player.y + Math.sin(angle) * dist;
+      // Cap exploders in a single squad to at most 2 to prevent audio/FPS cascade
+      const unitDef = def.archetype === 'exploder' && i >= 2 ? CRAWLER_SWARM : def;
+      this.spawnCallback(unitDef, x, y, scaling);
     }
   }
 
@@ -143,51 +194,24 @@ export class SpawnManager {
     if (minutes < 0.7) {
       // Early surges: Mini-Swarm or Pincer
       if (roll < 0.5) {
-        this.spawnSwarmRush(FODDER_BAT, 6, scaling);
+        this.spawnSwarmRush(FODDER_BAT, 8, scaling);
       } else {
-        this.spawnPincerSurge(CRAWLER_SWARM, 6, scaling);
+        this.spawnPincerSurge(CRAWLER_SWARM, 8, scaling);
       }
     } else if (minutes < 2.0) {
-      // Mid-early surges: Sprinter rush, Swarm or (rare) Ring ambush
-      if (roll < 0.35) {
-        this.spawnRingSurge(FODDER_BAT, 9, scaling);
-      } else if (roll < 0.70) {
-        this.spawnPincerSurge(SPRINTER_BUG, 6, scaling);
+      // Mid-early surges: Sprinter rush or Pincer
+      if (roll < 0.5) {
+        this.spawnPincerSurge(SPRINTER_BUG, 8, scaling);
       } else {
-        this.spawnSwarmRush(CRAWLER_SWARM, 8, scaling);
+        this.spawnSwarmRush(CRAWLER_SWARM, 10, scaling);
       }
     } else {
-      // Mid/late surges: Mixed Swarm, Sprinter pincer, (rare) broken Ring
-      if (roll < 0.30) {
-        this.spawnRingSurge(CRAWLER_SWARM, 10, scaling);
-      } else if (roll < 0.70) {
-        this.spawnPincerSurge(ARMORED_SLUG, 6, scaling);
+      // Mid/late surges: Slugs pincer or Sprinter swarm
+      if (roll < 0.5) {
+        this.spawnPincerSurge(ARMORED_SLUG, 8, scaling);
       } else {
-        this.spawnSwarmRush(SPRINTER_BUG, 8, scaling);
+        this.spawnSwarmRush(SPRINTER_BUG, 12, scaling);
       }
-    }
-  }
-
-  private spawnRingSurge(def: EnemyDefinition, count: number, scaling: EnemyScaling): void {
-    const player = this.getPlayerPosition();
-    const { maxRadius } = this.getViewport();
-    const spawnRadius = maxRadius + 70;
-
-    // Open a ~110° escape corridor toward the player's movement direction
-    let gapAngle = Math.atan2(player.vy, player.vx);
-    if (player.vx === 0 && player.vy === 0) {
-      gapAngle = Math.random() * Math.PI * 2;
-    }
-    const gapSize = Math.PI * 0.6;
-    const arc = Math.PI * 2 - gapSize;
-    const startAngle = gapAngle + gapSize / 2 + Math.random() * 0.3;
-    const angleStep = arc / (count - 1);
-
-    for (let i = 0; i < count; i++) {
-      const angle = startAngle + i * angleStep;
-      const x = player.x + Math.cos(angle) * spawnRadius;
-      const y = player.y + Math.sin(angle) * spawnRadius;
-      this.spawnCallback(def, x, y, scaling);
     }
   }
 
@@ -288,6 +312,15 @@ export class SpawnManager {
       if (roll < 0.40) return CRAWLER_SWARM;
       if (roll < 0.65) return SPRINTER_BUG;
       if (roll < 0.90) return ARMORED_SLUG;
+      return EXPLODER_SPORE;
+    }
+
+    // Power Score weight shift: Heavy vanguards for high-power builds
+    if (this.cachedPowerScore >= 12 && minutes >= 1.5) {
+      if (roll < 0.05) return FODDER_BAT;
+      if (roll < 0.25) return CRAWLER_SWARM;
+      if (roll < 0.50) return SPRINTER_BUG;
+      if (roll < 0.80) return ARMORED_SLUG;
       return EXPLODER_SPORE;
     }
 
@@ -392,6 +425,8 @@ export class SpawnManager {
     this.nextSurgeInterval = 32000;
     this.championTimer = 0;
     this.nextChampionInterval = 45000;
+    this.directorTimer = 0;
+    this.cachedPowerScore = 1;
     this.currentActiveCount = 0;
     this.miniBossSpawned = false;
     this.bossSpawned = false;

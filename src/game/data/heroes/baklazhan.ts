@@ -15,7 +15,7 @@ export const BAKLAZHAN_HERO: HeroDefinition = {
   posterKey: 'hero_card_baklazhan',
   stats: {
     maxHp: 150,
-    speed: 200,
+    speed: 160,
     damage: 20,
     armor: 2,
     attackSpeed: 1.0,

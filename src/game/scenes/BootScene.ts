@@ -234,9 +234,9 @@ export class BootScene extends Phaser.Scene {
   private createEnemyAnimations(): void {
     [
       { key: 'anim_fodder_run', prefix: 'tex_fodder_run_', count: 3, rate: 8 },
-      { key: 'anim_crawler_run', prefix: 'tex_crawler_run_', count: 4, rate: 8 },
-      { key: 'anim_spitter_run', prefix: 'tex_spitter_run_', count: 4, rate: 8 },
-      { key: 'anim_charger_run', prefix: 'tex_charger_run_', count: 4, rate: 8 },
+      { key: 'anim_crawler_run', prefix: 'tex_crawler_run_', count: 3, rate: 8 },
+      { key: 'anim_sprinter_run', prefix: 'tex_sprinter_run_', count: 4, rate: 10 },
+      { key: 'anim_tank_run', prefix: 'tex_tank_run_', count: 3, rate: 6 },
       { key: 'anim_exploder_run', prefix: 'tex_exploder_run_', count: 4, rate: 8 },
       { key: 'anim_miniboss_run', prefix: 'tex_miniboss_run_', count: 4, rate: 8 },
       { key: 'anim_boss_run', prefix: 'tex_boss_run_', count: 4, rate: 8 },

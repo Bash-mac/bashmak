@@ -59,7 +59,7 @@ export class OrbitingFliesWeapon implements IWeapon {
     }
 
     // Check collision with nearby enemies
-    const damage = Math.round((7 + ctx.player.stats.damage * 0.5 + (level - 1) * 5) * (1 + mods.damagePercentBonus));
+    const damage = Math.round((4 + level * 2) * (1 + mods.damagePercentBonus));
     const hitRadiusSq = 26 * 26;
 
     for (const enemy of ctx.enemiesMap.values()) {
@@ -78,10 +78,10 @@ export class OrbitingFliesWeapon implements IWeapon {
         const distSq = dx * dx + dy * dy;
         if (distSq <= hitRadiusSq) {
           ctx.combatSystem.applyDamage(ctx.player, enemy, damage);
-          this.hitCooldowns.set(enemy.id, 350);
+          this.hitCooldowns.set(enemy.id, 500);
 
           const pushAngle = Math.atan2(ey - py, ex - px);
-          enemy.applyKnockback(Math.cos(pushAngle) * 130, Math.sin(pushAngle) * 130, 90);
+          enemy.applyKnockback(Math.cos(pushAngle) * 90, Math.sin(pushAngle) * 90, 70);
 
           if (ctx.vfxPool) {
             ctx.vfxPool.spawnImpactSplat(fx, fy, 0.6);

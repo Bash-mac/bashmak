@@ -49,7 +49,7 @@ export class ToiletLidWeapon implements IWeapon {
     if (level <= 0) return;
 
     const baseSpeed = (ctx.player.stats.attackSpeed ?? 1.0) * (1 + mods.attackSpeedBonus);
-    const baseInterval = 1350 / baseSpeed;
+    const baseInterval = 1600 / baseSpeed;
 
     this.attackTimer += delta;
     if (this.attackTimer < baseInterval) return;

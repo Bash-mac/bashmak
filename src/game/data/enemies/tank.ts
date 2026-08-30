@@ -11,7 +11,7 @@ export const ARMORED_SLUG: EnemyDefinition = {
   mass: 5,
   stats: {
     maxHp: 65,
-    speed: 65,
+    speed: 45,
     damage: 12,
     armor: 1,
   },

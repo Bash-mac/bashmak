@@ -8,6 +8,7 @@ export class LootSystem {
   public gemsGroup: Phaser.Physics.Arcade.Group;
   public gooDropsGroup: Phaser.Physics.Arcade.Group;
   public chestsGroup: Phaser.Physics.Arcade.Group;
+  public consumablesGroup: Phaser.Physics.Arcade.Group;
   private scene: Phaser.Scene;
   private saveManager = SaveManager.getInstance();
   private damageNumbers?: DamageNumberPool;
@@ -15,6 +16,7 @@ export class LootSystem {
   private gemPool: ObjectPool<Phaser.Types.Physics.Arcade.SpriteWithDynamicBody>;
   private gooPool: ObjectPool<Phaser.Types.Physics.Arcade.SpriteWithDynamicBody>;
   private chestPool: ObjectPool<Phaser.Types.Physics.Arcade.SpriteWithDynamicBody>;
+  private consumablePool: ObjectPool<Phaser.Types.Physics.Arcade.SpriteWithDynamicBody>;
 
   private static readonly MAX_ACTIVE_GEMS = 90;
 
@@ -24,6 +26,7 @@ export class LootSystem {
     this.gemsGroup = scene.physics.add.group();
     this.gooDropsGroup = scene.physics.add.group();
     this.chestsGroup = scene.physics.add.group();
+    this.consumablesGroup = scene.physics.add.group();
 
     // 1. Gem Pool (XP Snots)
     this.gemPool = new ObjectPool<Phaser.Types.Physics.Arcade.SpriteWithDynamicBody>(scene, {
@@ -81,6 +84,25 @@ export class LootSystem {
       maxSize: 10,
     });
     this.chestPool.prewarm(4);
+
+    // 4. Combat Consumables Pool (Nuke, Magnet, Freeze, Frenzy)
+    this.consumablePool = new ObjectPool<Phaser.Types.Physics.Arcade.SpriteWithDynamicBody>(scene, {
+      create: () => {
+        const item = this.consumablesGroup.create(0, 0, 'drop_nuke') as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
+        item.setScale(0.75);
+        item.setCircle(18, 0, 0);
+        item.setDepth(6);
+        return item;
+      },
+      onRelease: (item) => {
+        this.scene.tweens.killTweensOf(item);
+        item.clearTint();
+        item.setData('armed', false);
+        item.setData('consumableType', undefined);
+      },
+      maxSize: 10,
+    });
+    this.consumablePool.prewarm(4);
   }
 
   public setDamageNumberPool(pool: DamageNumberPool): void {
@@ -295,9 +317,63 @@ export class LootSystem {
     this.chestPool.release(chest);
   }
 
+  public spawnConsumable(x: number, y: number, specificType?: 'nuke' | 'magnet' | 'freeze' | 'frenzy'): void {
+    const types: ('nuke' | 'magnet' | 'freeze' | 'frenzy')[] = ['nuke', 'magnet', 'freeze', 'frenzy'];
+    const chosenType = specificType || types[Math.floor(Math.random() * types.length)];
+    const item = this.consumablePool.get();
+
+    item.setTexture(`drop_${chosenType}`);
+    item.setPosition(x, y - 5);
+    item.setData('consumableType', chosenType);
+    item.setData('armed', false);
+    item.setScale(0.2);
+
+    const targetX = x + (Math.random() - 0.5) * 45;
+    const targetY = y + 15 + Math.random() * 20;
+
+    // Pop-up and bounce onto the ground
+    this.scene.tweens.add({
+      targets: item,
+      x: targetX,
+      y: { from: y - 28, to: targetY },
+      scaleX: 0.75,
+      scaleY: 0.75,
+      duration: 400,
+      ease: 'Bounce.easeOut',
+      onComplete: () => {
+        if (!item.active) return;
+        // Arm after bounce so player sees it drop rather than instantly vacuuming it
+        item.setData('armed', true);
+        this.scene.tweens.add({
+          targets: item,
+          scaleX: 0.85,
+          scaleY: 0.85,
+          duration: 450,
+          yoyo: true,
+          repeat: -1,
+          ease: 'Sine.easeInOut',
+        });
+      },
+    });
+
+    const labels: Record<string, { text: string; color: string }> = {
+      nuke: { text: 'БОМБА!', color: '#ef4444' },
+      magnet: { text: 'МАГНИТ!', color: '#3b82f6' },
+      freeze: { text: 'ЗАМОРОЗКА!', color: '#06b6d4' },
+      frenzy: { text: 'ЯРОСТЬ!', color: '#f59e0b' },
+    };
+    const info = labels[chosenType];
+    if (info) this.showFloatText(targetX, y - 35, info.text, info.color);
+  }
+
+  public releaseConsumable(item: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody): void {
+    this.consumablePool.release(item);
+  }
+
   public clear(): void {
     this.gemPool.clear();
     this.gooPool.clear();
     this.chestPool.clear();
+    this.consumablePool.clear();
   }
 }

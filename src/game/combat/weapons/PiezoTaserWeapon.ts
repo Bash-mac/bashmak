@@ -59,7 +59,7 @@ export class PiezoTaserWeapon implements IWeapon {
     });
 
     // Damage & Stun (Rolls crit based on player stats)
-    const baseDmg = 25 + ctx.player.stats.damage * 0.5 + (level - 1) * 16;
+    const baseDmg = 16 + (level - 1) * 7;
     const rawPrimaryDamage = Math.round(baseDmg * (1 + mods.damagePercentBonus));
     const isCrit = Math.random() < mods.critChance;
     const primaryDamage = isCrit ? Math.round(rawPrimaryDamage * (mods.critMultiplier || 2.0)) : rawPrimaryDamage;
@@ -89,7 +89,7 @@ export class PiezoTaserWeapon implements IWeapon {
           durationMs: 110,
           forks: false,
         });
-        const rawSecDmg = Math.round(rawPrimaryDamage * 0.55);
+        const rawSecDmg = Math.round(rawPrimaryDamage * 0.40);
         const isSecCrit = Math.random() < mods.critChance;
         const secDmg = isSecCrit ? Math.round(rawSecDmg * (mods.critMultiplier || 2.0)) : rawSecDmg;
         ctx.combatSystem.applyDamage(ctx.player, secTarget, secDmg);

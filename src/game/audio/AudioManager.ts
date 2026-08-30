@@ -19,6 +19,7 @@ export class AudioManager {
   private lastGooTime = 0;
   private lastImpactTime = 0;
   private lastSpitTime = 0;
+  private lastExplosionTime = 0;
 
   // BGM Lookahead Scheduler State
   private bgmSchedulerId: number | null = null;
@@ -391,6 +392,8 @@ export class AudioManager {
     if (this.isMuted || !this.ensureContext()) return;
     const ctx = this.ctx!;
     const now = ctx.currentTime;
+    if (now - this.lastExplosionTime < 0.12) return;
+    this.lastExplosionTime = now;
 
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();

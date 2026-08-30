@@ -49,7 +49,6 @@ export class CollisionManager {
       hazardSystem,
       gameState,
       eventBus,
-      hud,
       audio,
       projectilePool,
       damageNumbers,
@@ -104,17 +103,13 @@ export class CollisionManager {
       }
     });
 
-    // 2. Player vs Enemies (Contact damage & Knockback)
+    // 2. Player vs Enemies (Contact damage)
     scene.physics.add.overlap(player.sprite!, enemiesGroup, (_p, enemyObj) => {
       const enemy = enemiesMap.get((enemyObj as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody).getData('entityId'));
       if (enemy && enemy.isAlive && !enemy.isExploding) {
         if (enemy.definition?.archetype === 'exploder') {
           hazardSystem.startExploderFuse(enemy, scene, (e) => hazardSystem.detonateExploder(e, ctx.getHazardCtx()));
           return;
-        }
-        if (enemy.sprite && player.sprite) {
-          const angle = Phaser.Math.Angle.Between(player.x, player.y, enemy.x, enemy.y);
-          enemy.applyKnockback(Math.cos(angle) * 220, Math.sin(angle) * 220, 160);
         }
         if (ctx.getPlayerIframeTimer() <= 0) {
           ctx.applyDamageToPlayer(enemy.stats.damage);
@@ -134,16 +129,47 @@ export class CollisionManager {
       const by = barrel.y;
       barrel.destroy();
       const roll = Math.random();
-      if (roll < 0.40) lootSystem.spawnGem(bx, by, 6, player.x, player.y);
-      else if (roll < 0.70) lootSystem.spawnGoo(bx, by, Phaser.Math.Between(1, 2));
-      else if (roll < 0.88) {
-        player.health.heal(25);
-        hud.updateHp(player.health.currentHp, player.stats.maxHp);
-        eventBus.emit('player:healed', { currentHp: player.health.currentHp, maxHp: player.stats.maxHp, amount: 25 });
-      } else lootSystem.pullAllGemsToPlayer(player.x, player.y);
+      if (roll < 0.35) lootSystem.spawnGem(bx, by, 8, player.x, player.y);
+      else if (roll < 0.60) lootSystem.spawnGoo(bx, by, Phaser.Math.Between(1, 3));
+      else lootSystem.spawnConsumable(bx, by);
     });
 
-    // 5. Player vs Shrines & Loot Drops
+    // 5. Player vs Consumables (Armed pickups only)
+    scene.physics.add.overlap(player.sprite!, lootSystem.consumablesGroup, (_p, itemObj) => {
+      const item = itemObj as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
+      if (!item.active || !item.getData('armed')) return;
+      const type = item.getData('consumableType') as 'nuke' | 'magnet' | 'freeze' | 'frenzy' | undefined;
+      const ix = item.x;
+      const iy = item.y;
+      lootSystem.releaseConsumable(item);
+      audio.playLevelUp();
+
+      if (type === 'nuke') {
+        lootSystem.showFloatText(player.x, player.y - 40, 'ЯДЕРНЫЙ ВЗРЫВ!', '#ef4444');
+        hazardSystem.triggerScreenWipeBlast(scene, ix, iy, ctx.getHazardCtx());
+      } else if (type === 'magnet') {
+        lootSystem.showFloatText(player.x, player.y - 40, 'ПЫЛЕСОС ЖИЖИ!', '#3b82f6');
+        lootSystem.pullAllGemsToPlayer(player.x, player.y);
+      } else if (type === 'freeze') {
+        lootSystem.showFloatText(player.x, player.y - 40, 'АЗОТНАЯ ЗАМОРОЗКА!', '#06b6d4');
+        for (const enemy of enemiesMap.values()) {
+          if (enemy.isAlive && !enemy.isExploding && enemy.definition?.archetype !== 'boss') {
+            enemy.applySlow(0.95, 4500);
+            if (enemy.sprite) hazardSystem.flashSprite(scene, enemy.sprite, 0x67e8f9);
+          }
+        }
+      } else if (type === 'frenzy') {
+        lootSystem.showFloatText(player.x, player.y - 40, 'БЕРСЕРК!', '#f59e0b');
+        gameState.playerModifiers.attackSpeedBonus += 0.50;
+        player.stats.speed = (player.stats.speed || 170) * 1.35;
+        scene.time.delayedCall(7000, () => {
+          gameState.playerModifiers.attackSpeedBonus = Math.max(0, gameState.playerModifiers.attackSpeedBonus - 0.50);
+          player.stats.speed = (player.stats.speed || 170) / 1.35;
+        });
+      }
+    });
+
+    // 6. Player vs Shrines & Loot Drops
     scene.physics.add.overlap(player.sprite!, mapObjects.shrinesGroup, (_p, shrineObj) => {
       const shrine = shrineObj as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
       if (!shrine.active) return;

@@ -15,7 +15,7 @@ export class SlimeSpitWeapon implements IWeapon {
     const spitLevel = mods.slimeSpitLevel;
 
     const baseSpeed = (ctx.player.stats.attackSpeed ?? 1.3) * (1 + mods.attackSpeedBonus);
-    const baseInterval = 770 / baseSpeed;
+    const baseInterval = 1100 / baseSpeed;
 
     this.attackTimer += delta;
     if (this.attackTimer < baseInterval) return;
@@ -26,7 +26,7 @@ export class SlimeSpitWeapon implements IWeapon {
 
     this.attackTimer = 0;
     const primaryTarget = targets[0];
-    let damage = ctx.player.stats.damage * (1 + mods.damagePercentBonus);
+    let damage = Math.round(ctx.player.stats.damage * 0.85) * (1 + mods.damagePercentBonus);
 
     // Low HP rage bonus
     if (ctx.player.health.percent < mods.lowHpDmgThreshold) {
@@ -56,17 +56,22 @@ export class SlimeSpitWeapon implements IWeapon {
 
     const multishot = Math.max(1, mods.multishotCount || 1);
     const bursts = Math.max(1, mods.burstFireCount || 1);
+    const spreadAngle = 0.28;
+    const startAngle = -((multishot - 1) * spreadAngle) / 2;
 
+    let shotIndex = 0;
     for (let b = 0; b < bursts; b++) {
-      ctx.scene.time.delayedCall(b * 80, () => {
-        const spreadAngle = 0.28;
-        const startAngle = -((multishot - 1) * spreadAngle) / 2;
-
-        for (let i = 0; i < multishot; i++) {
-          const target = targets[i % targets.length] || primaryTarget;
-          this.fireSpit(ctx, target, damage, isCrit, mods.pierceCount || 0, startAngle + i * spreadAngle, spitLevel);
-        }
-      });
+      for (let i = 0; i < multishot; i++) {
+        const delay = shotIndex * 65;
+        const shotIdx = i;
+        ctx.scene.time.delayedCall(delay, () => {
+          if (!ctx.player.isAlive || !ctx.player.sprite?.active) return;
+          const freshTargets = this.findNearbyEnemies(ctx.player, ctx.enemiesMap, maxRange);
+          const target = freshTargets[shotIdx % Math.max(1, freshTargets.length)] || primaryTarget;
+          this.fireSpit(ctx, target, damage, isCrit, mods.pierceCount || 0, startAngle + shotIdx * spreadAngle, spitLevel);
+        });
+        shotIndex++;
+      }
     }
   }
 

@@ -6,12 +6,20 @@ import { createPlatformAdapter } from '../../../platform';
 import { getReadyEvolution, type EvolutionRecipe } from '../../data/evolutions';
 import { AudioManager } from '../../audio/AudioManager';
 
+interface CardActionItem {
+  select: () => void;
+  setFocus: (focused: boolean) => void;
+}
+
 export class LevelUpModal {
   private scene: Phaser.Scene;
   private onUpgradeSelected: (upgrade: UpgradeDefinition, levelToApply: number) => void;
   private onSkip?: () => void;
   private platform = createPlatformAdapter();
   private elements: Phaser.GameObjects.GameObject[] = [];
+  private cardItems: CardActionItem[] = [];
+  private focusedIndex = -1;
+  private onKeyDownBound?: (event: KeyboardEvent) => void;
   public isVisible = false;
 
   constructor(
@@ -88,13 +96,13 @@ export class LevelUpModal {
 
     if (readyEvo) {
       const cardX = startX + currentIdx * (cardWidth + spacing);
-      this.createEvolutionCard(readyEvo, cardX, cardY, cardWidth, cardHeight);
+      this.createEvolutionCard(readyEvo, cardX, cardY, cardWidth, cardHeight, currentIdx + 1);
       currentIdx++;
     }
 
     options.forEach((opt) => {
       const cardX = startX + currentIdx * (cardWidth + spacing);
-      this.createCard(opt.upgrade, opt.levelToApply, cardX, cardY, cardWidth, cardHeight);
+      this.createCard(opt.upgrade, opt.levelToApply, cardX, cardY, cardWidth, cardHeight, currentIdx + 1);
       currentIdx++;
     });
 
@@ -114,7 +122,7 @@ export class LevelUpModal {
       .setDepth(10005);
 
     const rerollText = this.scene.add
-      .text(rerollX, btnBarY, `РЕРОЛЛ (${gameState.rerollsRemaining})`, {
+      .text(rerollX, btnBarY, `[R] РЕРОЛЛ (${gameState.rerollsRemaining})`, {
         fontSize: width < 700 ? '12px' : '13px',
         fontStyle: 'bold',
         color: canReroll ? '#fde047' : '#64748b',
@@ -124,16 +132,19 @@ export class LevelUpModal {
       .setScrollFactor(0)
       .setDepth(10006);
 
+    const triggerReroll = () => {
+      if (!canReroll) return;
+      this.platform.vibrate(30);
+      AudioManager.getInstance().playClick();
+      gameState.rerollsRemaining--;
+      this.show();
+    };
+
     if (canReroll) {
       rerollBg.setInteractive({ useHandCursor: true });
       rerollBg.on('pointerover', () => rerollBg.setScale(1.04));
       rerollBg.on('pointerout', () => rerollBg.setScale(1.0));
-      rerollBg.on('pointerdown', () => {
-        this.platform.vibrate(30);
-        AudioManager.getInstance().playClick();
-        gameState.rerollsRemaining--;
-        this.show();
-      });
+      rerollBg.on('pointerdown', triggerReroll);
     }
 
     // Skip Button
@@ -146,7 +157,7 @@ export class LevelUpModal {
       .setDepth(10005);
 
     const skipText = this.scene.add
-      .text(skipX, btnBarY, `ПРОПУСК (${gameState.skipsRemaining})`, {
+      .text(skipX, btnBarY, `[S] ПРОПУСК (${gameState.skipsRemaining})`, {
         fontSize: width < 700 ? '12px' : '13px',
         fontStyle: 'bold',
         color: canSkip ? '#93c5fd' : '#64748b',
@@ -156,22 +167,26 @@ export class LevelUpModal {
       .setScrollFactor(0)
       .setDepth(10006);
 
+    const triggerSkip = () => {
+      if (!canSkip) return;
+      this.platform.vibrate(30);
+      AudioManager.getInstance().playClick();
+      gameState.skipsRemaining--;
+      this.hide();
+      if (this.onSkip) {
+        this.onSkip();
+      }
+    };
+
     if (canSkip) {
       skipBg.setInteractive({ useHandCursor: true });
       skipBg.on('pointerover', () => skipBg.setScale(1.04));
       skipBg.on('pointerout', () => skipBg.setScale(1.0));
-      skipBg.on('pointerdown', () => {
-        this.platform.vibrate(30);
-        AudioManager.getInstance().playClick();
-        gameState.skipsRemaining--;
-        this.hide();
-        if (this.onSkip) {
-          this.onSkip();
-        }
-      });
+      skipBg.on('pointerdown', triggerSkip);
     }
 
     this.elements.push(rerollBg, rerollText, skipBg, skipText);
+    this.setupKeyboard(canReroll, triggerReroll, canSkip, triggerSkip);
   }
 
   private createEvolutionCard(
@@ -179,7 +194,8 @@ export class LevelUpModal {
     x: number,
     y: number,
     w: number,
-    h: number
+    h: number,
+    cardIndex: number
   ): void {
     const cardContainer = this.scene.add.container(x, y).setDepth(10002).setScrollFactor(0);
 
@@ -195,7 +211,7 @@ export class LevelUpModal {
 
     // 3. Category Badge (Under top plate)
     const badgeLabel = this.scene.add
-      .text(0, -h * 0.23, ' СУПЕР-ЭВОЛЮЦИЯ', {
+      .text(0, -h * 0.23, 'СУПЕР-ЭВОЛЮЦИЯ', {
         fontSize: w < 240 ? '11px' : '13px',
         fontStyle: 'bold',
         color: '#facc15',
@@ -251,7 +267,7 @@ export class LevelUpModal {
     btnImage.setDisplaySize(btnW, btnH);
 
     const btnLabel = this.scene.add
-      .text(0, btnY - 2, 'МУТИРОВАТЬ', {
+      .text(0, btnY - 2, `[${cardIndex}] МУТИРОВАТЬ`, {
         fontSize: w < 240 ? '12px' : '14px',
         fontFamily: '"Gagalin", "Balsamiq Sans", monospace',
         color: '#451a03',
@@ -295,26 +311,38 @@ export class LevelUpModal {
       );
     };
 
+    const setFocus = (focused: boolean) => {
+      if (focused) {
+        btnImage.setTint(0xfff0aa);
+        this.scene.tweens.add({
+          targets: cardContainer,
+          scaleX: 1.04,
+          scaleY: 1.04,
+          duration: 100,
+          ease: 'Quad.easeOut',
+        });
+      } else {
+        btnImage.clearTint();
+        this.scene.tweens.add({
+          targets: cardContainer,
+          scaleX: 1.0,
+          scaleY: 1.0,
+          duration: 100,
+          ease: 'Quad.easeOut',
+        });
+      }
+    };
+
+    this.cardItems.push({ select: selectUpgrade, setFocus });
+
     hitArea.on('pointerover', () => {
-      btnImage.setTint(0xfff0aa);
-      this.scene.tweens.add({
-        targets: cardContainer,
-        scaleX: 1.03,
-        scaleY: 1.03,
-        duration: 100,
-        ease: 'Quad.easeOut',
-      });
+      this.focusedIndex = cardIndex - 1;
+      this.cardItems.forEach((c, idx) => c.setFocus(idx === this.focusedIndex));
     });
 
     hitArea.on('pointerout', () => {
-      btnImage.clearTint();
-      this.scene.tweens.add({
-        targets: cardContainer,
-        scaleX: 1.0,
-        scaleY: 1.0,
-        duration: 100,
-        ease: 'Quad.easeOut',
-      });
+      setFocus(false);
+      if (this.focusedIndex === cardIndex - 1) this.focusedIndex = -1;
     });
 
     hitArea.on('pointerdown', selectUpgrade);
@@ -328,7 +356,8 @@ export class LevelUpModal {
     x: number,
     y: number,
     w: number,
-    h: number
+    h: number,
+    cardIndex: number
   ): void {
     const cardContainer = this.scene.add.container(x, y).setDepth(10002).setScrollFactor(0);
 
@@ -426,10 +455,10 @@ export class LevelUpModal {
     btnImage.setDisplaySize(btnW, btnH);
 
     const actionText = isConsumable
-      ? 'ПРИМЕНИТЬ'
+      ? `[${cardIndex}] ПРИМЕНИТЬ`
       : isNew
-      ? 'ВЗЯТЬ'
-      : `УЛУЧШИТЬ (L${levelToApply})`;
+      ? `[${cardIndex}] ВЗЯТЬ`
+      : `[${cardIndex}] УЛУЧШИТЬ (L${levelToApply})`;
 
     const btnLabel = this.scene.add
       .text(0, btnY - 2, actionText, {
@@ -467,31 +496,99 @@ export class LevelUpModal {
       this.onUpgradeSelected(upgrade, levelToApply);
     };
 
+    const setFocus = (focused: boolean) => {
+      if (focused) {
+        btnImage.setTint(isUpgrade ? 0xfff0aa : 0xddffdd);
+        this.scene.tweens.add({
+          targets: cardContainer,
+          scaleX: 1.04,
+          scaleY: 1.04,
+          duration: 100,
+          ease: 'Quad.easeOut',
+        });
+      } else {
+        btnImage.clearTint();
+        this.scene.tweens.add({
+          targets: cardContainer,
+          scaleX: 1.0,
+          scaleY: 1.0,
+          duration: 100,
+          ease: 'Quad.easeOut',
+        });
+      }
+    };
+
+    this.cardItems.push({ select: selectUpgrade, setFocus });
+
     hitArea.on('pointerover', () => {
-      btnImage.setTint(isUpgrade ? 0xfff0aa : 0xddffdd);
-      this.scene.tweens.add({
-        targets: cardContainer,
-        scaleX: 1.03,
-        scaleY: 1.03,
-        duration: 100,
-        ease: 'Quad.easeOut',
-      });
+      this.focusedIndex = cardIndex - 1;
+      this.cardItems.forEach((c, idx) => c.setFocus(idx === this.focusedIndex));
     });
 
     hitArea.on('pointerout', () => {
-      btnImage.clearTint();
-      this.scene.tweens.add({
-        targets: cardContainer,
-        scaleX: 1.0,
-        scaleY: 1.0,
-        duration: 100,
-        ease: 'Quad.easeOut',
-      });
+      setFocus(false);
+      if (this.focusedIndex === cardIndex - 1) this.focusedIndex = -1;
     });
 
     hitArea.on('pointerdown', selectUpgrade);
 
     this.elements.push(cardContainer, hitArea);
+  }
+
+  private setupKeyboard(
+    canReroll: boolean,
+    onReroll: () => void,
+    canSkip: boolean,
+    onSkip: () => void
+  ): void {
+    this.removeKeyboard();
+    this.onKeyDownBound = (event: KeyboardEvent) => {
+      if (!this.isVisible) return;
+      const key = event.key;
+      const code = event.code;
+
+      if (key === '1' || code === 'Digit1' || code === 'Numpad1') {
+        if (this.cardItems[0]) this.cardItems[0].select();
+      } else if (key === '2' || code === 'Digit2' || code === 'Numpad2') {
+        if (this.cardItems[1]) this.cardItems[1].select();
+      } else if (key === '3' || code === 'Digit3' || code === 'Numpad3') {
+        if (this.cardItems[2]) this.cardItems[2].select();
+      } else if (key === '4' || code === 'Digit4' || code === 'Numpad4') {
+        if (this.cardItems[3]) this.cardItems[3].select();
+      } else if (key === 'ArrowLeft' || code === 'KeyA' || key === 'a' || key === 'A' || key === 'ф' || key === 'Ф') {
+        this.navigateFocus(-1);
+      } else if (key === 'ArrowRight' || code === 'KeyD' || key === 'd' || key === 'D' || key === 'в' || key === 'В') {
+        this.navigateFocus(1);
+      } else if (key === 'Enter' || key === ' ') {
+        if (this.focusedIndex >= 0 && this.cardItems[this.focusedIndex]) {
+          this.cardItems[this.focusedIndex].select();
+        } else if (this.cardItems.length > 0 && this.cardItems[0]) {
+          this.cardItems[0].select();
+        }
+      } else if (code === 'KeyR' || key === 'r' || key === 'R' || key === 'к' || key === 'К') {
+        if (canReroll) onReroll();
+      } else if (code === 'KeyS' || key === 's' || key === 'S' || key === 'ы' || key === 'Ы' || key === 'Escape') {
+        if (canSkip) onSkip();
+      }
+    };
+    this.scene.input.keyboard?.on('keydown', this.onKeyDownBound);
+  }
+
+  private navigateFocus(dir: number): void {
+    if (this.cardItems.length === 0) return;
+    if (this.focusedIndex === -1) {
+      this.focusedIndex = dir > 0 ? 0 : this.cardItems.length - 1;
+    } else {
+      this.focusedIndex = (this.focusedIndex + dir + this.cardItems.length) % this.cardItems.length;
+    }
+    this.cardItems.forEach((c, idx) => c.setFocus(idx === this.focusedIndex));
+  }
+
+  private removeKeyboard(): void {
+    if (this.onKeyDownBound) {
+      this.scene.input.keyboard?.off('keydown', this.onKeyDownBound);
+      this.onKeyDownBound = undefined;
+    }
   }
 
   hide(): void {
@@ -500,6 +597,9 @@ export class LevelUpModal {
   }
 
   private clear(): void {
+    this.removeKeyboard();
+    this.cardItems = [];
+    this.focusedIndex = -1;
     for (const el of this.elements) {
       el.destroy();
     }

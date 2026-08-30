@@ -11,7 +11,7 @@ export const BASHMAK_HERO: HeroDefinition = {
   posterKey: 'hero_card_bashmak',
   stats: {
     maxHp: 180,
-    speed: 170,
+    speed: 150,
     damage: 18,
     armor: 3,
     attackSpeed: 1.0,

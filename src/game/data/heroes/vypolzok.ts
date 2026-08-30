@@ -11,14 +11,14 @@ export const VYPOLZOK_HERO: HeroDefinition = {
   posterKey: 'hero_card_worm',
   stats: {
     maxHp: 100,
-    speed: 230,
+    speed: 170,
     damage: 10,
     armor: 0,
     attackSpeed: 1.3,
   },
   attackIntervalMs: 770,
   attackRange: 300,
-  projectileSpeed: 520,
+  projectileSpeed: 390,
   projectileSize: 10,
   startingWeaponId: 'weapon_slime_spit',
   trait: {

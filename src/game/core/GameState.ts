@@ -47,6 +47,14 @@ export class GameState {
     return GameState.instance;
   }
 
+  public getPowerScore(): number {
+    let score = 0;
+    for (const lvl of this.activeUpgrades.values()) {
+      score += lvl;
+    }
+    return Math.max(1, score);
+  }
+
   private createDefaultModifiers(): PlayerModifiers {
     return {
       doubleSpitChance: 0,

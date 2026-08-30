@@ -12,7 +12,7 @@ export class AcidTrailWeapon implements IWeapon {
     if (level <= 0) return;
 
     this.stinkAuraTimer += delta;
-    if (this.stinkAuraTimer >= 450) {
+    if (this.stinkAuraTimer >= 800) {
       this.stinkAuraTimer = 0;
       this.emitStinkPulse(ctx, level);
     }
@@ -22,8 +22,8 @@ export class AcidTrailWeapon implements IWeapon {
     const px = ctx.player.x;
     const py = ctx.player.y;
     const mods = ctx.gameState.playerModifiers;
-    const auraRadius = (110 + (level - 1) * 18) * (1 + mods.attackAreaBonus);
-    const damage = Math.round((5 + ctx.player.stats.damage * 0.5 + (level - 1) * 6) * (1 + mods.damagePercentBonus));
+    const auraRadius = (85 + (level - 1) * 15) * (1 + mods.attackAreaBonus);
+    const damage = Math.round((4 + level * 2) * (1 + mods.damagePercentBonus));
 
     // Stench Aura VFX from ArcadaEffector (calibrated to true 140px visual content diameter)
     const vfxScale = (auraRadius * 2) / 140;
