@@ -29,7 +29,7 @@ export class ToiletLidWeapon implements IWeapon {
     this.attackTimer = 0;
     if (this.lastCtx) {
       for (const lid of this.lids) {
-        if (lid.sprite?.active) {
+        if (lid.sprite) {
           if (this.lastCtx.projectilePool) this.lastCtx.projectilePool.releaseProjectile(lid.sprite);
           else lid.sprite.destroy();
         }
@@ -148,6 +148,10 @@ export class ToiletLidWeapon implements IWeapon {
       const spr = lid.sprite;
 
       if (!spr || !spr.active) {
+        if (spr) {
+          if (ctx.projectilePool) ctx.projectilePool.releaseProjectile(spr);
+          else spr.destroy();
+        }
         this.lids.splice(i, 1);
         continue;
       }
@@ -235,7 +239,7 @@ export class ToiletLidWeapon implements IWeapon {
 
           // Lv.5 accumulative +8% per enemy ricochet (wall bounces don't ramp)
           if (lid.level >= 5) {
-            lid.damageMultiplier += 0.08;
+            lid.damageMultiplier = Math.min(lid.damageMultiplier + 0.08, 1.60);
             lid.speed = Math.min(850, lid.speed * 1.05);
           }
 

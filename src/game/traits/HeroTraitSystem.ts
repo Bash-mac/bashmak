@@ -37,7 +37,7 @@ export class HeroTraitSystem {
         if (mods.standStillBonusActive) {
           mods.standStillBonusActive = false;
           mods.standStillTimerMs = 0;
-          ctx.player.applySlow(0.25, 1200);
+          ctx.player.applySlow(0.15, 800);
         } else {
           mods.standStillTimerMs = 0;
         }
@@ -62,7 +62,7 @@ export class HeroTraitSystem {
         ctx.player.applySpeedBoost(1.0 + mods.momentumSpeedBonus, 150);
 
         if (mods.momentumSpeedBonus >= 0.25) {
-          ctx.applyAreaDamage(ctx.player.x, ctx.player.y, 44, 18);
+          ctx.applyAreaDamage(ctx.player.x, ctx.player.y, 44, 12);
         }
       } else {
         mods.straightRunTimerMs = 0;
@@ -76,9 +76,6 @@ export class HeroTraitSystem {
     mods.killStreakStacks = Math.min(10, (mods.killStreakStacks || 0) + 1);
     mods.killStreakTimerMs = 4500;
     ctx.player.applySpeedBoost(1.0 + mods.killStreakStacks * 0.03, 4500);
-    if (mods.killStreakStacks === 10) {
-      ctx.lootSystem.showFloatText(ctx.player.x, ctx.player.y - 25, ' MEGA CARROT READY!', '#f97316');
-    }
   }
 
   private getTrailPool(scene: Phaser.Scene): ObjectPool<Phaser.GameObjects.Sprite> {

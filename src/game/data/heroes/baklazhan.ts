@@ -16,7 +16,7 @@ export const BAKLAZHAN_HERO: HeroDefinition = {
   stats: {
     maxHp: 150,
     speed: 160,
-    damage: 20,
+    damage: 17,
     armor: 2,
     attackSpeed: 1.0,
   },

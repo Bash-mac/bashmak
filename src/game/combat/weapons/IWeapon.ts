@@ -19,6 +19,7 @@ export interface WeaponContext {
   vfxPool?: VfxPool;
   flashSprite?: (sprite: Phaser.GameObjects.Sprite, color: number) => void;
   vibrate?: (ms: number) => void;
+  hapticImpact?: (style: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft') => void;
   spawnAcidPool?: (x: number, y: number, radius: number, damage: number, durationMs: number, isPlayer: boolean) => void;
 }
 

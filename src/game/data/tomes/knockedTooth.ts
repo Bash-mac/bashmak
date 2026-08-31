@@ -46,11 +46,11 @@ export const TOME_CRIT: UpgradeDefinition = {
     },
     {
       level: 5,
-      description: ' КРОВАВЫЙ РАЗРЫВ: Шанс крита +55%, множитель 3.2×!',
+      description: ' КРОВАВЫЙ РАЗРЫВ: Шанс крита +45%, множитель 2.5x!',
       apply: (mod) => {
         mod.tomeCrit = 5;
-        mod.critChance += 0.15;
-        mod.critMultiplier = Math.max(mod.critMultiplier, 3.2);
+        mod.critChance += 0.05;
+        mod.critMultiplier = Math.max(mod.critMultiplier, 2.5);
       },
     },
   ],

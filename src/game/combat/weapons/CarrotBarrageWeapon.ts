@@ -39,12 +39,12 @@ export class CarrotBarrageWeapon implements IWeapon {
     this.attackTimer += delta;
     if (this.attackTimer < baseInterval) return;
 
-    const primaryTarget = this.findClosestEnemy(ctx.player, ctx.enemiesMap, 380);
+    const primaryTarget = this.findClosestEnemy(ctx.player, ctx.enemiesMap, 550);
     if (!primaryTarget) return;
 
     this.attackTimer = 0;
 
-    let damage = Math.round(ctx.player.stats.damage * 0.75) * (1 + mods.damagePercentBonus);
+    let damage = Math.round(ctx.player.stats.damage * 0.85) * (1 + mods.damagePercentBonus);
 
     // 10 Stacks Kill-Streak Mega Shot
     let isSuperCrit = false;
@@ -79,10 +79,11 @@ export class CarrotBarrageWeapon implements IWeapon {
     for (let i = 0; i < carrotsCount; i++) {
       ctx.scene.time.delayedCall(i * repeatInterval, () => {
         if (!ctx.player.isAlive || !ctx.player.sprite?.active) return;
-        const freshTarget = this.findClosestEnemy(ctx.player, ctx.enemiesMap, 420) || primaryTarget;
+        const freshTarget = this.findClosestEnemy(ctx.player, ctx.enemiesMap, 600) || primaryTarget;
         const baseAngle = Phaser.Math.Angle.Between(ctx.player.x, ctx.player.y, freshTarget.x, freshTarget.y);
         const angle = baseAngle + startAngle + i * spreadAngle;
-        this.fireCarrotBoomerang(ctx, angle, damage, isSuperCrit, 2 + (carrotLevel >= 4 ? 2 : 0) + (mods.pierceCount || 0));
+        const carrotPierce = 1 + (carrotLevel >= 3 ? 1 : 0) + (carrotLevel >= 5 ? 1 : 0) + (mods.pierceCount || 0);
+        this.fireCarrotBoomerang(ctx, angle, damage, isSuperCrit, carrotPierce);
         if (i === 0) AudioManager.getInstance().playClick();
       });
     }
@@ -94,13 +95,13 @@ export class CarrotBarrageWeapon implements IWeapon {
       ? ctx.projectilePool.getProjectile(texKey, ctx.player.x, ctx.player.y)
       : (ctx.projectilesGroup.create(ctx.player.x, ctx.player.y, texKey) as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody);
 
-    if (!isSuperCrit && ctx.scene.anims.exists('vfx_anim_carrot_fly')) {
-      proj.play('vfx_anim_carrot_fly');
+    if (ctx.scene.anims.exists('vfx_anim_carrot_fly')) {
+      proj.play('vfx_anim_carrot_fly', true);
     }
 
-    const scale = isSuperCrit ? 0.28 : 0.20;
+    const scale = isSuperCrit ? 0.38 : 0.30;
     proj.setScale(scale);
-    const targetRadius = isSuperCrit ? 16 : 11;
+    const targetRadius = isSuperCrit ? 15 : 12;
     if (proj.body) {
       const bodyRadius = targetRadius / scale;
       proj.body.setCircle(
@@ -121,7 +122,7 @@ export class CarrotBarrageWeapon implements IWeapon {
       proj.clearTint();
     }
 
-    const speed = 580;
+    const speed = 680;
     const vx = Math.cos(angle) * speed;
     const vy = Math.sin(angle) * speed;
     proj.setVelocity(vx, vy);
@@ -130,7 +131,7 @@ export class CarrotBarrageWeapon implements IWeapon {
     this.boomerangs.push({
       sprite: proj,
       elapsedMs: 0,
-      outwardDurationMs: 420,
+      outwardDurationMs: 520,
       initialVx: vx,
       initialVy: vy,
       returning: false,
@@ -151,7 +152,6 @@ export class CarrotBarrageWeapon implements IWeapon {
       }
 
       boom.elapsedMs += delta;
-      spr.rotation += 0.25; // Spinning boomerang
 
       if (!boom.returning) {
         if (boom.elapsedMs < boom.outwardDurationMs) {
@@ -179,6 +179,7 @@ export class CarrotBarrageWeapon implements IWeapon {
         const returnAngle = Phaser.Math.Angle.Between(spr.x, spr.y, px, py);
         const returnSpeed = Math.min(800, 450 + (boom.elapsedMs - boom.outwardDurationMs) * 0.7);
         spr.setVelocity(Math.cos(returnAngle) * returnSpeed, Math.sin(returnAngle) * returnSpeed);
+        spr.rotation = returnAngle;
       }
     }
   }

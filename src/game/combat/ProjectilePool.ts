@@ -66,8 +66,8 @@ export class ProjectilePool {
 
   public releaseProjectile(proj: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody): void {
     const textureKey = proj.texture?.key;
-    if (textureKey && this.poolsByTexture.has(textureKey)) {
-      this.poolsByTexture.get(textureKey)!.release(proj);
+    if (textureKey) {
+      this.getPoolForTexture(textureKey).release(proj);
     } else {
       proj.destroy();
     }

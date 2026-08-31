@@ -10,8 +10,8 @@ export const CRAWLER_SWARM: EnemyDefinition = {
   displayScale: 0.28,
   mass: 2,
   stats: {
-    maxHp: 24,
-    speed: 60,
+    maxHp: 22,
+    speed: 78,
     damage: 6,
     armor: 0,
   },

@@ -28,6 +28,7 @@ import { AudioManager } from '../audio/AudioManager';
 import { ProjectilePool } from '../combat/ProjectilePool';
 import { DamageNumberPool } from '../combat/DamageNumberPool';
 import { VfxPool } from '../combat/VfxPool';
+import { EnemyPool } from '../pools/EnemyPool';
 
 export class GameScene extends Phaser.Scene {
   private inputManager!: InputManager; private hud!: HUD;
@@ -44,6 +45,7 @@ export class GameScene extends Phaser.Scene {
   private projectilePool!: ProjectilePool;
   private damageNumbersPool!: DamageNumberPool;
   private vfxPool!: VfxPool;
+  private enemyPool!: EnemyPool;
   private mapObjects!: MapObjects;
   private gameState = GameState.getInstance();
   private saveManager = SaveManager.getInstance();
@@ -72,12 +74,12 @@ export class GameScene extends Phaser.Scene {
 
     this.mapObjects = MapGenerator.createWorld(this, worldSize);
     this.enemiesGroup = this.physics.add.group();
+    this.enemyPool = new EnemyPool(this, this.enemiesGroup);
     this.playerProjectilesGroup = this.physics.add.group();
     this.damageNumbersPool = new DamageNumberPool(this);
     this.projectilePool = new ProjectilePool(this, this.playerProjectilesGroup);
     this.vfxPool = new VfxPool(this);
     this.lootSystem = new LootSystem(this, this.damageNumbersPool);
-
     const { playerEntity, currentHero } = HeroFactory.createPlayer(this, worldSize / 2, worldSize / 2, this.gameState, this.saveManager);
     this.playerEntity = playerEntity; this.currentHero = currentHero;
 
@@ -109,7 +111,7 @@ export class GameScene extends Phaser.Scene {
     this.levelUpModal = new LevelUpModal(this,
       (upgrade, lvl) => {
         this.gameState.applyUpgrade(upgrade, this.playerEntity.stats, this.playerEntity.health, lvl);
-        onLvlDone(); this.hud.updateHp(this.playerEntity.health.currentHp, this.playerEntity.stats.maxHp);
+        this.playerEntity.moveSpeedBonus = this.gameState.playerModifiers.moveSpeedBonus; onLvlDone(); this.hud.updateHp(this.playerEntity.health.currentHp, this.playerEntity.stats.maxHp);
       },
       () => { if (this.gameState.pendingLevelUps > 0) this.gameState.pendingLevelUps--; onLvlDone(); }
     );
@@ -118,7 +120,7 @@ export class GameScene extends Phaser.Scene {
       () => ({ x: this.playerEntity.x, y: this.playerEntity.y, vx: this.playerEntity.sprite?.body?.velocity.x ?? 0, vy: this.playerEntity.sprite?.body?.velocity.y ?? 0 }),
       (def, x, y, scaling, isChamp) => {
         const id = `enemy_${++this.enemyIdCounter}`;
-        this.enemiesMap.set(id, EnemyFactory.createEnemy(this.enemiesGroup, def, x, y, id, scaling, isChamp));
+        this.enemiesMap.set(id, EnemyFactory.createEnemy(this.enemyPool, def, x, y, id, scaling, isChamp, this));
         this.eventBus.emit('enemy:spawned', { id, x, y });
       },
       () => ({ halfW: this.cameras.main.width / (2 * this.cameras.main.zoom), halfH: this.cameras.main.height / (2 * this.cameras.main.zoom) }),
@@ -161,15 +163,15 @@ export class GameScene extends Phaser.Scene {
       this.hazardSystem.detonateExploder(enemy, this.getHazardCtx());
     } else {
       this.vfxPool.spawnEnemyDeath(data.x, data.y, (enemy.definition?.displayScale ?? 0.3) * (enemy.isChampion ? 1.8 : 1.2));
-      this.lootSystem.spawnGem(data.x, data.y, enemy.isChampion ? data.xpValue * 3 : data.xpValue, this.playerEntity.x, this.playerEntity.y);
+      this.lootSystem.spawnGem(data.x, data.y, enemy.isChampion ? data.xpValue * 5 : data.xpValue, this.playerEntity.x, this.playerEntity.y);
       if (enemy.isChampion) {
         this.lootSystem.spawnChest(data.x, data.y);
-        this.lootSystem.spawnGoo(data.x, data.y, 4);
+        this.lootSystem.spawnGoo(data.x, data.y, 10);
       } else if (enemy.definition?.archetype === 'boss') this.lootSystem.spawnGoo(data.x, data.y, 25);
       else if (enemy.type === 'boss' || (enemy.definition?.stats.maxHp ?? 0) >= 150) this.lootSystem.spawnGoo(data.x, data.y, 5);
       else if (Math.random() < 0.16) this.lootSystem.spawnGoo(data.x, data.y, 1);
-      if (enemy.sprite) this.enemiesGroup.remove(enemy.sprite, false, false);
-      enemy.destroy();
+      if (enemy.sprite) this.enemyPool.release(enemy.sprite);
+      enemy.sprite = undefined;
       this.enemiesMap.delete(data.id);
     }
     if (this.gameState.playerModifiers.healOnKill > 0 && this.playerEntity.isAlive && this.playerEntity.health.percent < 1 && this.gameState.playerModifiers.healOnKillTimerMs <= 0) {
@@ -244,7 +246,7 @@ export class GameScene extends Phaser.Scene {
 
   private applyDamageToPlayer(dmg: number): void {
     if (!this.playerEntity.isAlive || this.playerIframeTimerMs > 0 || this.isDying) return;
-    this.playerIframeTimerMs = 220;
+    this.playerIframeTimerMs = 400;
     const effectiveDmg = Math.max(1, Math.round(dmg * (12 / (12 + (this.playerEntity.stats.armor || 0))) * (1 - (this.gameState.playerModifiers.damageReductionPercent || 0))));
     this.playerEntity.health.takeDamage(effectiveDmg); this.audio.playPlayerHurt();
 
@@ -374,6 +376,7 @@ export class GameScene extends Phaser.Scene {
     this.hud?.destroy(); this.levelUpModal?.destroy(); this.gameOverModal?.clear(); this.pauseModal?.destroy();
     this.grimoireModal?.destroy(); this.debugModal?.destroy(); this.inputManager.destroy();
     this.lootSystem.clear(); this.hazardSystem.clear(); this.heroTraitSystem.clear(); this.eventDirector.reset();
+    this.enemyAISystem.reset(); this.enemyPool?.clear();
     this.projectilePool?.clear(); this.damageNumbersPool?.clear(); this.vfxPool?.clear(); this.weaponManager.reset();
   }
 }

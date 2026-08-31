@@ -47,10 +47,33 @@ export class GameState {
     return GameState.instance;
   }
 
+  public powerWindowTimerMs = 0;
+
+  public triggerPowerWindow(durationMs = 40000): void {
+    this.powerWindowTimerMs = durationMs;
+  }
+
+  public updatePowerWindow(deltaMs: number): void {
+    if (this.powerWindowTimerMs > 0) {
+      this.powerWindowTimerMs = Math.max(0, this.powerWindowTimerMs - deltaMs);
+    }
+  }
+
   public getPowerScore(): number {
     let score = 0;
-    for (const lvl of this.activeUpgrades.values()) {
-      score += lvl;
+    const utilityTomes = new Set<string>([
+      'tome_speed',
+      'tome_magnet',
+      'tome_armor',
+      'tome_hp_regen',
+      'tome_lifesteal',
+    ]);
+    for (const [id, lvl] of this.activeUpgrades.entries()) {
+      if (utilityTomes.has(id)) {
+        score += lvl * 0.2;
+      } else {
+        score += lvl * 1.0;
+      }
     }
     return Math.max(1, score);
   }
@@ -98,7 +121,7 @@ export class GameState {
       extraRange: 0,
       magnetRadiusBonus: 0,
       attackAreaBonus: 0,
-      wriggleDash: false,
+      moveSpeedBonus: 0,
       acidTrail: false,
 
       // Active Weapons
@@ -149,75 +172,53 @@ export class GameState {
     };
   }
 
+  private activateWeapon(upgradeId: string): void {
+    this.activeUpgrades.set(upgradeId, 1);
+    if (!this.selectedUpgrades.includes(upgradeId)) this.selectedUpgrades.push(upgradeId);
+  }
+
   public applyStartingWeapon(startingWeaponId: string): void {
     switch (startingWeaponId) {
       case 'weapon_slime_spit':
         this.playerModifiers.slimeSpitLevel = 1;
-        this.activeUpgrades.set('wpn_slime_spit', 1);
-        if (!this.selectedUpgrades.includes('wpn_slime_spit')) {
-          this.selectedUpgrades.push('wpn_slime_spit');
-        }
+        this.activateWeapon('wpn_slime_spit');
         break;
       case 'weapon_lace_whip':
         this.playerModifiers.laceWhipLevel = 1;
-        this.activeUpgrades.set('wpn_lace_whip', 1);
-        if (!this.selectedUpgrades.includes('wpn_lace_whip')) {
-          this.selectedUpgrades.push('wpn_lace_whip');
-        }
+        this.activateWeapon('wpn_lace_whip');
         break;
       case 'weapon_carrot_barrage':
         this.playerModifiers.carrotBarrageLevel = 1;
-        this.activeUpgrades.set('wpn_carrot_barrage', 1);
-        if (!this.selectedUpgrades.includes('wpn_carrot_barrage')) {
-          this.selectedUpgrades.push('wpn_carrot_barrage');
-        }
+        this.activateWeapon('wpn_carrot_barrage');
         break;
       case 'weapon_eggplant_roll':
         this.playerModifiers.eggplantRollLevel = 1;
-        this.activeUpgrades.set('wpn_eggplant_roll', 1);
-        if (!this.selectedUpgrades.includes('wpn_eggplant_roll')) {
-          this.selectedUpgrades.push('wpn_eggplant_roll');
-        }
+        this.activateWeapon('wpn_eggplant_roll');
         break;
       case 'weapon_homing_daggers':
         this.playerModifiers.homingDaggersLevel = 1;
         this.playerModifiers.homingDaggersCount = 2;
-        this.activeUpgrades.set('wpn_homing_daggers', 1);
-        if (!this.selectedUpgrades.includes('wpn_homing_daggers')) {
-          this.selectedUpgrades.push('wpn_homing_daggers');
-        }
+        this.activateWeapon('wpn_homing_daggers');
         break;
       case 'weapon_mega_boot':
         this.playerModifiers.megaBootLevel = 1;
-        this.activeUpgrades.set('wpn_mega_boot', 1);
-        if (!this.selectedUpgrades.includes('wpn_mega_boot')) {
-          this.selectedUpgrades.push('wpn_mega_boot');
-        }
+        this.activateWeapon('wpn_mega_boot');
         break;
       case 'weapon_lightning_zap':
         this.playerModifiers.lightningZapLevel = 1;
         this.playerModifiers.staticZapMax = 100;
-        this.activeUpgrades.set('wpn_lightning_zap', 1);
-        if (!this.selectedUpgrades.includes('wpn_lightning_zap')) {
-          this.selectedUpgrades.push('wpn_lightning_zap');
-        }
+        this.activateWeapon('wpn_lightning_zap');
         break;
       case 'weapon_acid_trail':
         this.playerModifiers.acidTrail = true;
         this.playerModifiers.acidTrailLevel = 1;
-        this.activeUpgrades.set('wpn_acid_trail', 1);
-        if (!this.selectedUpgrades.includes('wpn_acid_trail')) {
-          this.selectedUpgrades.push('wpn_acid_trail');
-        }
+        this.activateWeapon('wpn_acid_trail');
         break;
       default:
         // Default to homing daggers if unknown
         this.playerModifiers.homingDaggersLevel = 1;
         this.playerModifiers.homingDaggersCount = 2;
-        this.activeUpgrades.set('wpn_homing_daggers', 1);
-        if (!this.selectedUpgrades.includes('wpn_homing_daggers')) {
-          this.selectedUpgrades.push('wpn_homing_daggers');
-        }
+        this.activateWeapon('wpn_homing_daggers');
         break;
     }
   }
@@ -237,6 +238,7 @@ export class GameState {
     this.activeUpgrades.clear();
     this.selectedUpgrades = [];
     this.playerModifiers = this.createDefaultModifiers();
+    this.powerWindowTimerMs = 0;
     this.pendingLevelUps = 0;
     this.rerollsRemaining = 2;
     this.skipsRemaining = 2;
@@ -362,6 +364,9 @@ export class GameState {
       upgrade.levels[0]?.apply(this.playerModifiers, playerStats, playerHealth);
     } else {
       this.activeUpgrades.set(upgrade.id, levelToApply);
+      if (upgrade.category === 'weapon' && levelToApply >= upgrade.maxLevel) {
+        this.triggerPowerWindow(40000);
+      }
       const levelConfig = upgrade.levels.find((l) => l.level === levelToApply);
       if (levelConfig) {
         levelConfig.apply(this.playerModifiers, playerStats, playerHealth);

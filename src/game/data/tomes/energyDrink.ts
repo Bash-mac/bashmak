@@ -10,44 +10,42 @@ export const TOME_ATTACK_SPEED: UpgradeDefinition = {
   levels: [
     {
       level: 1,
-      description: 'ГЛОБАЛЬНО: Скорость всех атак +15%.',
+      description: 'ГЛОБАЛЬНО: Скорость всех атак +8%.',
       apply: (mod) => {
         mod.tomeAttackSpeed = 1;
-        mod.attackSpeedBonus += 0.15;
+        mod.attackSpeedBonus += 0.08;
       },
     },
     {
       level: 2,
-      description: 'Скорость всех атак +30% (суммарно +30%).',
+      description: 'Скорость всех атак +16% (суммарно +16%).',
       apply: (mod) => {
         mod.tomeAttackSpeed = 2;
-        mod.attackSpeedBonus += 0.15;
+        mod.attackSpeedBonus += 0.08;
       },
     },
     {
       level: 3,
-      description: 'ПУЛЕМЁТНЫЙ СТРИМ: Скорость атак +45% + очередь из 2 быстрых залпов.',
+      description: 'Скорость всех атак +24% (суммарно +24%).',
       apply: (mod) => {
         mod.tomeAttackSpeed = 3;
-        mod.attackSpeedBonus += 0.15;
-        mod.burstFireCount = Math.max(mod.burstFireCount, 2);
+        mod.attackSpeedBonus += 0.08;
       },
     },
     {
       level: 4,
-      description: 'Скорость всех атак +60% (суммарно +60%).',
+      description: 'Скорость всех атак +32% (суммарно +32%).',
       apply: (mod) => {
         mod.tomeAttackSpeed = 4;
-        mod.attackSpeedBonus += 0.15;
+        mod.attackSpeedBonus += 0.08;
       },
     },
     {
       level: 5,
-      description: 'БЕШЕНЫЙ ШКВАЛ: Скорость атак +80% + непрерывная очередь из 3 залпов!',
+      description: 'ТУРБО-РЕЖИМ: Скорость всех атак +40% (суммарно +40%).',
       apply: (mod) => {
         mod.tomeAttackSpeed = 5;
-        mod.attackSpeedBonus += 0.20;
-        mod.burstFireCount = Math.max(mod.burstFireCount, 3);
+        mod.attackSpeedBonus += 0.08;
       },
     },
   ],

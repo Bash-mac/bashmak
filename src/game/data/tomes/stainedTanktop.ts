@@ -10,7 +10,7 @@ export const TOME_ARMOR: UpgradeDefinition = {
   levels: [
     {
       level: 1,
-      description: 'Броня +1 (снижает входящий урон на 1).',
+      description: 'Броня +1 (снижает входящий урон на ~8%).',
       apply: (mod, stats) => {
         mod.tomeArmor = 1;
         stats.modifyArmor(1);
@@ -18,7 +18,7 @@ export const TOME_ARMOR: UpgradeDefinition = {
     },
     {
       level: 2,
-      description: 'Броня +2, Максимальное HP +15.',
+      description: 'Броня +2 (~15% снижения урона), Максимальное HP +15.',
       apply: (mod, stats, health) => {
         mod.tomeArmor = 2;
         stats.modifyArmor(1);
@@ -28,7 +28,7 @@ export const TOME_ARMOR: UpgradeDefinition = {
     },
     {
       level: 3,
-      description: ' БРОНЕВАЯ ТКАНЬ: Броня +3, поглощение 15% всего урона.',
+      description: 'Броня +3 (~20% снижения урона), поглощение 15% всего урона.',
       apply: (mod, stats) => {
         mod.tomeArmor = 3;
         stats.modifyArmor(1);
@@ -37,7 +37,7 @@ export const TOME_ARMOR: UpgradeDefinition = {
     },
     {
       level: 4,
-      description: 'Броня +4, Максимальное HP +25.',
+      description: 'Броня +4 (~25% снижения урона), Максимальное HP +25.',
       apply: (mod, stats, health) => {
         mod.tomeArmor = 4;
         stats.modifyArmor(1);
@@ -47,7 +47,7 @@ export const TOME_ARMOR: UpgradeDefinition = {
     },
     {
       level: 5,
-      description: ' ТИТАНОВАЯ ЗАКАЛКА: Броня +5, поглощение 25% всего входящего урона!',
+      description: 'Броня +5 (~29% снижения урона), поглощение 25% всего входящего урона!',
       apply: (mod, stats) => {
         mod.tomeArmor = 5;
         stats.modifyArmor(1);

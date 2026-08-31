@@ -38,6 +38,7 @@ export class LootSystem {
         return gem;
       },
       onRelease: (gem) => {
+        this.scene.tweens.killTweensOf(gem);
         gem.setData('speed', 0);
         gem.setData('xpValue', 0);
         gem.clearTint();
@@ -58,6 +59,7 @@ export class LootSystem {
         return drop;
       },
       onRelease: (drop) => {
+        this.scene.tweens.killTweensOf(drop);
         drop.setData('speed', 0);
         drop.setData('gooValue', 0);
         drop.clearTint();

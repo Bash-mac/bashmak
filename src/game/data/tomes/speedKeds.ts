@@ -10,42 +10,42 @@ export const TOME_SPEED: UpgradeDefinition = {
   levels: [
     {
       level: 1,
-      description: ' ГЛОБАЛЬНО: Скорость бега персонажа +10%.',
-      apply: (mod, stats) => {
+      description: 'Скорость бега персонажа +10%.',
+      apply: (mod) => {
         mod.tomeSpeed = 1;
-        stats.modifySpeed(1.10);
+        mod.moveSpeedBonus = (mod.moveSpeedBonus || 0) + 0.10;
       },
     },
     {
       level: 2,
       description: 'Скорость бега +15% (суммарно +25%).',
-      apply: (mod, stats) => {
+      apply: (mod) => {
         mod.tomeSpeed = 2;
-        stats.modifySpeed(1.15);
+        mod.moveSpeedBonus = (mod.moveSpeedBonus || 0) + 0.15;
       },
     },
     {
       level: 3,
-      description: ' СПРИНТЕРСКИЙ РЫВОК: Скорость бега +15% (суммарно +40%).',
-      apply: (mod, stats) => {
+      description: 'Скорость бега +15% (суммарно +40%).',
+      apply: (mod) => {
         mod.tomeSpeed = 3;
-        stats.modifySpeed(1.15);
+        mod.moveSpeedBonus = (mod.moveSpeedBonus || 0) + 0.15;
       },
     },
     {
       level: 4,
       description: 'Скорость бега +15% (суммарно +55%).',
-      apply: (mod, stats) => {
+      apply: (mod) => {
         mod.tomeSpeed = 4;
-        stats.modifySpeed(1.15);
+        mod.moveSpeedBonus = (mod.moveSpeedBonus || 0) + 0.15;
       },
     },
     {
       level: 5,
-      description: ' СПРИНТЕР-ПСИХ: Скорость бега +20% (суммарно +75%) + супер-маневренность!',
-      apply: (mod, stats) => {
+      description: 'Скорость бега +20% (суммарно +75%) + супер-маневренность!',
+      apply: (mod) => {
         mod.tomeSpeed = 5;
-        stats.modifySpeed(1.20);
+        mod.moveSpeedBonus = (mod.moveSpeedBonus || 0) + 0.20;
       },
     },
   ],

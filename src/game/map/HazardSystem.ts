@@ -31,6 +31,19 @@ export class HazardSystem {
   private audio = AudioManager.getInstance();
   private platform = createPlatformAdapter();
 
+  private blastGfxFree: Phaser.GameObjects.Graphics[] = [];
+
+  private acquireBlastGfx(scene: Phaser.Scene): Phaser.GameObjects.Graphics {
+    return this.blastGfxFree.pop() ?? scene.add.graphics();
+  }
+
+  private releaseBlastGfx(gfx: Phaser.GameObjects.Graphics): void {
+    gfx.clear();
+    gfx.setAlpha(1);
+    gfx.setScale(1);
+    this.blastGfxFree.push(gfx);
+  }
+
   private initPool(scene: Phaser.Scene): void {
     if (!this.poolSpritePool) {
       this.poolSpritePool = new ObjectPool<Phaser.GameObjects.Sprite>(scene, {
@@ -185,7 +198,7 @@ export class HazardSystem {
     }
 
     // 3. Explosion visual blast effect (lightweight flash circle)
-    const blastGfx = ctx.scene.add.graphics();
+    const blastGfx = this.acquireBlastGfx(ctx.scene);
     blastGfx.setPosition(x, y);
     blastGfx.fillStyle(0xef4444, 0.45);
     blastGfx.fillCircle(0, 0, blastRadius);
@@ -198,7 +211,7 @@ export class HazardSystem {
       scaleX: 1.25,
       scaleY: 1.25,
       duration: 220,
-      onComplete: () => blastGfx.destroy(),
+      onComplete: () => this.releaseBlastGfx(blastGfx),
     });
 
     // 4. Blast damage to player (with knockback) and neighboring enemies
@@ -211,18 +224,19 @@ export class HazardSystem {
 
     ctx.applyAreaDamageToEnemies(x, y, blastRadius, blastDmg * 0.75);
     this.audio.playExplosion();
-    this.platform.vibrate(30);
+    if (this.platform.hapticImpact) this.platform.hapticImpact('heavy');
+    else this.platform.vibrate(50);
   }
 
   public triggerScreenWipeBlast(scene: Phaser.Scene, x: number, y: number, ctx: HazardContext): void {
     this.audio.playExplosion();
 
-    const blastGfx = scene.add.graphics();
+    const blastGfx = this.acquireBlastGfx(scene);
     blastGfx.setPosition(x, y);
     blastGfx.lineStyle(6, 0xfacc15, 1);
     blastGfx.fillStyle(0xa855f7, 0.4);
-    blastGfx.fillCircle(0, 0, 380);
-    blastGfx.strokeCircle(0, 0, 380);
+    blastGfx.fillCircle(0, 0, 320);
+    blastGfx.strokeCircle(0, 0, 320);
 
     scene.tweens.add({
       targets: blastGfx,
@@ -230,11 +244,12 @@ export class HazardSystem {
       scaleX: 1.5,
       scaleY: 1.5,
       duration: 450,
-      onComplete: () => blastGfx.destroy(),
+      onComplete: () => this.releaseBlastGfx(blastGfx),
     });
 
-    ctx.applyAreaDamageToEnemies(x, y, 380, 250);
-    this.platform.vibrate(60);
+    ctx.applyAreaDamageToEnemies(x, y, 320, 180);
+    if (this.platform.hapticImpact) this.platform.hapticImpact('heavy');
+    else this.platform.vibrate(60);
   }
 
   public flashSprite(scene: Phaser.Scene, sprite: Phaser.GameObjects.Sprite, tintColor: number): void {
@@ -252,6 +267,8 @@ export class HazardSystem {
       this.poolSpritePool.clear();
       this.poolSpritePool = undefined;
     }
+    this.blastGfxFree.forEach(g => g.destroy());
+    this.blastGfxFree = [];
     this.acidPools = [];
   }
 }

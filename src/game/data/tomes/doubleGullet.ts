@@ -46,12 +46,12 @@ export const TOME_QUANTITY: UpgradeDefinition = {
     },
     {
       level: 5,
-      description: ' АБСОЛЮТНЫЙ ЗАЛП: +5 снарядов ко всем атакам + 25% урона всему арсеналу!',
+      description: ' АБСОЛЮТНЫЙ ЗАЛП: +5 снарядов ко всем атакам + 15% сплэш-урона!',
       apply: (mod) => {
         mod.tomeQuantity = 5;
         mod.multishotCount += 1;
         mod.homingDaggersCount += 2;
-        mod.damagePercentBonus += 0.25;
+        mod.splashPercent = (mod.splashPercent || 0) + 0.15;
       },
     },
   ],

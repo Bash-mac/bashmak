@@ -21,7 +21,6 @@ export const WPN_ACID_TRAIL: UpgradeDefinition = {
       description: 'Урон вони +50%, облако шире. Открывает рывок Wriggle Dash сквозь толпу.',
       apply: (mod) => {
         mod.acidTrailLevel = 2;
-        mod.wriggleDash = true;
       },
     },
     {

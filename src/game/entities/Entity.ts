@@ -66,8 +66,11 @@ export class Entity {
     return this.sprite?.y ?? 0;
   }
 
+  // Additive speed bonus (from tomes, meta upgrades, etc.)
+  public moveSpeedBonus = 0;
+
   get effectiveSpeed(): number {
-    let spd = this.stats.speed;
+    let spd = this.stats.speed * (1 + this.moveSpeedBonus);
     if (this.slowTimer > 0) {
       spd *= (1 - this.slowAmount);
     }

@@ -27,6 +27,36 @@ export class BrowserPlatformAdapter implements IPlatformAdapter {
     }
   }
 
+  hapticImpact(style: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft' = 'medium'): void {
+    const durationMap: Record<string, number> = {
+      light: 25,
+      medium: 50,
+      heavy: 85,
+      rigid: 35,
+      soft: 60,
+    };
+    this.vibrate(durationMap[style] || 50);
+  }
+
+  hapticNotification(type: 'error' | 'success' | 'warning' = 'success'): void {
+    const patternMap: Record<string, number[]> = {
+      success: [40, 60, 40],
+      warning: [60, 80, 60],
+      error: [80, 50, 80, 50, 80],
+    };
+    if ('vibrate' in navigator) {
+      try {
+        navigator.vibrate(patternMap[type] || 50);
+      } catch {
+        // Ignore vibration errors
+      }
+    }
+  }
+
+  hapticSelection(): void {
+    this.vibrate(15);
+  }
+
   requestFullscreen(): void {
     // Only request fullscreen on mobile touch devices (to hide browser address bar)
     const isMobile =

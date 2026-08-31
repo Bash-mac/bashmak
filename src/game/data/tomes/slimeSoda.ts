@@ -42,10 +42,10 @@ export const TOME_DAMAGE: UpgradeDefinition = {
     },
     {
       level: 5,
-      description: ' ТОКСИЧЕСКИЙ ДОПИНГ: Урон всего арсенала +65%!',
+      description: ' ТОКСИЧЕСКИЙ ДОПИНГ: Урон всего арсенала +58%!',
       apply: (mod) => {
         mod.tomeDamage = 5;
-        mod.damagePercentBonus += 0.17;
+        mod.damagePercentBonus += 0.10;
       },
     },
   ],

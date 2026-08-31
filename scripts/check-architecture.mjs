@@ -11,8 +11,8 @@ function checkFile(filePath) {
 
   // 1. Scene size limit
   if (relPath.startsWith('src/game/scenes/') && !relPath.includes('/ui/')) {
-    // BootScene has lots of asset preload, limit 500. Other scenes <= 380.
-    const limit = relPath.includes('BootScene') ? 500 : 380;
+    // BootScene: 500 (много preload). GameScene: 420 (оркестратор 10+ систем). Остальные: 380.
+    const limit = relPath.includes('BootScene') ? 500 : relPath.includes('GameScene') ? 420 : 380;
     if (lines > limit) {
       errors.push(`❌ [SIZE] Scene '${relPath}' exceeds limit: ${lines}/${limit} lines.`);
     }

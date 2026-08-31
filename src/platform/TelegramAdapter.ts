@@ -77,17 +77,13 @@ export class TelegramPlatformAdapter implements IPlatformAdapter {
         }
       }
 
-      // Запрос полного экрана при первом касании экрана игроком
-      const tryFullscreen = () => {
+      const onFirstPointer = () => {
+        window.removeEventListener('pointerdown', onFirstPointer);
         if (typeof wa.requestFullscreen === 'function' && !wa.isFullscreen) {
-          try {
-            wa.requestFullscreen();
-          } catch {
-            // Ignored
-          }
+          try { wa.requestFullscreen(); } catch { /* ignored */ }
         }
       };
-      window.addEventListener('pointerdown', tryFullscreen);
+      window.addEventListener('pointerdown', onFirstPointer);
 
       console.log(`[Platform] Initialized TelegramPlatformAdapter (v${wa.version}, platform: ${wa.platform})`);
     } else {
@@ -107,9 +103,33 @@ export class TelegramPlatformAdapter implements IPlatformAdapter {
   }
 
   vibrate(_durationMs?: number): void {
+    this.hapticImpact('medium');
+  }
+
+  hapticImpact(style: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft' = 'medium'): void {
     if (this.webApp?.HapticFeedback) {
       try {
-        this.webApp.HapticFeedback.impactOccurred('medium');
+        this.webApp.HapticFeedback.impactOccurred(style);
+      } catch {
+        // Ignore haptic errors
+      }
+    }
+  }
+
+  hapticNotification(type: 'error' | 'success' | 'warning' = 'success'): void {
+    if (this.webApp?.HapticFeedback) {
+      try {
+        this.webApp.HapticFeedback.notificationOccurred(type);
+      } catch {
+        // Ignore haptic errors
+      }
+    }
+  }
+
+  hapticSelection(): void {
+    if (this.webApp?.HapticFeedback) {
+      try {
+        this.webApp.HapticFeedback.selectionChanged();
       } catch {
         // Ignore haptic errors
       }

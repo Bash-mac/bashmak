@@ -1,4 +1,5 @@
 import type { EnemyDefinition } from '../data/definitions';
+import { GameState } from '../core/GameState';
 import {
   FODDER_BAT,
   CRAWLER_SWARM,
@@ -22,7 +23,7 @@ export class SpawnManager {
   private getViewportExtents?: () => { halfW: number; halfH: number };
   private getPowerScore?: () => number;
 
-  private spawnTimer = 0;
+  private spawnTimer = 9999;
   private surgeTimer = 0;
   private nextSurgeInterval = 18000;
   private championTimer = 0;
@@ -49,6 +50,8 @@ export class SpawnManager {
 
   update(deltaMs: number, runTimeSeconds: number): void {
     const minutes = runTimeSeconds / 60;
+    const gameState = GameState.getInstance();
+    gameState.updatePowerWindow(deltaMs);
 
     // 0. Stepped Director Power Sampling (every 35s to preserve Power Fantasy window)
     this.directorTimer += deltaMs;
@@ -57,13 +60,16 @@ export class SpawnManager {
       this.cachedPowerScore = this.getPowerScore ? this.getPowerScore() : 1;
     }
 
-    // Sub-linear Power Scaling (< 1.0 exponent) ensures player DPS always outpaces mob HP
-    const powerHpFactor = 1 + Math.pow(Math.max(0, this.cachedPowerScore - 1), 0.85) * 0.07;
-    const timeHpFactor = 1 + 0.12 * minutes;
+    // Freeze powerHpFactor during active Power Window (40s after evolution / max weapon)
+    const isPowerWindowActive = gameState.powerWindowTimerMs > 0;
+    const powerHpFactor = isPowerWindowActive
+      ? 1.0
+      : 1 + Math.pow(Math.max(0, this.cachedPowerScore - 1), 0.92) * 0.09;
+    const timeHpFactor = 1 + 0.15 * minutes;
 
     const scaling: EnemyScaling = {
       hpMultiplier: timeHpFactor * powerHpFactor,
-      speedMultiplier: Math.min(1.22, 1 + 0.02 * minutes),
+      speedMultiplier: Math.min(1.35, 1 + 0.02 * minutes),
       damageMultiplier: 1 + 0.08 * minutes,
     };
 
@@ -75,12 +81,12 @@ export class SpawnManager {
       this.spawnBoss(scaling);
     }
 
-    // 2. Periodic Champion Spawn (every 45-60s starting at 1.5 min)
-    if (minutes >= 1.5) {
+    // 2. Periodic Champion Spawn (every 40-55s starting at 0.8 min)
+    if (minutes >= 0.8) {
       this.championTimer += deltaMs;
       if (this.championTimer >= this.nextChampionInterval) {
         this.championTimer = 0;
-        this.nextChampionInterval = 65000 + Math.random() * 20000;
+        this.nextChampionInterval = 40000 + Math.random() * 15000;
         this.spawnChampion(minutes, scaling);
       }
     }
@@ -94,43 +100,43 @@ export class SpawnManager {
     }
 
     // 4. Dynamic Directional Squad Waves (Pacing, Formations & Density Scaling)
-    const powerSquadBonus = Math.floor((this.cachedPowerScore - 1) * 0.35);
+    const powerSquadBonus = Math.floor((this.cachedPowerScore - 1) * 0.4);
     const powerPopBonus = Math.floor((this.cachedPowerScore - 1) * 1.5);
 
-    let targetPopulation = 20 + powerPopBonus;
-    let squadSize = 6 + powerSquadBonus;
-    let waveInterval = 2400; // ms between directional squad spawns
+    let targetPopulation = 30 + powerPopBonus;
+    let squadSize = 8 + powerSquadBonus;
+    let waveInterval = 2200; // ms between directional squad spawns
 
     if (minutes < 0.5) {
-      // 0:00 - 0:30 (Tutorial / early pacing)
-      targetPopulation = 18 + powerPopBonus;
-      squadSize = 5 + powerSquadBonus;
-      waveInterval = 2500;
+      // 0:00 - 0:30 (Balanced early pacing, immediate action)
+      targetPopulation = 36 + powerPopBonus;
+      squadSize = 10 + powerSquadBonus;
+      waveInterval = 1200;
     } else if (minutes < 1.5) {
       // 0:30 - 1:30
-      targetPopulation = 28 + powerPopBonus;
-      squadSize = 7 + powerSquadBonus;
-      waveInterval = 2200;
+      targetPopulation = 50 + powerPopBonus;
+      squadSize = 12 + powerSquadBonus;
+      waveInterval = 2000;
     } else if (minutes < 3.0) {
       // 1:30 - 3:00
-      targetPopulation = 45 + powerPopBonus;
-      squadSize = 9 + powerSquadBonus;
-      waveInterval = 1900;
+      targetPopulation = 80 + powerPopBonus;
+      squadSize = 16 + powerSquadBonus;
+      waveInterval = 1800;
     } else if (minutes < 5.0) {
       // 3:00 - 5:00
-      targetPopulation = 65 + powerPopBonus;
-      squadSize = 12 + powerSquadBonus;
-      waveInterval = 1700;
+      targetPopulation = 105 + powerPopBonus;
+      squadSize = 20 + powerSquadBonus;
+      waveInterval = 1600;
     } else if (minutes < 7.0) {
       // 5:00 - 7:00
-      targetPopulation = 85 + powerPopBonus;
-      squadSize = 14 + powerSquadBonus;
+      targetPopulation = 130 + powerPopBonus;
+      squadSize = 24 + powerSquadBonus;
       waveInterval = 1500;
     } else {
       // 7:00+ (Endgame swarm)
-      targetPopulation = 100 + powerPopBonus;
-      squadSize = 16 + powerSquadBonus;
-      waveInterval = 1300;
+      targetPopulation = 155 + powerPopBonus;
+      squadSize = 28 + powerSquadBonus;
+      waveInterval = 1400;
     }
 
     const activeCount = this.getActiveEnemyCount?.() ?? this.currentActiveCount;

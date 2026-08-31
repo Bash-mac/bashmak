@@ -11,7 +11,7 @@ export const SPRINTER_BUG: EnemyDefinition = {
   mass: 1,
   stats: {
     maxHp: 14,
-    speed: 130,
+    speed: 155,
     damage: 6,
     armor: 0,
   },

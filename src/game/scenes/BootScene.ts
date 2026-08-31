@@ -23,18 +23,10 @@ export class BootScene extends Phaser.Scene {
     this.load.image('social_buttons', '/assets/menu/social_buttons.webp');
     this.load.image('char_worm', '/assets/menu/char_worm.webp');
     this.load.image('char_rat', '/assets/menu/char_rat.webp');
-    this.load.image('shop_room_bg', '/assets/menu/shop/shop_room_bg.webp');
-    this.load.image('shop_sign', '/assets/menu/shop/shop_sign.png');
-    this.load.image('shop_left_frame', '/assets/menu/shop/shop_left_frame.png');
-    this.load.image('shop_board_slots', '/assets/menu/shop/shop_board_slots.png');
-    this.load.image('shop_seller_desk', '/assets/menu/shop/shop_seller_desk.png');
-    this.load.image('shop_top_bar', '/assets/menu/shop/shop_top_bar.png');
-    this.load.image('shop_exit_note', '/assets/menu/shop/shop_exit_note.png');
-    this.load.image('btn_shop_tab_active', '/assets/menu/btn_shop_tab_active.png');
-    this.load.image('btn_shop_tab_inactive', '/assets/menu/btn_shop_tab_inactive.png');
-    this.load.image('btn_shop_buy_green', '/assets/menu/shop/btn_shop_buy_green.png');
-    this.load.image('btn_shop_buy_red', '/assets/menu/shop/btn_shop_buy_red.png');
-    this.load.image('btn_shop_buy_dark', '/assets/menu/shop/btn_shop_buy_dark.png');
+    // === Mutation Lab (shop2) ===
+    ['lab_background', 'lab_sign', 'lab_clipboard', 'lab_terminal', 'lab_goo_bar', 'lab_goo_badge', 'lab_badge_purple', 'lab_badge_yellow', 'lab_btn_confirm', 'lab_btn_back', 'lab_btn_carousel', 'lab_arrow_left', 'lab_arrow_right', 'arrow_left_yellow', 'arrow_right_yellow', 'lab_title_bar', 'lab_desc_card', 'lab_flask_big', 'lab_gauge', 'lab_valve', 'pip_active', 'pip_inactive', 'btn_buy_upgrade', 'pedestal_large', 'pedestal_medium', 'pedestal_small', 'pedestal_tiny', 'pedestal_side', 'dome_large', 'dome_medium', 'dome_small', 'organ_skull', 'organ_lungs', 'organ_muscle', 'organ_brain', 'organ_stomach', 'organ_heart', 'organ_eye', 'organ_clone', 'organ_tentacle', 'organ_bag', 'sketch_skull', 'sketch_lungs', 'sketch_muscle', 'sketch_brain', 'sketch_stomach', 'sketch_heart', 'sketch_eye', 'sketch_clone', 'sketch_tentacle', 'sketch_bag', 'goo_badge_200', 'goo_badge_250', 'goo_badge_350', 'goo_badge_400', 'decor_poster_train', 'decor_note_fungs', 'decor_papers', 'decor_goo_splash', 'icon_check_green', 'icon_back_purple'].forEach(k => this.load.image(k, `/assets/menu/shop2/${k}.webp`));
+
+
     // Vypolzok Assets & UI
     this.load.image('vypolzok_portrait', '/assets/sprites/vypolzok/ui/portrait_vypolzok.webp');
     this.load.image('hud_face_smug', '/assets/sprites/vypolzok/ui/hud_face_smug.webp');
@@ -420,9 +412,12 @@ export class BootScene extends Phaser.Scene {
     this.anims.create({
       key: 'vfx_anim_carrot_fly',
       frames: [
-        { key: 'vfx_carrot_fly_1' }, { key: 'vfx_carrot_fly_2' }, { key: 'vfx_carrot_fly_3' },
+        { key: 'vfx_carrot_fly_4' },
+        { key: 'vfx_carrot_fly_3' },
+        { key: 'vfx_carrot_fly_2' },
+        { key: 'vfx_carrot_fly_1' },
       ],
-      frameRate: 12,
+      frameRate: 16,
       repeat: -1,
     });
 

@@ -2,18 +2,21 @@ import Phaser from 'phaser';
 import { Entity } from '../entities/Entity';
 import type { EnemyDefinition } from '../data/definitions';
 import type { EnemyScaling } from './SpawnManager';
+import type { EnemyPool } from '../pools/EnemyPool';
 
 export class EnemyFactory {
   public static createEnemy(
-    enemiesGroup: Phaser.Physics.Arcade.Group,
+    pool: EnemyPool,
     definition: EnemyDefinition,
     x: number,
     y: number,
     id: string,
     scaling?: EnemyScaling,
-    isChampion = false
+    isChampion = false,
+    scene?: Phaser.Scene
   ): Entity {
-    const sprite = enemiesGroup.create(x, y, definition.textureKey) as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
+    const sprite = pool.acquire(definition.textureKey, x, y);
+
     const baseScale = definition.displayScale ?? Math.max(0.2, (definition.size || 16) / 64);
     const scale = isChampion ? baseScale * 1.38 : baseScale;
     sprite.setScale(scale);
@@ -33,13 +36,14 @@ export class EnemyFactory {
     sprite.setData('entityId', id);
     sprite.setDepth(isChampion ? 10 : 8);
 
-    if (definition.animKey && sprite.scene.anims.exists(definition.animKey)) {
+    const sc = scene ?? sprite.scene;
+    if (definition.animKey && sc.anims.exists(definition.animKey)) {
       sprite.play(definition.animKey);
     }
 
     if (isChampion) {
       sprite.setTint(0xffd700);
-      sprite.scene.tweens.add({
+      sc.tweens.add({
         targets: sprite,
         alpha: { from: 0.82, to: 1.0 },
         duration: 320,
@@ -54,7 +58,7 @@ export class EnemyFactory {
 
     const isBoss = definition.archetype === 'boss' || definition.archetype === 'miniboss';
     const speedJitter = isBoss ? 1.0 : 0.88 + Math.random() * 0.24;
-    const champHpMult = isChampion ? 4.2 : 1.0;
+    const champHpMult = isChampion ? 2.6 : 1.0;
     const champDmgMult = isChampion ? 1.25 : 1.0;
 
     const scaledMaxHp = Math.round(definition.stats.maxHp * hpMult * champHpMult);

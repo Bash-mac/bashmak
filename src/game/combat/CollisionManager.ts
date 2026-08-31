@@ -11,6 +11,7 @@ import type { AudioManager } from '../audio/AudioManager';
 import type { ProjectilePool } from './ProjectilePool';
 import type { DamageNumberPool } from './DamageNumberPool';
 import type { VfxPool } from './VfxPool';
+import type { IPlatformAdapter } from '../../platform';
 import { getReadyEvolution } from '../data/evolutions';
 
 export interface CollisionContext {
@@ -27,6 +28,7 @@ export interface CollisionContext {
   eventBus: EventBus;
   hud: HUD;
   audio: AudioManager;
+  platform?: IPlatformAdapter;
   projectilePool?: ProjectilePool;
   damageNumbers?: DamageNumberPool;
   vfxPool?: VfxPool;
@@ -50,6 +52,7 @@ export class CollisionManager {
       gameState,
       eventBus,
       audio,
+      platform,
       projectilePool,
       damageNumbers,
       vfxPool,
@@ -66,6 +69,12 @@ export class CollisionManager {
         const damage = (proj.getData('damage') as number) || 10;
         const isCrit = (proj.getData('isCrit') as boolean) || false;
         combatSystem.applyDamage(player, enemy, damage);
+
+        audio.playImpactSplat(isCrit);
+        if (isCrit) {
+          if (platform?.hapticImpact) platform.hapticImpact('medium');
+          else platform?.vibrate(35);
+        }
 
         if (damageNumbers) {
           damageNumbers.showDamage(enemy.x, enemy.y, damage, isCrit);
@@ -143,6 +152,7 @@ export class CollisionManager {
       const iy = item.y;
       lootSystem.releaseConsumable(item);
       audio.playLevelUp();
+      if (platform?.hapticNotification) platform.hapticNotification('success');
 
       if (type === 'nuke') {
         lootSystem.showFloatText(player.x, player.y - 40, 'ЯДЕРНЫЙ ВЗРЫВ!', '#ef4444');
@@ -190,6 +200,7 @@ export class CollisionManager {
       lootSystem.releaseGem(gem);
       gameState.addXp(xp);
       audio.playXpPickup();
+      platform?.hapticSelection?.();
     });
 
     scene.physics.add.overlap(player.sprite!, lootSystem.gooDropsGroup, (_p, gooObj) => {
@@ -202,6 +213,7 @@ export class CollisionManager {
       gameState.addGoo(val);
       lootSystem.showFloatText(gx, gy, `+${val} GOO`);
       audio.playGooPickup();
+      platform?.hapticSelection?.();
     });
 
     scene.physics.add.overlap(player.sprite!, lootSystem.chestsGroup, (_p, chestObj) => {
@@ -215,11 +227,14 @@ export class CollisionManager {
       if (readyEvo) {
         readyEvo.apply(gameState);
         audio.playLevelUp();
+        if (platform?.hapticNotification) platform.hapticNotification('success');
         lootSystem.showFloatText(cx, cy - 25, `${readyEvo.name.toUpperCase()}!`, '#facc15');
         hazardSystem.triggerScreenWipeBlast(scene, cx, cy, ctx.getHazardCtx());
       } else {
         gameState.pendingLevelUps++;
         eventBus.emit('player:levelUp', { newLevel: gameState.level });
+        audio.playLevelUp();
+        if (platform?.hapticNotification) platform.hapticNotification('success');
         lootSystem.showFloatText(cx, cy - 25, 'СУНДУК МУТАЦИИ!', '#facc15');
       }
 

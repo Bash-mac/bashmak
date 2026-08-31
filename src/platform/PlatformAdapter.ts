@@ -14,5 +14,8 @@ export interface IPlatformAdapter {
   initialize(): Promise<void>;
   getUser(): UserInfo | null;
   vibrate(durationMs?: number): void;
+  hapticImpact?(style?: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft'): void;
+  hapticNotification?(type?: 'error' | 'success' | 'warning'): void;
+  hapticSelection?(): void;
   requestFullscreen?(): void;
 }

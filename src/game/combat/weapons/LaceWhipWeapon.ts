@@ -88,8 +88,9 @@ export class LaceWhipWeapon implements IWeapon {
       }
     }
 
-    AudioManager.getInstance().playImpactSplat();
-    ctx.vibrate?.(35);
+    AudioManager.getInstance().playWhipSlash();
+    if (ctx.hapticImpact) ctx.hapticImpact('medium');
+    else ctx.vibrate?.(35);
   }
 
   private drawWhipArc(

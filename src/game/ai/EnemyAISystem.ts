@@ -126,16 +126,42 @@ export class EnemyAISystem {
 
       if (def?.archetype === 'boss') {
         this.handleBossAI(enemy, delta, angleToPlayer, ctx);
+      } else if (enemy.sprite.getData('stampedeDir')) {
+        const dir = enemy.sprite.getData('stampedeDir') as { vx: number; vy: number };
+        const speedMult = (enemy.sprite.getData('stampedeSpeedMult') as number) || 1.0;
+        const marchSpeed = Math.max(65, spd * speedMult);
+        enemy.sprite.setVelocity(dir.vx * marchSpeed, dir.vy * marchSpeed);
+        enemy.sprite.setFlipX(dir.vx < 0);
+        enemy.sprite.rotation = 0;
       } else {
-        // Encircle & flank bias when outside melee distance
+        const isRunner = enemy.sprite.getData('isRunner') === true;
         let moveAngle = angleToPlayer;
-        if (distToPlayer > 75) {
+
+        if (isRunner) {
+          const orbitDir = (enemy.flankOffset ?? 0.5) > 0 ? 1 : -1;
+          const tangentAngle = angleToPlayer + (Math.PI / 2) * orbitDir;
+
+          if (distToPlayer < 180) {
+            moveAngle = angleToPlayer + Math.PI;
+          } else if (distToPlayer > 300) {
+            moveAngle = angleToPlayer + (Math.PI / 4) * orbitDir;
+          } else {
+            moveAngle = tangentAngle;
+          }
+
+          const bounds = ctx.scene.physics.world.bounds;
+          const pad = 120;
+          if (enemy.x < bounds.x + pad || enemy.x > bounds.right - pad || enemy.y < bounds.y + pad || enemy.y > bounds.bottom - pad) {
+            moveAngle = Phaser.Math.Angle.Between(enemy.x, enemy.y, bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+          }
+        } else if (distToPlayer > 75) {
           const blend = Math.min(1.0, (distToPlayer - 75) / 220);
           moveAngle += (enemy.flankOffset ?? 0) * blend;
         }
 
-        const vx = Math.cos(moveAngle) * spd + sepX;
-        const vy = Math.sin(moveAngle) * spd + sepY;
+        const runSpd = isRunner ? Math.min(170, spd * 0.95) : spd;
+        const vx = Math.cos(moveAngle) * runSpd + sepX;
+        const vy = Math.sin(moveAngle) * runSpd + sepY;
         enemy.sprite.setVelocity(vx, vy);
         enemy.sprite.setFlipX(vx < 0);
         enemy.sprite.rotation = 0;
@@ -194,7 +220,7 @@ export class EnemyAISystem {
           boss.sprite.setVelocity(0, 0);
           if (ctx.flashSprite) ctx.flashSprite(boss.sprite, 0xfacc15);
 
-          ctx.scene.time.delayedCall(1500, () => {
+          ctx.scene.time.delayedCall(900, () => {
             this.isBossVulnerable = false;
           });
         });

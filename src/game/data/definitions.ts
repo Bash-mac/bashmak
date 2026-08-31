@@ -118,7 +118,7 @@ export interface PlayerModifiers {
   extraRange: number;
   magnetRadiusBonus: number;
   attackAreaBonus: number;
-  wriggleDash: boolean;
+  moveSpeedBonus: number;
   acidTrail: boolean;
 
   // Active Weapons

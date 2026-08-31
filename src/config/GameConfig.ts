@@ -24,9 +24,12 @@ export const GameConfig: Phaser.Types.Core.GameConfig = {
   render: {
     powerPreference: 'high-performance',
     antialias: true,
+    antialiasGL: true,
     pixelArt: false,
-    roundPixels: false,
+    roundPixels: true,
   },
+
+
   scene: [BootScene, MenuScene, GameScene, UpgradesScene],
   input: {
     activePointers: 3,

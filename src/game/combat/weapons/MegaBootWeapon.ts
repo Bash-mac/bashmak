@@ -96,7 +96,8 @@ export class MegaBootWeapon implements IWeapon {
     // Audio, comic camera shake & haptics
     AudioManager.getInstance().playBashStomp();
     ctx.scene.cameras.main.shake(120, 0.005);
-    ctx.vibrate?.(45);
+    if (ctx.hapticImpact) ctx.hapticImpact('heavy');
+    else ctx.vibrate?.(65);
   }
 
   private findNearestEnemy(ctx: WeaponContext): Entity | null {
