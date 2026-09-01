@@ -17,6 +17,10 @@ export class BrowserPlatformAdapter implements IPlatformAdapter {
     };
   }
 
+  getInitData(): string | null {
+    return null;
+  }
+
   vibrate(durationMs = 50): void {
     if ('vibrate' in navigator) {
       try {

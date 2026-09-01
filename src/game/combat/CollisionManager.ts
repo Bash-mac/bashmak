@@ -84,15 +84,22 @@ export class CollisionManager {
           if (proj.getData('isCarrot')) {
             vfxPool.spawnCarrotSplat(proj.x, proj.y, 0.14);
           } else {
-            vfxPool.spawnImpactSplat(proj.x, proj.y, 0.75);
+            vfxPool.spawnImpactSplat(proj.x, proj.y, 0.55);
           }
         } else if (scene.anims.exists('vfx_anim_impact_splat')) {
-          const splat = scene.add.sprite(proj.x, proj.y, 'vfx_impact_splat_1').setDepth(12).setScale(0.75);
+          const splat = scene.add.sprite(proj.x, proj.y, 'vfx_impact_splat_1').setDepth(12).setScale(0.55);
           splat.play('vfx_anim_impact_splat').once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => splat.destroy());
         }
 
         if (proj.getData('isSlimeSpit')) {
-          enemy.applySlow(0.35, 1800);
+          enemy.applySlow(0.30, 1300);
+          const splashRadius = 65 * (1 + (gameState.playerModifiers.attackAreaBonus || 0));
+          const splashDmg = Math.max(4, Math.round(damage * 0.65));
+          combatSystem.applyAreaDamage(player, enemiesMap, proj.x, proj.y, splashRadius, splashDmg, enemy.id, (splashEnemy) => {
+            splashEnemy.applySlow(0.25, 1000);
+            if (damageNumbers) damageNumbers.showDamage(splashEnemy.x, splashEnemy.y, splashDmg, false);
+            if (splashEnemy.sprite) hazardSystem.flashSprite(scene, splashEnemy.sprite, 0x84cc16);
+          });
         }
 
         const pierce = (proj.getData('pierce') as number) || 0;

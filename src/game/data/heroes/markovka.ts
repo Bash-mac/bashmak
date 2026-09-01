@@ -15,7 +15,7 @@ export const MARKOVKA_HERO: HeroDefinition = {
   posterKey: 'hero_card_markovka',
   stats: {
     maxHp: 90,
-    speed: 185,
+    speed: 168,
     damage: 14,
     armor: 0,
     attackSpeed: 1.4,

@@ -11,7 +11,7 @@ export const MINI_BOSS_ELITE: EnemyDefinition = {
   mass: 8,
   stats: {
     maxHp: 400,
-    speed: 75,
+    speed: 67,
     damage: 18,
     armor: 1,
   },

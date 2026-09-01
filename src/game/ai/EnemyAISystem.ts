@@ -90,10 +90,11 @@ export class EnemyAISystem {
       const angleToPlayer = Phaser.Math.Angle.Between(enemy.x, enemy.y, playerX, playerY);
       const spd = enemy.effectiveSpeed;
 
-      // Flocking Separation Force — only check 3x3 neighboring cells (O(k) per enemy)
+      // Flocking Separation Force — archetype-aware radius to give physical volume
       let sepX = 0;
       let sepY = 0;
-      const separationRadius = 58;
+      const isTank = def?.archetype === 'tank' || def?.archetype === 'miniboss';
+      const separationRadius = isTank ? 72 : 46;
       const separationRadiusSq = separationRadius * separationRadius;
       const ecx = Math.floor(enemy.x / CELL);
       const ecy = Math.floor(enemy.y / CELL);
@@ -109,15 +110,15 @@ export class EnemyAISystem {
             const distSq = ox * ox + oy * oy;
             if (distSq < separationRadiusSq && distSq > 0.01) {
               const d = Math.sqrt(distSq);
-              const force = Math.pow((separationRadius - d) / separationRadius, 1.2);
-              sepX += (ox / d) * force * 70;
-              sepY += (oy / d) * force * 70;
+              const force = Math.pow((separationRadius - d) / separationRadius, 1.1);
+              sepX += (ox / d) * force * 110;
+              sepY += (oy / d) * force * 110;
             }
           }
         }
       }
 
-      const maxSep = spd * 0.9;
+      const maxSep = spd * 1.25;
       const sepLen = Math.sqrt(sepX * sepX + sepY * sepY);
       if (sepLen > maxSep && sepLen > 0) {
         sepX = (sepX / sepLen) * maxSep;
@@ -127,12 +128,26 @@ export class EnemyAISystem {
       if (def?.archetype === 'boss') {
         this.handleBossAI(enemy, delta, angleToPlayer, ctx);
       } else if (enemy.sprite.getData('stampedeDir')) {
-        const dir = enemy.sprite.getData('stampedeDir') as { vx: number; vy: number };
-        const speedMult = (enemy.sprite.getData('stampedeSpeedMult') as number) || 1.0;
-        const marchSpeed = Math.max(65, spd * speedMult);
-        enemy.sprite.setVelocity(dir.vx * marchSpeed, dir.vy * marchSpeed);
-        enemy.sprite.setFlipX(dir.vx < 0);
-        enemy.sprite.rotation = 0;
+        let stampedeTimer = (enemy.sprite.getData('stampedeTimer') as number) ?? 2600;
+        stampedeTimer -= delta;
+        enemy.sprite.setData('stampedeTimer', stampedeTimer);
+
+        const bounds = ctx.scene.physics.world.bounds;
+        const pad = 60;
+        const hitWall = enemy.x < bounds.x + pad || enemy.x > bounds.right - pad || enemy.y < bounds.y + pad || enemy.y > bounds.bottom - pad;
+
+        if (stampedeTimer <= 0 || hitWall) {
+          // Finished charge or reached wall — transition back to regular pursuit AI
+          enemy.sprite.setData('stampedeDir', undefined);
+        } else {
+          const dir = enemy.sprite.getData('stampedeDir') as { vx: number; vy: number };
+          const speedMult = (enemy.sprite.getData('stampedeSpeedMult') as number) || 1.6;
+          const marchSpeed = Math.max(130, spd * speedMult);
+          enemy.sprite.setVelocity(dir.vx * marchSpeed + sepX * 0.3, dir.vy * marchSpeed + sepY * 0.3);
+          enemy.sprite.setFlipX(dir.vx < 0);
+          enemy.sprite.rotation = 0;
+          continue;
+        }
       } else {
         const isRunner = enemy.sprite.getData('isRunner') === true;
         let moveAngle = angleToPlayer;

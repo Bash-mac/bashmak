@@ -99,44 +99,44 @@ export class SpawnManager {
       this.triggerWaveSurge(minutes, scaling);
     }
 
-    // 4. Dynamic Directional Squad Waves (Pacing, Formations & Density Scaling)
+    // 4. Dynamic Perimeter Waves (Surrounding Formations & Smooth Pacing)
     const powerSquadBonus = Math.floor((this.cachedPowerScore - 1) * 0.4);
     const powerPopBonus = Math.floor((this.cachedPowerScore - 1) * 1.5);
 
-    let targetPopulation = 30 + powerPopBonus;
-    let squadSize = 8 + powerSquadBonus;
-    let waveInterval = 2200; // ms between directional squad spawns
+    let targetPopulation = 14 + powerPopBonus;
+    let squadSize = 3 + powerSquadBonus;
+    let waveInterval = 2000; // ms between perimeter squad spawns
 
-    if (minutes < 0.5) {
-      // 0:00 - 0:30 (Balanced early pacing, immediate action)
-      targetPopulation = 36 + powerPopBonus;
-      squadSize = 10 + powerSquadBonus;
-      waveInterval = 1200;
-    } else if (minutes < 1.5) {
-      // 0:30 - 1:30
-      targetPopulation = 50 + powerPopBonus;
-      squadSize = 12 + powerSquadBonus;
+    if (minutes < 0.6) {
+      // 0:00 - 0:35 (Smooth intro, small manageable packs)
+      targetPopulation = 14 + powerPopBonus;
+      squadSize = 3 + powerSquadBonus;
       waveInterval = 2000;
-    } else if (minutes < 3.0) {
-      // 1:30 - 3:00
-      targetPopulation = 80 + powerPopBonus;
-      squadSize = 16 + powerSquadBonus;
+    } else if (minutes < 1.25) {
+      // 0:35 - 1:15 (Building pressure)
+      targetPopulation = 28 + powerPopBonus;
+      squadSize = 5 + powerSquadBonus;
+      waveInterval = 1900;
+    } else if (minutes < 2.5) {
+      // 1:15 - 2:30 (Solid horde formation)
+      targetPopulation = 48 + powerPopBonus;
+      squadSize = 8 + powerSquadBonus;
       waveInterval = 1800;
-    } else if (minutes < 5.0) {
-      // 3:00 - 5:00
+    } else if (minutes < 4.0) {
+      // 2:30 - 4:00 (Heavy pressure)
+      targetPopulation = 75 + powerPopBonus;
+      squadSize = 12 + powerSquadBonus;
+      waveInterval = 1650;
+    } else if (minutes < 6.0) {
+      // 4:00 - 6:00 (Massive swarm)
       targetPopulation = 105 + powerPopBonus;
-      squadSize = 20 + powerSquadBonus;
-      waveInterval = 1600;
-    } else if (minutes < 7.0) {
-      // 5:00 - 7:00
-      targetPopulation = 130 + powerPopBonus;
-      squadSize = 24 + powerSquadBonus;
-      waveInterval = 1500;
+      squadSize = 16 + powerSquadBonus;
+      waveInterval = 1550;
     } else {
-      // 7:00+ (Endgame swarm)
-      targetPopulation = 155 + powerPopBonus;
-      squadSize = 28 + powerSquadBonus;
-      waveInterval = 1400;
+      // 6:00+ (Endgame siege)
+      targetPopulation = 135 + powerPopBonus;
+      squadSize = 20 + powerSquadBonus;
+      waveInterval = 1350;
     }
 
     const activeCount = this.getActiveEnemyCount?.() ?? this.currentActiveCount;
@@ -148,48 +148,48 @@ export class SpawnManager {
       const deficit = targetPopulation - activeCount;
       const countToSpawn = Math.min(squadSize, deficit);
 
-      // Spawn a homogeneous directional squad from one distinct flank/angle
+      // Spawn evenly distributed perimeter wave around screen boundaries
       const def = this.selectEnemyDefinition(minutes);
-      this.spawnDirectionalSquad(def, countToSpawn, scaling);
+      this.spawnPerimeterWave(def, countToSpawn, scaling);
     }
   }
 
-  private spawnDirectionalSquad(def: EnemyDefinition, count: number, scaling: EnemyScaling): void {
+  private spawnPerimeterWave(def: EnemyDefinition, count: number, scaling: EnemyScaling): void {
     if (count <= 0) return;
     const player = this.getPlayerPosition();
-    const { maxRadius } = this.getViewport();
-    const baseDist = maxRadius + 70;
-
-    // Pick a distinct flank/sector (ahead/flank/behind)
-    let baseAngle = Math.random() * Math.PI * 2;
-    if (player.vx !== 0 || player.vy !== 0) {
-      const moveAngle = Math.atan2(player.vy, player.vx);
-      const roll = Math.random();
-      if (roll < 0.45) {
-        // Intercept ahead (cone +/- 35 deg)
-        baseAngle = moveAngle + (Math.random() - 0.5) * 0.7;
-      } else if (roll < 0.80) {
-        // Flank perpendicular (left or right)
-        baseAngle = moveAngle + (Math.random() < 0.5 ? Math.PI / 2 : -Math.PI / 2) + (Math.random() - 0.5) * 0.4;
-      } else {
-        // Pursue from rear
-        baseAngle = moveAngle + Math.PI + (Math.random() - 0.5) * 0.6;
-      }
-    }
-
-    // Spread the squad tightly in a directional wedge (arc ~25-35 deg)
-    const wedgeSpread = Math.min(0.55, 0.08 * count);
-    const startAngle = baseAngle - wedgeSpread / 2;
-    const angleStep = count > 1 ? wedgeSpread / (count - 1) : 0;
+    const { halfW, halfH } = this.getViewport();
+    const margin = 80;
 
     for (let i = 0; i < count; i++) {
-      const angle = startAngle + i * angleStep;
-      const depthOffset = (Math.random() - 0.5) * 45 + (i % 2 === 0 ? 0 : 30);
-      const dist = baseDist + depthOffset;
-      const x = player.x + Math.cos(angle) * dist;
-      const y = player.y + Math.sin(angle) * dist;
-      // Cap exploders in a single squad to at most 2 to prevent audio/FPS cascade
-      const unitDef = def.archetype === 'exploder' && i >= 2 ? CRAWLER_SWARM : def;
+      const side = (i + Math.floor(Math.random() * 4)) % 4;
+      let x = 0;
+      let y = 0;
+
+      if (side === 0) {
+        // Top
+        x = player.x + (Math.random() - 0.5) * (halfW * 2.2);
+        y = player.y - (halfH + margin + Math.random() * 50);
+      } else if (side === 1) {
+        // Right
+        x = player.x + (halfW + margin + Math.random() * 50);
+        y = player.y + (Math.random() - 0.5) * (halfH * 2.2);
+      } else if (side === 2) {
+        // Bottom
+        x = player.x + (Math.random() - 0.5) * (halfW * 2.2);
+        y = player.y + (halfH + margin + Math.random() * 50);
+      } else {
+        // Left
+        x = player.x - (halfW + margin + Math.random() * 50);
+        y = player.y + (Math.random() - 0.5) * (halfH * 2.2);
+      }
+
+      // Cap tanks and exploders in a wave: at most 1 tank per squad, rest are regular swarms
+      let unitDef = def;
+      if (def.archetype === 'tank' && i >= 1) {
+        unitDef = CRAWLER_SWARM;
+      } else if (def.archetype === 'exploder' && i >= 2) {
+        unitDef = CRAWLER_SWARM;
+      }
       this.spawnCallback(unitDef, x, y, scaling);
     }
   }
@@ -197,26 +197,26 @@ export class SpawnManager {
   private triggerWaveSurge(minutes: number, scaling: EnemyScaling): void {
     const roll = Math.random();
 
-    if (minutes < 0.7) {
-      // Early surges: Mini-Swarm or Pincer
+    if (minutes < 1.0) {
+      // Early surges: Small Bat swarm or Crawler pincer
       if (roll < 0.5) {
-        this.spawnSwarmRush(FODDER_BAT, 8, scaling);
+        this.spawnSwarmRush(FODDER_BAT, 6, scaling);
       } else {
-        this.spawnPincerSurge(CRAWLER_SWARM, 8, scaling);
+        this.spawnPincerSurge(CRAWLER_SWARM, 6, scaling);
       }
-    } else if (minutes < 2.0) {
-      // Mid-early surges: Sprinter rush or Pincer
+    } else if (minutes < 2.5) {
+      // Mid-early surges: Light Sprinter pincer or Crawler swarm
       if (roll < 0.5) {
-        this.spawnPincerSurge(SPRINTER_BUG, 8, scaling);
+        this.spawnPincerSurge(SPRINTER_BUG, 5, scaling);
       } else {
-        this.spawnSwarmRush(CRAWLER_SWARM, 10, scaling);
+        this.spawnSwarmRush(CRAWLER_SWARM, 8, scaling);
       }
     } else {
-      // Mid/late surges: Slugs pincer or Sprinter swarm
+      // Mid/late surges: Light Tank pincer (2-3 tanks) or Sprinter wave
       if (roll < 0.5) {
-        this.spawnPincerSurge(ARMORED_SLUG, 8, scaling);
+        this.spawnPincerSurge(ARMORED_SLUG, 3, scaling);
       } else {
-        this.spawnSwarmRush(SPRINTER_BUG, 12, scaling);
+        this.spawnSwarmRush(SPRINTER_BUG, 6, scaling);
       }
     }
   }
@@ -243,7 +243,7 @@ export class SpawnManager {
         const offsetX = (Math.random() - 0.5) * halfW * 1.8;
         x1 = player.x + offsetX;
         y1 = player.y - (halfH + margin);
-        x2 = player.x + (Math.random() - 0.5) * halfW * 1.8;
+        x2 = player.x + (Math.random() - 0.5) * halfH * 1.8;
         y2 = player.y + (halfH + margin);
       }
       this.spawnCallback(def, x1, y1, scaling);
@@ -285,39 +285,32 @@ export class SpawnManager {
   private selectEnemyDefinition(minutes: number): EnemyDefinition {
     const roll = Math.random();
 
-    // 0:00 - 0:15: 80% Bats, 20% Crawlers
-    if (minutes < 0.25) {
-      return roll < 0.80 ? FODDER_BAT : CRAWLER_SWARM;
+    // 0:00 - 0:45: 75% Bats, 25% Crawlers (NO sprinters or tanks!)
+    if (minutes < 0.75) {
+      return roll < 0.75 ? FODDER_BAT : CRAWLER_SWARM;
     }
 
-    // 0:15 - 0:40: 60% Bats, 30% Crawlers, 10% Sprinters
-    if (minutes < 0.65) {
-      if (roll < 0.60) return FODDER_BAT;
+    // 0:45 - 1:30: 45% Bats, 45% Crawlers, 10% Sprinters
+    if (minutes < 1.5) {
+      if (roll < 0.45) return FODDER_BAT;
       if (roll < 0.90) return CRAWLER_SWARM;
       return SPRINTER_BUG;
     }
 
-    // 0:40 - 1:15: 40% Bats, 40% Crawlers, 20% Sprinters
-    if (minutes < 1.25) {
-      if (roll < 0.40) return FODDER_BAT;
-      if (roll < 0.80) return CRAWLER_SWARM;
-      return SPRINTER_BUG;
-    }
-
-    // 1:15 - 2:30: 20% Bats, 35% Crawlers, 30% Sprinters, 15% Armored Slugs
+    // 1:30 - 2:30: 30% Bats, 45% Crawlers, 20% Sprinters, 5% Armored Slugs
     if (minutes < 2.5) {
-      if (roll < 0.20) return FODDER_BAT;
-      if (roll < 0.55) return CRAWLER_SWARM;
-      if (roll < 0.85) return SPRINTER_BUG;
+      if (roll < 0.30) return FODDER_BAT;
+      if (roll < 0.75) return CRAWLER_SWARM;
+      if (roll < 0.95) return SPRINTER_BUG;
       return ARMORED_SLUG;
     }
 
-    // 2:30 - 4:00: 15% Bats, 25% Crawlers, 25% Sprinters, 25% Slugs, 10% Exploders
+    // 2:30 - 4:00: 20% Bats, 40% Crawlers, 25% Sprinters, 8% Slugs, 7% Exploders
     if (minutes < 4.0) {
-      if (roll < 0.15) return FODDER_BAT;
-      if (roll < 0.40) return CRAWLER_SWARM;
-      if (roll < 0.65) return SPRINTER_BUG;
-      if (roll < 0.90) return ARMORED_SLUG;
+      if (roll < 0.20) return FODDER_BAT;
+      if (roll < 0.60) return CRAWLER_SWARM;
+      if (roll < 0.85) return SPRINTER_BUG;
+      if (roll < 0.93) return ARMORED_SLUG;
       return EXPLODER_SPORE;
     }
 

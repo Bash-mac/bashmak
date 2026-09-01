@@ -39,9 +39,6 @@ export class CarrotBarrageWeapon implements IWeapon {
     this.attackTimer += delta;
     if (this.attackTimer < baseInterval) return;
 
-    const primaryTarget = this.findClosestEnemy(ctx.player, ctx.enemiesMap, 550);
-    if (!primaryTarget) return;
-
     this.attackTimer = 0;
 
     let damage = Math.round(ctx.player.stats.damage * 0.85) * (1 + mods.damagePercentBonus);
@@ -54,6 +51,21 @@ export class CarrotBarrageWeapon implements IWeapon {
       damage *= 2.0;
     } else if (mods.critChance > 0 && Math.random() < mods.critChance) {
       damage *= mods.critMultiplier;
+    }
+
+    // Target closest enemy in range (360°), or default to movement/facing direction
+    const closestEnemy = this.findClosestEnemy(ctx.player, ctx.enemiesMap, 550);
+    let baseAngle = 0;
+    if (closestEnemy) {
+      baseAngle = Phaser.Math.Angle.Between(ctx.player.x, ctx.player.y, closestEnemy.x, closestEnemy.y);
+    } else {
+      const body = ctx.player.sprite?.body as Phaser.Physics.Arcade.Body | undefined;
+      if (body && (Math.abs(body.velocity.x) > 10 || Math.abs(body.velocity.y) > 10)) {
+        baseAngle = Math.atan2(body.velocity.y, body.velocity.x);
+      } else {
+        const facingRight = ctx.player.sprite ? !ctx.player.sprite.flipX : true;
+        baseAngle = facingRight ? 0 : Math.PI;
+      }
     }
 
     // Visual bat attack animation on player sprite
@@ -72,15 +84,13 @@ export class CarrotBarrageWeapon implements IWeapon {
     }
 
     const carrotsCount = 1 + (carrotLevel >= 3 ? 2 : 0) + (carrotLevel >= 5 ? 2 : 0) + (mods.multishotCount > 1 ? mods.multishotCount - 1 : 0);
-    const spreadAngle = 0.24;
+    const spreadAngle = 0.20;
     const startAngle = -((carrotsCount - 1) * spreadAngle) / 2;
-    const repeatInterval = 60;
+    const repeatInterval = 55;
 
     for (let i = 0; i < carrotsCount; i++) {
       ctx.scene.time.delayedCall(i * repeatInterval, () => {
         if (!ctx.player.isAlive || !ctx.player.sprite?.active) return;
-        const freshTarget = this.findClosestEnemy(ctx.player, ctx.enemiesMap, 600) || primaryTarget;
-        const baseAngle = Phaser.Math.Angle.Between(ctx.player.x, ctx.player.y, freshTarget.x, freshTarget.y);
         const angle = baseAngle + startAngle + i * spreadAngle;
         const carrotPierce = 1 + (carrotLevel >= 3 ? 1 : 0) + (carrotLevel >= 5 ? 1 : 0) + (mods.pierceCount || 0);
         this.fireCarrotBoomerang(ctx, angle, damage, isSuperCrit, carrotPierce);
@@ -99,9 +109,9 @@ export class CarrotBarrageWeapon implements IWeapon {
       proj.play('vfx_anim_carrot_fly', true);
     }
 
-    const scale = isSuperCrit ? 0.38 : 0.30;
+    const scale = isSuperCrit ? 0.28 : 0.21;
     proj.setScale(scale);
-    const targetRadius = isSuperCrit ? 15 : 12;
+    const targetRadius = isSuperCrit ? 11 : 8.5;
     if (proj.body) {
       const bodyRadius = targetRadius / scale;
       proj.body.setCircle(

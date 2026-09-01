@@ -89,6 +89,7 @@ export class BootScene extends Phaser.Scene {
 
     // Combat FX
     this.load.spritesheet('vfx_electro_zap', '/assets/sprites/vfx/vfx_electro_zap.png', { frameWidth: 256, frameHeight: 256 });
+    this.load.spritesheet('vfx_piezo_strike', '/assets/sprites/vfx/vfx_piezo_strike.png', { frameWidth: 256, frameHeight: 512 });
     this.load.spritesheet('vfx_piezo_muzzle', '/assets/sprites/vfx/vfx_piezo_muzzle.png', { frameWidth: 128, frameHeight: 128 });
     this.load.spritesheet('vfx_piezo_hit', '/assets/sprites/vfx/vfx_piezo_hit.png', { frameWidth: 128, frameHeight: 128 });
     this.load.spritesheet('vfx_toilet_lid_spin', '/assets/sprites/vfx/vfx_toilet_lid_spin.png', { frameWidth: 160, frameHeight: 160 });
@@ -368,6 +369,12 @@ export class BootScene extends Phaser.Scene {
     this.anims.create({
       key: 'vfx_anim_electro_zap',
       frames: this.anims.generateFrameNumbers('vfx_electro_zap', { start: 0, end: 11 }),
+      frameRate: 24,
+      repeat: 0,
+    });
+    this.anims.create({
+      key: 'vfx_anim_piezo_strike',
+      frames: this.anims.generateFrameNumbers('vfx_piezo_strike', { start: 0, end: 7 }),
       frameRate: 24,
       repeat: 0,
     });

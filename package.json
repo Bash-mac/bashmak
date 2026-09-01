@@ -7,7 +7,7 @@
     "dev": "vite",
     "check:arch": "node scripts/check-architecture.mjs",
     "sim:balance": "tsx scripts/balance_sim.ts",
-    "build": "node scripts/check-architecture.mjs && tsc && vite build",
+    "build": "node scripts/check-architecture.mjs && tsc && vite build && esbuild server/src/index.ts --bundle --format=esm --target=es2022 --platform=neutral --outfile=dist/_worker.js",
     "preview": "npm run build && wrangler pages dev dist",
     "deploy": "npm run build && wrangler pages deploy dist --project-name bashmak"
   },
@@ -20,6 +20,7 @@
     "wrangler": "^4.125.0"
   },
   "dependencies": {
+    "hono": "^4.13.5",
     "phaser": "^4.2.1"
   }
 }

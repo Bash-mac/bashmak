@@ -49,11 +49,11 @@ export class ObjectPool<T extends Phaser.GameObjects.GameObject> {
     return item;
   }
 
-  public release(item: T): void {
-    if (!item) return;
+  public release(item: T): boolean {
+    if (!item) return false;
 
     if (!this.activeSet.has(item)) {
-      return;
+      return false;
     }
 
     this.activeSet.delete(item);
@@ -70,6 +70,7 @@ export class ObjectPool<T extends Phaser.GameObjects.GameObject> {
     } else {
       item.destroy();
     }
+    return true;
   }
 
   public releaseAll(): void {

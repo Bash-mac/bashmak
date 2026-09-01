@@ -10,9 +10,9 @@ export const SPRINTER_BUG: EnemyDefinition = {
   displayScale: 0.24,
   mass: 1,
   stats: {
-    maxHp: 14,
-    speed: 155,
-    damage: 6,
+    maxHp: 10,
+    speed: 112,
+    damage: 3,
     armor: 0,
   },
   xpReward: 3,

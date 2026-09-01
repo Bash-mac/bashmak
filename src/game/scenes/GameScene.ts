@@ -8,7 +8,6 @@ import { LevelUpModal } from './ui/LevelUpModal';
 import { GameOverModal } from './ui/GameOverModal';
 import { PauseModal } from './ui/PauseModal';
 import { GrimoireModal } from './ui/GrimoireModal';
-import { DebugModal } from './ui/DebugModal';
 import { CombatSystem } from '../combat/CombatSystem';
 import { CollisionManager } from '../combat/CollisionManager';
 import { SpawnManager } from '../spawning/SpawnManager';
@@ -33,7 +32,7 @@ import { EnemyPool } from '../pools/EnemyPool';
 export class GameScene extends Phaser.Scene {
   private inputManager!: InputManager; private hud!: HUD;
   private levelUpModal!: LevelUpModal; private gameOverModal!: GameOverModal;
-  private pauseModal!: PauseModal; private grimoireModal!: GrimoireModal; private debugModal!: DebugModal;
+  private pauseModal!: PauseModal; private grimoireModal!: GrimoireModal;
   private combatSystem = new CombatSystem();
   private spawnManager!: SpawnManager;
   private eventDirector = new EventDirector();
@@ -82,27 +81,16 @@ export class GameScene extends Phaser.Scene {
     this.lootSystem = new LootSystem(this, this.damageNumbersPool);
     const { playerEntity, currentHero } = HeroFactory.createPlayer(this, worldSize / 2, worldSize / 2, this.gameState, this.saveManager);
     this.playerEntity = playerEntity; this.currentHero = currentHero;
+    this.saveManager.startRunSession(this.currentHero.id);
 
     this.inputManager = new InputManager(this); this.inputManager.init();
     this.hud = new HUD(this); this.hud.updateHp(this.playerEntity.health.currentHp, this.playerEntity.stats.maxHp);
     this.gameOverModal = new GameOverModal(this);
     this.pauseModal = new PauseModal(this);
     this.grimoireModal = new GrimoireModal(this);
-    this.debugModal = new DebugModal(this);
 
     this.input.keyboard?.on('keydown-ESC', () => this.togglePause());
     this.input.keyboard?.on('keydown-P', () => this.togglePause());
-    const onKey = (e: KeyboardEvent) => {
-      const isF2 = e.key === 'F2';
-      const isTilde = e.code === 'Backquote' || e.key === '`' || e.key === '~' || e.key === 'ё' || e.key === 'Ё';
-      const isCombo = (e.altKey && e.shiftKey && (e.key === 'D' || e.key === 'd' || e.key === 'В' || e.key === 'в')) ||
-                      (e.ctrlKey && e.altKey && (e.key === 'D' || e.key === 'd' || e.key === 'В' || e.key === 'в'));
-      if (isF2 || isTilde || isCombo) {
-        e.preventDefault(); e.stopPropagation(); this.debugModal.toggle(this.getDebugCtx());
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => window.removeEventListener('keydown', onKey));
 
     const onLvlDone = () => {
       if (this.gameState.pendingLevelUps > 0) this.levelUpModal.show();
@@ -150,7 +138,6 @@ export class GameScene extends Phaser.Scene {
     this.unbindEvents.push(
       this.eventBus.on('enemy:died', (data) => this.onEnemyDied(data)),
       this.eventBus.on('ui:pause_requested', () => this.togglePause()),
-      this.eventBus.on('ui:secret_debug_requested', () => this.debugModal.toggle(this.getDebugCtx())),
       this.eventBus.on('player:levelUp', () => this.onPlayerLevelUp()),
       this.eventBus.on('player:died', () => this.triggerPlayerDeath())
     );
@@ -216,15 +203,6 @@ export class GameScene extends Phaser.Scene {
 
   private resumeGame(): void {
     this.pauseModal.clear(); this.grimoireModal.hide(); this.isGamePaused = false; this.physics.resume(); this.inputManager.setEnabled(true);
-  }
-
-  private getDebugCtx() {
-    return {
-      scene: this, player: this.playerEntity, gameState: this.gameState, spawnManager: this.spawnManager,
-      lootSystem: this.lootSystem, enemiesMap: this.enemiesMap, combatSystem: this.combatSystem, hud: this.hud,
-      pauseGame: () => { this.isGamePaused = true; this.physics.pause(); this.inputManager.setEnabled(false); },
-      resumeGame: () => { this.isGamePaused = false; this.physics.resume(); this.inputManager.setEnabled(true); },
-    };
   }
 
   private getHazardCtx() {
@@ -362,10 +340,8 @@ export class GameScene extends Phaser.Scene {
     });
 
     this.lootSystem.update(deltaSeconds, this.playerEntity.x, this.playerEntity.y, this.gameState.playerModifiers, this.gameState.level, this.playerEntity.effectiveSpeed);
-    if (!this.debugModal?.isSpawnPaused) {
-      this.spawnManager.update(delta, this.gameState.runTime);
-      this.eventDirector.update(this.gameState.runTime, { scene: this, spawnManager: this.spawnManager, lootSystem: this.lootSystem, audio: this.audio, getPlayerPos: () => ({ x: this.playerEntity.x, y: this.playerEntity.y }) });
-    }
+    this.spawnManager.update(delta, this.gameState.runTime);
+    this.eventDirector.update(this.gameState.runTime, { scene: this, spawnManager: this.spawnManager, lootSystem: this.lootSystem, audio: this.audio, getPlayerPos: () => ({ x: this.playerEntity.x, y: this.playerEntity.y }) });
     this.hazardSystem.update(delta, this.getHazardCtx());
   }
 
@@ -374,7 +350,7 @@ export class GameScene extends Phaser.Scene {
     this.unbindEvents = [];
     this.audio.stopBgm();
     this.hud?.destroy(); this.levelUpModal?.destroy(); this.gameOverModal?.clear(); this.pauseModal?.destroy();
-    this.grimoireModal?.destroy(); this.debugModal?.destroy(); this.inputManager.destroy();
+    this.grimoireModal?.destroy(); this.inputManager.destroy();
     this.lootSystem.clear(); this.hazardSystem.clear(); this.heroTraitSystem.clear(); this.eventDirector.reset();
     this.enemyAISystem.reset(); this.enemyPool?.clear();
     this.projectilePool?.clear(); this.damageNumbersPool?.clear(); this.vfxPool?.clear(); this.weaponManager.reset();

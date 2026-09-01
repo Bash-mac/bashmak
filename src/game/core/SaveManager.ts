@@ -2,6 +2,8 @@ import { META_POWERUPS } from '../data/metaUpgrades';
 import type { StatsComponent } from '../entities/components/StatsComponent';
 import type { HealthComponent } from '../entities/components/HealthComponent';
 import type { PlayerModifiers } from '../data/definitions';
+import { GameApiClient } from '../../api/GameApiClient';
+import type { ServerPlayerProfile } from '../../api/types';
 
 export interface SaveData {
   goo: number;
@@ -23,8 +25,11 @@ const SAVE_KEY = 'bashmak_save_v1';
 export class SaveManager {
   private static instance: SaveManager;
   private data: SaveData;
+  private apiClient: GameApiClient;
+  private activeRunId: string | null = null;
 
   private constructor() {
+    this.apiClient = GameApiClient.getInstance();
     this.data = this.load();
   }
 
@@ -33,6 +38,38 @@ export class SaveManager {
       SaveManager.instance = new SaveManager();
     }
     return SaveManager.instance;
+  }
+
+  /**
+   * Hydrate state from server if authenticated.
+   */
+  public async syncWithServer(): Promise<void> {
+    try {
+      if (this.apiClient.isAuthenticated()) {
+        const profile = await this.apiClient.fetchProfile();
+        this.hydrateFromProfile(profile);
+      }
+    } catch (e) {
+      console.warn('[SaveManager] Server sync failed, using local cache:', e);
+    }
+  }
+
+  public hydrateFromProfile(profile: ServerPlayerProfile): void {
+    this.data = {
+      goo: profile.goo,
+      powerUps: { ...profile.powerUps },
+      unlockedHeroIds: [...profile.unlockedHeroIds],
+      selectedHeroId: profile.selectedHeroId,
+      stats: {
+        totalRuns: profile.stats.totalRuns,
+        totalKills: profile.stats.totalKills,
+        totalGooEarned: profile.stats.totalGooEarned,
+        bestSurvivalTimeSec: profile.stats.bestSurvivalTimeSec,
+        bestKills: profile.stats.bestKills,
+        bestScore: profile.stats.bestScore,
+      },
+    };
+    this.save();
   }
 
   private getDefaultData(): SaveData {
@@ -119,8 +156,14 @@ export class SaveManager {
   }
 
   public setSelectedHeroId(id: string): void {
-    this.data.selectedHeroId = id === 'hero_worm' ? 'hero_vypolzok' : id;
+    const canonical = id === 'hero_worm' ? 'hero_vypolzok' : id;
+    this.data.selectedHeroId = canonical;
     this.save();
+    if (this.apiClient.isAuthenticated()) {
+      this.apiClient.selectHero(canonical).then((res) => {
+        if (res.profile) this.hydrateFromProfile(res.profile);
+      }).catch((err) => console.warn('[SaveManager] selectHero server failed:', err));
+    }
   }
 
   public isHeroUnlocked(id: string): boolean {
@@ -136,6 +179,11 @@ export class SaveManager {
     if (!this.data.unlockedHeroIds.includes(canonical)) {
       this.data.unlockedHeroIds.push(canonical);
       this.save();
+      if (this.apiClient.isAuthenticated()) {
+        this.apiClient.unlockHero(canonical).then((res) => {
+          if (res.profile) this.hydrateFromProfile(res.profile);
+        }).catch((err) => console.warn('[SaveManager] unlockHero server failed:', err));
+      }
     }
   }
 
@@ -166,6 +214,15 @@ export class SaveManager {
     if (this.spendGoo(cost)) {
       this.data.powerUps[id] = currentLvl + 1;
       this.save();
+
+      if (this.apiClient.isAuthenticated()) {
+        this.apiClient.buyPowerUp(id).then((res) => {
+          if (res.profile) this.hydrateFromProfile(res.profile);
+        }).catch((err) => {
+          console.warn('[SaveManager] buyPowerUp server rejected, resyncing:', err);
+          this.syncWithServer();
+        });
+      }
       return true;
     }
     return false;
@@ -187,7 +244,30 @@ export class SaveManager {
     this.data.goo += refundAmount;
     this.data.powerUps = {};
     this.save();
+
+    if (this.apiClient.isAuthenticated()) {
+      this.apiClient.refundAllPowerUps().then((res) => {
+        if (res.profile) this.hydrateFromProfile(res.profile);
+      }).catch((err) => {
+        console.warn('[SaveManager] refundAll server rejected, resyncing:', err);
+        this.syncWithServer();
+      });
+    }
     return refundAmount;
+  }
+
+  public async startRunSession(heroId: string): Promise<string | null> {
+    if (this.apiClient.isAuthenticated()) {
+      try {
+        const res = await this.apiClient.startRun(heroId);
+        this.activeRunId = res.runId;
+        return res.runId;
+      } catch (err) {
+        console.warn('[SaveManager] startRun server failed:', err);
+      }
+    }
+    this.activeRunId = `local_run_${Date.now()}`;
+    return this.activeRunId;
   }
 
   /**
@@ -251,6 +331,9 @@ export class SaveManager {
     gooEarned: number;
     won: boolean;
   }): void {
+    const runId = this.activeRunId || `run_${Date.now()}`;
+    this.activeRunId = null;
+
     this.data.stats.totalRuns += 1;
     this.data.stats.totalKills += result.kills;
     this.data.stats.bestSurvivalTimeSec = Math.max(
@@ -260,5 +343,20 @@ export class SaveManager {
     this.data.stats.bestKills = Math.max(this.data.stats.bestKills, result.kills);
     this.data.stats.bestScore = Math.max(this.data.stats.bestScore, result.score);
     this.addGoo(result.gooEarned);
+
+    if (this.apiClient.isAuthenticated()) {
+      this.apiClient.finishRun({
+        runId,
+        timeSurvived: result.timeSurvived,
+        kills: result.kills,
+        score: result.score,
+        gooEarned: result.gooEarned,
+        won: result.won,
+      }).then((res) => {
+        if (res.profile) this.hydrateFromProfile(res.profile);
+      }).catch((err) => {
+        console.warn('[SaveManager] finishRun server sync failed:', err);
+      });
+    }
   }
 }

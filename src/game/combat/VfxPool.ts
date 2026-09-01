@@ -6,6 +6,7 @@ export class VfxPool {
   private carrotSplatPool: ObjectPool<Phaser.GameObjects.Sprite>;
   private enemyDeadPool: ObjectPool<Phaser.GameObjects.Sprite>;
   private electroZapPool: ObjectPool<Phaser.GameObjects.Sprite>;
+  private piezoStrikePool: ObjectPool<Phaser.GameObjects.Sprite>;
   private piezoMuzzlePool: ObjectPool<Phaser.GameObjects.Sprite>;
   private piezoHitPool: ObjectPool<Phaser.GameObjects.Sprite>;
   private toiletLidImpactPool: ObjectPool<Phaser.GameObjects.Sprite>;
@@ -18,12 +19,12 @@ export class VfxPool {
     this.scene = scene;
     this.splatPool = new ObjectPool<Phaser.GameObjects.Sprite>(scene, {
       create: () => {
-        const splat = scene.add.sprite(0, 0, 'vfx_impact_splat_1').setDepth(12).setScale(0.75);
+        const splat = scene.add.sprite(0, 0, 'vfx_impact_splat_1').setDepth(12).setScale(0.55);
         return splat;
       },
       onRelease: (splat) => {
         splat.stop();
-        splat.setScale(0.75);
+        splat.setScale(0.55);
         splat.setAlpha(1);
       },
       maxSize: 60,
@@ -32,12 +33,12 @@ export class VfxPool {
 
     this.carrotSplatPool = new ObjectPool<Phaser.GameObjects.Sprite>(scene, {
       create: () => {
-        const splat = scene.add.sprite(0, 0, 'vfx_carrot_splat_1').setDepth(12).setScale(0.14);
+        const splat = scene.add.sprite(0, 0, 'vfx_carrot_splat_1').setDepth(12).setScale(0.11);
         return splat;
       },
       onRelease: (splat) => {
         splat.stop();
-        splat.setScale(0.14);
+        splat.setScale(0.11);
         splat.setAlpha(1);
       },
       maxSize: 60,
@@ -71,6 +72,24 @@ export class VfxPool {
       maxSize: 40,
     });
     this.electroZapPool.prewarm(12);
+ 
+    this.piezoStrikePool = new ObjectPool<Phaser.GameObjects.Sprite>(scene, {
+      create: () => {
+        const spr = scene.add.sprite(0, 0, 'vfx_piezo_strike')
+          .setOrigin(0.5, 0.88)
+          .setDepth(16)
+          .setBlendMode(Phaser.BlendModes.ADD);
+        return spr;
+      },
+      onRelease: (spr) => {
+        spr.stop();
+        spr.setScale(1);
+        spr.setAlpha(1);
+        spr.setOrigin(0.5, 0.88);
+      },
+      maxSize: 25,
+    });
+    this.piezoStrikePool.prewarm(8);
 
     this.piezoMuzzlePool = new ObjectPool<Phaser.GameObjects.Sprite>(scene, {
       create: () => {
@@ -164,7 +183,7 @@ export class VfxPool {
     this.proceduralLightningPool.prewarm(12);
   }
 
-  public spawnImpactSplat(x: number, y: number, scale = 0.75): void {
+  public spawnImpactSplat(x: number, y: number, scale = 0.55): void {
     const splat = this.splatPool.get();
     splat.setPosition(x, y);
     splat.setScale(scale);
@@ -180,7 +199,7 @@ export class VfxPool {
     }
   }
 
-  public spawnCarrotSplat(x: number, y: number, scale = 0.14): void {
+  public spawnCarrotSplat(x: number, y: number, scale = 0.11): void {
     const splat = this.carrotSplatPool.get();
     splat.setPosition(x, y);
     splat.setScale(scale);
@@ -224,6 +243,22 @@ export class VfxPool {
     } else {
       this.scene.time.delayedCall(350, () => {
         this.electroZapPool.release(spr);
+      });
+    }
+  }
+
+  public spawnPiezoStrike(x: number, y: number, scale = 0.5): void {
+    const spr = this.piezoStrikePool.get();
+    spr.setPosition(x, y);
+    spr.setScale(scale);
+
+    if (this.scene.anims.exists('vfx_anim_piezo_strike')) {
+      spr.play('vfx_anim_piezo_strike').once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+        this.piezoStrikePool.release(spr);
+      });
+    } else {
+      this.scene.time.delayedCall(320, () => {
+        this.piezoStrikePool.release(spr);
       });
     }
   }
@@ -438,6 +473,7 @@ export class VfxPool {
     this.carrotSplatPool.clear();
     this.enemyDeadPool.clear();
     this.electroZapPool.clear();
+    this.piezoStrikePool.clear();
     this.piezoMuzzlePool.clear();
     this.piezoHitPool.clear();
     this.toiletLidImpactPool.clear();

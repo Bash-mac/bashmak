@@ -1,4 +1,3 @@
-import Phaser from 'phaser';
 import type { IWeapon, WeaponContext } from './IWeapon';
 import type { Entity } from '../../entities/Entity';
 import { AudioManager } from '../../audio/AudioManager';
@@ -22,7 +21,7 @@ export class PiezoTaserWeapon implements IWeapon {
     this.attackTimer += delta;
     if (this.attackTimer < baseInterval) return;
 
-    const range = (240 + (level - 1) * 15) * (1 + (mods.extraRange || 0));
+    const range = (380 + (level - 1) * 35) * (1 + (mods.extraRange || 0));
     const targets = this.findRandomEnemiesInRange(ctx.player, ctx.enemiesMap, range);
     if (targets.length === 0) return;
 
@@ -40,23 +39,13 @@ export class PiezoTaserWeapon implements IWeapon {
   }
 
   private performPiezoZap(ctx: WeaponContext, primaryTarget: Entity, level: number): void {
-    const px = ctx.player.x;
-    const py = ctx.player.y;
     const tx = primaryTarget.x;
     const ty = primaryTarget.y;
     const mods = ctx.gameState.playerModifiers;
 
-    // 0. Muzzle click spark at player position pointing to target
-    const angleDeg = Phaser.Math.RadToDeg(Phaser.Math.Angle.Between(px, py, tx, ty));
-    ctx.vfxPool?.spawnPiezoMuzzle(px, py, angleDeg, 0.45);
-
-    // 1. Primary Dynamic Procedural Lightning from Player to Target
-    ctx.vfxPool?.spawnProceduralLightning(px, py, tx, ty, {
-      color: 0xfacc15,
-      glowColor: 0x4ade80,
-      durationMs: 140,
-      forks: true,
-    });
+    // 1. Primary Lightning Strike from Sky Above (Baked HD VFX)
+    const strikeScale = (level >= 5 ? 0.56 : 0.46) * (1 + (mods.attackAreaBonus || 0) * 0.25);
+    ctx.vfxPool?.spawnPiezoStrike(tx, ty, strikeScale);
 
     // Damage & Stun (Rolls crit based on player stats)
     const baseDmg = 16 + (level - 1) * 7;

@@ -46,17 +46,17 @@ export class LevelUpModal {
     this.elements.push(overlay);
 
     // 2. Title Banner (Depth: 10001)
-    const titleY = Math.max(30, height * 0.08);
-    const subtitleY = titleY + 32;
+    const titleY = Math.max(22, height * 0.05);
+    const subtitleY = titleY + 26;
 
     const title = this.scene.add
       .text(width / 2, titleY, 'LEVEL UP!', {
-        fontSize: width < 700 ? '28px' : '40px',
+        fontSize: width < 700 ? '24px' : '34px',
         fontStyle: 'bold',
         color: '#4ade80',
         fontFamily: 'monospace',
         stroke: '#064e3b',
-        strokeThickness: 5,
+        strokeThickness: 4,
       })
       .setOrigin(0.5)
       .setScrollFactor(0)
@@ -64,7 +64,7 @@ export class LevelUpModal {
 
     const subtitle = this.scene.add
       .text(width / 2, subtitleY, 'Выбери развитие мутации:', {
-        fontSize: width < 700 ? '12px' : '15px',
+        fontSize: width < 700 ? '11px' : '13px',
         color: '#cbd5e1',
         fontFamily: 'monospace',
       })
@@ -74,23 +74,27 @@ export class LevelUpModal {
 
     this.elements.push(title, subtitle);
 
-    // 3. Check for ready weapon evolution
     const gameState = GameState.getInstance();
-    const readyEvo = getReadyEvolution(gameState);
 
+    // 3. Active Inventory Ribbon (Equipped Weapons & Tomes)
+    const ribbonY = subtitleY + 28;
+    this.createInventoryRibbon(width, ribbonY, gameState);
+
+    // 4. Check for ready weapon evolution & eligible options
+    const readyEvo = getReadyEvolution(gameState);
     const neededNormalCount = readyEvo ? 2 : 3;
     const options = gameState.getEligibleUpgrades(ALL_UPGRADES, neededNormalCount);
     const totalCards = (readyEvo ? 1 : 0) + options.length;
 
-    // 4. Single Horizontal Row Layout (Landscape 16:9)
+    // 5. Single Horizontal Row Layout (Landscape 16:9)
     const availableWidth = width - 48;
     const spacing = Math.min(22, Math.max(10, (availableWidth - totalCards * 280) / Math.max(1, totalCards - 1)));
     const cardWidth = Math.min(280, Math.floor((availableWidth - (totalCards - 1) * spacing) / totalCards));
-    const cardHeight = Math.min(430, Math.floor(height - subtitleY - 65));
+    const cardHeight = Math.min(390, Math.floor(height - ribbonY - 68));
 
     const totalW = totalCards * cardWidth + (totalCards - 1) * spacing;
     const startX = (width - totalW) / 2 + cardWidth / 2;
-    const cardY = subtitleY + 14 + cardHeight / 2;
+    const cardY = ribbonY + 20 + cardHeight / 2;
 
     let currentIdx = 0;
 
@@ -604,6 +608,164 @@ export class LevelUpModal {
       el.destroy();
     }
     this.elements = [];
+  }
+
+  private createInventoryRibbon(width: number, topY: number, gameState: GameState): void {
+    const activeUpgradesMap = gameState.activeUpgrades;
+    const upgradeDefsMap = new Map<string, UpgradeDefinition>();
+    ALL_UPGRADES.forEach((u) => upgradeDefsMap.set(u.id, u));
+
+    const equippedWeapons: Array<{ def: UpgradeDefinition; lvl: number }> = [];
+    const equippedTomes: Array<{ def: UpgradeDefinition; lvl: number }> = [];
+
+    for (const [id, lvl] of activeUpgradesMap.entries()) {
+      const def = upgradeDefsMap.get(id);
+      if (!def) continue;
+      if (def.category === 'weapon') {
+        equippedWeapons.push({ def, lvl });
+      } else if (def.category === 'tome') {
+        equippedTomes.push({ def, lvl });
+      }
+    }
+
+    const slotSize = 34;
+    const slotGap = 6;
+    const maxWeapons = gameState.maxWeaponSlots || 2;
+    const maxTomes = gameState.maxTomeSlots || 2;
+
+    const weaponsBlockWidth = maxWeapons * slotSize + (maxWeapons - 1) * slotGap;
+    const tomesBlockWidth = maxTomes * slotSize + (maxTomes - 1) * slotGap;
+    const sectionGap = 28;
+    const totalBarWidth = 75 + weaponsBlockWidth + sectionGap + 55 + tomesBlockWidth;
+
+    let currX = width / 2 - totalBarWidth / 2;
+
+    // 1. Weapons Label
+    const wLabel = this.scene.add
+      .text(currX, topY, 'ОРУЖИЕ:', {
+        fontSize: '12px',
+        fontStyle: 'bold',
+        color: '#facc15',
+        fontFamily: 'monospace',
+      })
+      .setOrigin(0, 0.5)
+      .setScrollFactor(0)
+      .setDepth(10001);
+    this.elements.push(wLabel);
+    currX += wLabel.width + 8;
+
+    // 2. Weapon Slots
+    for (let i = 0; i < maxWeapons; i++) {
+      const slotX = currX + i * (slotSize + slotGap) + slotSize / 2;
+      const slotY = topY;
+      const equipped = equippedWeapons[i];
+
+      const slotBg = this.scene.add
+        .rectangle(slotX, slotY, slotSize, slotSize, 0x0f172a, 0.92)
+        .setStrokeStyle(1.5, equipped ? 0xfacc15 : 0x334155)
+        .setScrollFactor(0)
+        .setDepth(10001);
+      this.elements.push(slotBg);
+
+      if (equipped) {
+        if (equipped.def.iconKey && this.scene.textures.exists(equipped.def.iconKey)) {
+          const icon = this.scene.add
+            .image(slotX, slotY, equipped.def.iconKey)
+            .setDisplaySize(slotSize - 8, slotSize - 8)
+            .setScrollFactor(0)
+            .setDepth(10002);
+          this.elements.push(icon);
+        }
+        const lvlBadge = this.scene.add
+          .text(slotX + slotSize / 2 - 2, slotY + slotSize / 2 - 2, `${equipped.lvl}`, {
+            fontSize: '10px',
+            fontStyle: 'bold',
+            color: '#fef08a',
+            fontFamily: 'monospace',
+            stroke: '#000000',
+            strokeThickness: 3,
+          })
+          .setOrigin(1, 1)
+          .setScrollFactor(0)
+          .setDepth(10003);
+        this.elements.push(lvlBadge);
+      } else {
+        const dash = this.scene.add
+          .text(slotX, slotY, '-', {
+            fontSize: '13px',
+            color: '#475569',
+            fontFamily: 'monospace',
+          })
+          .setOrigin(0.5)
+          .setScrollFactor(0)
+          .setDepth(10002);
+        this.elements.push(dash);
+      }
+    }
+    currX += weaponsBlockWidth + sectionGap;
+
+    // 3. Tomes Label
+    const tLabel = this.scene.add
+      .text(currX, topY, 'ТОМА:', {
+        fontSize: '12px',
+        fontStyle: 'bold',
+        color: '#4ade80',
+        fontFamily: 'monospace',
+      })
+      .setOrigin(0, 0.5)
+      .setScrollFactor(0)
+      .setDepth(10001);
+    this.elements.push(tLabel);
+    currX += tLabel.width + 8;
+
+    // 4. Tome Slots
+    for (let i = 0; i < maxTomes; i++) {
+      const slotX = currX + i * (slotSize + slotGap) + slotSize / 2;
+      const slotY = topY;
+      const equipped = equippedTomes[i];
+
+      const slotBg = this.scene.add
+        .rectangle(slotX, slotY, slotSize, slotSize, 0x0f172a, 0.92)
+        .setStrokeStyle(1.5, equipped ? 0x4ade80 : 0x334155)
+        .setScrollFactor(0)
+        .setDepth(10001);
+      this.elements.push(slotBg);
+
+      if (equipped) {
+        if (equipped.def.iconKey && this.scene.textures.exists(equipped.def.iconKey)) {
+          const icon = this.scene.add
+            .image(slotX, slotY, equipped.def.iconKey)
+            .setDisplaySize(slotSize - 8, slotSize - 8)
+            .setScrollFactor(0)
+            .setDepth(10002);
+          this.elements.push(icon);
+        }
+        const lvlBadge = this.scene.add
+          .text(slotX + slotSize / 2 - 2, slotY + slotSize / 2 - 2, `${equipped.lvl}`, {
+            fontSize: '10px',
+            fontStyle: 'bold',
+            color: '#bbf7d0',
+            fontFamily: 'monospace',
+            stroke: '#000000',
+            strokeThickness: 3,
+          })
+          .setOrigin(1, 1)
+          .setScrollFactor(0)
+          .setDepth(10003);
+        this.elements.push(lvlBadge);
+      } else {
+        const dash = this.scene.add
+          .text(slotX, slotY, '-', {
+            fontSize: '13px',
+            color: '#475569',
+            fontFamily: 'monospace',
+          })
+          .setOrigin(0.5)
+          .setScrollFactor(0)
+          .setDepth(10002);
+        this.elements.push(dash);
+      }
+    }
   }
 
   destroy(): void {

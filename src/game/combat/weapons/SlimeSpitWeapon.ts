@@ -3,30 +3,60 @@ import type { IWeapon, WeaponContext } from './IWeapon';
 import type { Entity } from '../../entities/Entity';
 import { AudioManager } from '../../audio/AudioManager';
 
+interface ActiveSpit {
+  sprite: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
+  lifeTimeMs: number;
+}
+
 export class SlimeSpitWeapon implements IWeapon {
   readonly id = 'weapon_slime_spit';
   readonly name = 'Слизеплюй';
 
   private attackTimer = 0;
+  private activeSpits: ActiveSpit[] = [];
+
+  public reset(): void {
+    this.attackTimer = 0;
+    this.activeSpits = [];
+  }
 
   update(delta: number, ctx: WeaponContext): void {
+    // 1. Update existing active flying spits
+    for (let i = this.activeSpits.length - 1; i >= 0; i--) {
+      const spit = this.activeSpits[i];
+      if (!spit.sprite.active) {
+        this.activeSpits.splice(i, 1);
+        continue;
+      }
+      spit.lifeTimeMs += delta;
+      if (spit.lifeTimeMs >= 1600) {
+        if (ctx.projectilePool) {
+          ctx.projectilePool.releaseProjectile(spit.sprite);
+        } else {
+          spit.sprite.destroy();
+        }
+        this.activeSpits.splice(i, 1);
+      }
+    }
+
+    // 2. Weapon attack check
     const mods = ctx.gameState.playerModifiers;
     if ((mods.slimeSpitLevel ?? 0) <= 0) return;
     const spitLevel = mods.slimeSpitLevel;
 
     const baseSpeed = (ctx.player.stats.attackSpeed ?? 1.3) * (1 + mods.attackSpeedBonus);
-    const baseInterval = 1100 / baseSpeed;
+    const baseInterval = 1000 / baseSpeed;
 
     this.attackTimer += delta;
     if (this.attackTimer < baseInterval) return;
 
-    const maxRange = 360;
+    const maxRange = 400;
     const targets = this.findNearbyEnemies(ctx.player, ctx.enemiesMap, maxRange);
     if (targets.length === 0) return;
 
     this.attackTimer = 0;
     const primaryTarget = targets[0];
-    let damage = Math.round(ctx.player.stats.damage * 0.85) * (1 + mods.damagePercentBonus);
+    let damage = Math.round(ctx.player.stats.damage * 0.92) * (1 + mods.damagePercentBonus);
 
     // Low HP rage bonus
     if (ctx.player.health.percent < mods.lowHpDmgThreshold) {
@@ -54,23 +84,29 @@ export class SlimeSpitWeapon implements IWeapon {
       });
     }
 
-    const multishot = Math.max(1, mods.multishotCount || 1);
+    const spitCount = (spitLevel >= 5 ? 3 : spitLevel >= 3 ? 2 : 1) + (mods.multishotCount > 1 ? mods.multishotCount - 1 : 0);
     const bursts = Math.max(1, mods.burstFireCount || 1);
-    const spreadAngle = 0.28;
-    const startAngle = -((multishot - 1) * spreadAngle) / 2;
+    const spreadAngle = 0.22;
+    const startAngle = -((spitCount - 1) * spreadAngle) / 2;
 
-    let shotIndex = 0;
     for (let b = 0; b < bursts; b++) {
-      for (let i = 0; i < multishot; i++) {
-        const delay = shotIndex * 65;
-        const shotIdx = i;
-        ctx.scene.time.delayedCall(delay, () => {
+      const burstDelay = b * 120;
+      if (burstDelay === 0) {
+        for (let i = 0; i < spitCount; i++) {
+          const target = targets[i % targets.length] || primaryTarget;
+          const angleOffset = startAngle + i * spreadAngle;
+          this.fireSpit(ctx, target, damage, isCrit, mods.pierceCount || 0, angleOffset, spitLevel);
+        }
+      } else {
+        ctx.scene.time.delayedCall(burstDelay, () => {
           if (!ctx.player.isAlive || !ctx.player.sprite?.active) return;
           const freshTargets = this.findNearbyEnemies(ctx.player, ctx.enemiesMap, maxRange);
-          const target = freshTargets[shotIdx % Math.max(1, freshTargets.length)] || primaryTarget;
-          this.fireSpit(ctx, target, damage, isCrit, mods.pierceCount || 0, startAngle + shotIdx * spreadAngle, spitLevel);
+          for (let i = 0; i < spitCount; i++) {
+            const target = freshTargets[i % Math.max(1, freshTargets.length)] || primaryTarget;
+            const angleOffset = startAngle + i * spreadAngle;
+            this.fireSpit(ctx, target, damage, isCrit, mods.pierceCount || 0, angleOffset, spitLevel);
+          }
         });
-        shotIndex++;
       }
     }
   }
@@ -96,14 +132,15 @@ export class SlimeSpitWeapon implements IWeapon {
       proj.play('vfx_anim_spit_proj');
     }
 
-    const scale = (ctx.gameState.playerModifiers.fatSpitScale || 1.0) * (isCrit ? 1.4 : 1.0);
+    const scale = 0.70 * (ctx.gameState.playerModifiers.fatSpitScale || 1.0) * (isCrit ? 1.3 : 1.0);
     proj.setScale(scale);
-    const radius = 16 * scale;
     if (proj.body) {
+      const targetRadius = isCrit ? 18 : 15;
+      const bodyRadius = targetRadius / scale;
       proj.body.setCircle(
-        radius,
-        (proj.width - radius * 2) / 2,
-        (proj.height - radius * 2) / 2
+        bodyRadius,
+        (proj.width - bodyRadius * 2) / 2,
+        (proj.height - bodyRadius * 2) / 2
       );
     }
     proj.setData('damage', Math.round(damage));
@@ -117,21 +154,12 @@ export class SlimeSpitWeapon implements IWeapon {
     }
 
     const angle = Phaser.Math.Angle.Between(ctx.player.x, ctx.player.y, target.x, target.y) + angleOffset;
-    const speed = 520;
+    const speed = 560;
     proj.setVelocity(Math.cos(angle) * speed, Math.sin(angle) * speed);
     proj.rotation = angle;
 
     AudioManager.getInstance().playSlimeSpit();
-
-    ctx.scene.time.delayedCall(1300, () => {
-      if (proj && proj.active) {
-        if (ctx.projectilePool) {
-          ctx.projectilePool.releaseProjectile(proj);
-        } else {
-          proj.destroy();
-        }
-      }
-    });
+    this.activeSpits.push({ sprite: proj, lifeTimeMs: 0 });
   }
 
   private findNearbyEnemies(player: Entity, enemiesMap: Map<string, Entity>, range: number, maxCount = 4): Entity[] {

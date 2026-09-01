@@ -2,10 +2,19 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "bashmak",
   "compatibility_date": "2026-08-20",
+  "pages_build_output_dir": "./dist",
   "observability": {
     "enabled": true
   },
-  "assets": {
-    "not_found_handling": "single-page-application"
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "bashmak-db",
+      "database_id": "09de5941-8229-40a2-85f4-642f3461d8a6",
+      "migrations_dir": "server/migrations"
+    }
+  ],
+  "vars": {
+    "DEV_MODE": "true"
   }
 }

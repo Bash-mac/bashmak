@@ -134,15 +134,15 @@ export class EventDirector {
     const p = ctx.getPlayerPos();
     const { halfW, halfH } = ctx.spawnManager.getViewport();
     const isHorizontal = Math.random() < 0.5;
-    const count = 12;
+    const count = 8;
     const margin = 120;
 
     // 1. Red warning corridor telegraph
     const warnRect = ctx.scene.add.rectangle(
-      isHorizontal ? p.x : p.x,
-      isHorizontal ? p.y : p.y,
-      isHorizontal ? halfW * 2.2 : 160,
-      isHorizontal ? 160 : halfH * 2.2,
+      p.x,
+      p.y,
+      isHorizontal ? halfW * 2.2 : 180,
+      isHorizontal ? 180 : halfH * 2.2,
       0xef4444,
       0.18
     );
@@ -163,7 +163,7 @@ export class EventDirector {
       if (isHorizontal) {
         const fromLeft = Math.random() < 0.5;
         const dirVx = fromLeft ? 1 : -1;
-        const spanH = halfH * 1.8;
+        const spanH = halfH * 1.6;
         const stepY = spanH / count;
 
         for (let i = 0; i < count; i++) {
@@ -172,8 +172,8 @@ export class EventDirector {
             ? p.x - (halfW + margin) - wedgeOffset
             : p.x + (halfW + margin) + wedgeOffset;
           const y = p.y - spanH / 2 + i * stepY + (Math.random() - 0.5) * 15;
-          const def = i === 3 || i === 8 ? EXPLODER_SPORE : ARMORED_SLUG;
-          ctx.spawnManager.spawnDirect(def, startX, y, { hpMultiplier: 1.6, speedMultiplier: 1.0 });
+          const def = i === 2 || i === 5 ? EXPLODER_SPORE : ARMORED_SLUG;
+          ctx.spawnManager.spawnDirect(def, startX, y, { hpMultiplier: 1.4, speedMultiplier: 1.0 });
         }
 
         ctx.scene.time.delayedCall(50, () => {
@@ -182,14 +182,15 @@ export class EventDirector {
           for (const e of enemies.values()) {
             if ((e.definition?.id === ARMORED_SLUG.id || e.definition?.id === EXPLODER_SPORE.id) && !e.sprite?.getData('stampedeDir')) {
               e.sprite?.setData('stampedeDir', { vx: dirVx, vy: 0 });
-              e.sprite?.setData('stampedeSpeedMult', 0.85 + Math.random() * 0.3);
+              e.sprite?.setData('stampedeSpeedMult', 1.6 + Math.random() * 0.3);
+              e.sprite?.setData('stampedeTimer', 2600);
             }
           }
         });
       } else {
         const fromTop = Math.random() < 0.5;
         const dirVy = fromTop ? 1 : -1;
-        const spanW = halfW * 1.8;
+        const spanW = halfW * 1.6;
         const stepX = spanW / count;
 
         for (let i = 0; i < count; i++) {
@@ -198,8 +199,8 @@ export class EventDirector {
             ? p.y - (halfH + margin) - wedgeOffset
             : p.y + (halfH + margin) + wedgeOffset;
           const x = p.x - spanW / 2 + i * stepX + (Math.random() - 0.5) * 15;
-          const def = i === 3 || i === 8 ? EXPLODER_SPORE : ARMORED_SLUG;
-          ctx.spawnManager.spawnDirect(def, x, startY, { hpMultiplier: 1.6, speedMultiplier: 1.0 });
+          const def = i === 2 || i === 5 ? EXPLODER_SPORE : ARMORED_SLUG;
+          ctx.spawnManager.spawnDirect(def, x, startY, { hpMultiplier: 1.4, speedMultiplier: 1.0 });
         }
 
         ctx.scene.time.delayedCall(50, () => {
@@ -208,7 +209,8 @@ export class EventDirector {
           for (const e of enemies.values()) {
             if ((e.definition?.id === ARMORED_SLUG.id || e.definition?.id === EXPLODER_SPORE.id) && !e.sprite?.getData('stampedeDir')) {
               e.sprite?.setData('stampedeDir', { vx: 0, vy: dirVy });
-              e.sprite?.setData('stampedeSpeedMult', 0.85 + Math.random() * 0.3);
+              e.sprite?.setData('stampedeSpeedMult', 1.6 + Math.random() * 0.3);
+              e.sprite?.setData('stampedeTimer', 2600);
             }
           }
         });

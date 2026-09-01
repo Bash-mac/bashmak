@@ -4,7 +4,6 @@ import type { GameState } from '../../core/GameState';
 import { ALL_UPGRADES } from '../../data/upgrades';
 import { EVOLUTION_RECIPES } from '../../data/evolutions';
 import { getHeroById } from '../../data/heroes';
-import { createPlatformAdapter } from '../../../platform';
 
 interface HudSlot {
   bg: Phaser.GameObjects.Graphics;
@@ -67,23 +66,8 @@ export class HUD {
 
     const avatarBadge = scene.add.image(avatarX, avatarY, 'hud_avatar_badge_frame')
       .setScrollFactor(0)
-      .setDepth(9001)
-      .setInteractive({ useHandCursor: false });
+      .setDepth(9001);
     avatarBadge.setDisplaySize(92, 92);
-
-    let avatarTaps = 0;
-    let lastAvatarTapTime = 0;
-    avatarBadge.on('pointerdown', () => {
-      const now = Date.now();
-      if (now - lastAvatarTapTime > 1600) avatarTaps = 0;
-      lastAvatarTapTime = now;
-      avatarTaps++;
-      if (avatarTaps >= 5) {
-        avatarTaps = 0;
-        createPlatformAdapter().vibrate(40);
-        EventBus.getInstance().emit('ui:secret_debug_requested');
-      }
-    });
     this.elements.push(avatarBadge);
 
     // Level Badge attached directly to the avatar frame

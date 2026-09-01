@@ -5,11 +5,14 @@ import { getHeroById } from '../data/heroes';
 import { AudioManager } from '../audio/AudioManager';
 import { GrimoireModal } from './ui/GrimoireModal';
 import { HeroSelectModal } from './ui/HeroSelectModal';
+import { AuthModal } from './ui/AuthModal';
+import { GameApiClient } from '../../api/GameApiClient';
 
 export class MenuScene extends Phaser.Scene {
   private platform = createPlatformAdapter();
   private grimoireModal!: GrimoireModal;
   private heroSelectModal!: HeroSelectModal;
+  private authModal!: AuthModal;
   private selectedHeroText?: Phaser.GameObjects.Text;
 
   constructor() {
@@ -251,40 +254,13 @@ export class MenuScene extends Phaser.Scene {
     ];
 
     topButtonConfigs.forEach((cfg) => {
-      const icon = this.add.image(cfg.x, -310, cfg.key).setInteractive({ useHandCursor: true });
-      icon.setScale(0.62);
-
-      icon.on('pointerover', () => {
-        this.tweens.add({
-          targets: icon,
-          scaleX: 0.68,
-          scaleY: 0.68,
-          duration: 100,
-          ease: 'Back.easeOut',
-        });
-      });
-
-      icon.on('pointerout', () => {
-        this.tweens.add({
-          targets: icon,
-          scaleX: 0.62,
-          scaleY: 0.62,
-          duration: 100,
-        });
-      });
-
+      const icon = this.add.image(cfg.x, -310, cfg.key).setInteractive({ useHandCursor: true }).setScale(0.62);
+      icon.on('pointerover', () => this.tweens.add({ targets: icon, scaleX: 0.68, scaleY: 0.68, duration: 100, ease: 'Back.easeOut' }));
+      icon.on('pointerout', () => this.tweens.add({ targets: icon, scaleX: 0.62, scaleY: 0.62, duration: 100 }));
       icon.on('pointerdown', () => {
         this.platform.vibrate(25);
-        this.tweens.add({
-          targets: icon,
-          scaleX: 0.55,
-          scaleY: 0.55,
-          duration: 70,
-          yoyo: true,
-          onComplete: cfg.action,
-        });
+        this.tweens.add({ targets: icon, scaleX: 0.55, scaleY: 0.55, duration: 70, yoyo: true, onComplete: cfg.action });
       });
-
       topIcons.push(icon);
     });
 
@@ -299,6 +275,41 @@ export class MenuScene extends Phaser.Scene {
       fontFamily: 'monospace',
     }).setOrigin(0.5);
 
+    // Top Profile / Auth Badge
+    const isTelegram = this.platform.isTelegram;
+    const authUser = GameApiClient.getInstance().getCurrentUser() || (isTelegram ? user : null);
+    const isAuth = Boolean(isTelegram || (GameApiClient.getInstance().isAuthenticated() && authUser && (authUser as any).id !== 'guest'));
+    const userLabel = isAuth && authUser?.username
+      ? `@${authUser.username}`
+      : isAuth && authUser?.firstName
+        ? authUser.firstName.toUpperCase()
+        : 'ГОСТЬ';
+
+    const authBadgeBg = this.add.rectangle(170, -310, 160, 38, isAuth ? 0x1e293b : 0x0f172a, 0.9);
+    authBadgeBg.setStrokeStyle(2, isAuth ? 0x38bdf8 : 0x64748b);
+    authBadgeBg.setInteractive({ useHandCursor: true });
+    const authBadgeText = this.add.text(170, -310, `[ ${userLabel} ]`, {
+      fontSize: '13px',
+      fontStyle: 'bold',
+      color: isAuth ? '#38bdf8' : '#94a3b8',
+      fontFamily: 'monospace',
+    }).setOrigin(0.5);
+
+    this.authModal = new AuthModal(this, () => {
+      const u = GameApiClient.getInstance().getCurrentUser() || (isTelegram ? user : null);
+      const lbl = u?.username ? `@${u.username}` : u?.firstName ? u.firstName.toUpperCase() : 'ГОСТЬ';
+      authBadgeText.setText(`[ ${lbl} ]`);
+      authBadgeText.setColor('#38bdf8');
+      authBadgeBg.setFillStyle(0x1e293b, 0.9);
+      gooBadgeText.setText(` ${SaveManager.getInstance().getGoo()}`);
+    });
+
+    authBadgeBg.on('pointerdown', () => {
+      this.platform.vibrate(20);
+      AudioManager.getInstance().playClick();
+      this.authModal.show();
+    });
+
     uiContainer.add([
       logo,
       worm,
@@ -309,6 +320,8 @@ export class MenuScene extends Phaser.Scene {
       dailyGoo,
       mission,
       social,
+      authBadgeBg,
+      authBadgeText,
       gooBadgeBg,
       gooBadgeText,
       ...topIcons,

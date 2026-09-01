@@ -10,9 +10,9 @@ export const FODDER_BAT: EnemyDefinition = {
   displayScale: 0.24,
   mass: 1,
   stats: {
-    maxHp: 11,
-    speed: 100,
-    damage: 4,
+    maxHp: 8,
+    speed: 90,
+    damage: 3,
     armor: 0,
   },
   xpReward: 1,

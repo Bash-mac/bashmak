@@ -15,6 +15,7 @@ export interface TraitContext {
 export class HeroTraitSystem {
   private slimeTrailSegments: Array<{ sprite: Phaser.GameObjects.Sprite; x: number; y: number; timeLeftMs: number }> = [];
   private slimeDropTimerMs = 0;
+  private slimeDamageTimerMs = 0;
   private trailPool?: ObjectPool<Phaser.GameObjects.Sprite>;
 
   public update(delta: number, isMoving: boolean, ctx: TraitContext, heroId: string): void {
@@ -152,6 +153,17 @@ export class HeroTraitSystem {
     if (onTrail) {
       ctx.player.applySpeedBoost(1.2, 180);
     }
+
+    // Burn & slow pursuing enemies stepping on the slime trail
+    this.slimeDamageTimerMs += delta;
+    if (this.slimeDamageTimerMs >= 360 && this.slimeTrailSegments.length > 0) {
+      this.slimeDamageTimerMs = 0;
+      const step = Math.max(1, Math.floor(this.slimeTrailSegments.length / 8));
+      for (let i = 0; i < this.slimeTrailSegments.length; i += step) {
+        const seg = this.slimeTrailSegments[i];
+        ctx.applyAreaDamage(seg.x, seg.y, 42, 3);
+      }
+    }
   }
 
   public clear(): void {
@@ -166,5 +178,6 @@ export class HeroTraitSystem {
     }
     this.slimeTrailSegments = [];
     this.slimeDropTimerMs = 0;
+    this.slimeDamageTimerMs = 0;
   }
 }

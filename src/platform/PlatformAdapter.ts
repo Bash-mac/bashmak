@@ -13,6 +13,7 @@ export interface IPlatformAdapter {
 
   initialize(): Promise<void>;
   getUser(): UserInfo | null;
+  getInitData?(): string | null;
   vibrate(durationMs?: number): void;
   hapticImpact?(style?: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft'): void;
   hapticNotification?(type?: 'error' | 'success' | 'warning'): void;

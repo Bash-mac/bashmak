@@ -102,6 +102,10 @@ export class TelegramPlatformAdapter implements IPlatformAdapter {
     };
   }
 
+  getInitData(): string | null {
+    return this.webApp?.initData || null;
+  }
+
   vibrate(_durationMs?: number): void {
     this.hapticImpact('medium');
   }

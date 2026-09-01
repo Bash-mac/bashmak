@@ -28,6 +28,7 @@ export class ProjectilePool {
         create: () => {
           const sprite = this.projectilesGroup.create(0, 0, textureKey) as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
           sprite.setDepth(9);
+          sprite.setData('originPoolKey', textureKey);
           return sprite;
         },
         onRelease: (proj) => {
@@ -38,6 +39,7 @@ export class ProjectilePool {
           proj.setData('isHoming', false);
           proj.setData('isToiletLid', false);
           proj.stop();
+          proj.setTexture(textureKey);
           proj.clearTint();
           proj.setScale(1);
           proj.rotation = 0;
@@ -60,17 +62,39 @@ export class ProjectilePool {
   ): Phaser.Types.Physics.Arcade.SpriteWithDynamicBody {
     const pool = this.getPoolForTexture(textureKey);
     const proj = pool.get();
+    proj.setData('originPoolKey', textureKey);
     proj.setPosition(x, y);
+    if (proj.body) {
+      proj.body.reset(x, y);
+    }
     return proj;
   }
 
   public releaseProjectile(proj: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody): void {
-    const textureKey = proj.texture?.key;
-    if (textureKey) {
-      this.getPoolForTexture(textureKey).release(proj);
-    } else {
-      proj.destroy();
+    const originKey = proj.getData('originPoolKey') as string | undefined;
+    if (originKey && this.poolsByTexture.has(originKey)) {
+      if (this.poolsByTexture.get(originKey)!.release(proj)) {
+        return;
+      }
     }
+    const textureKey = proj.texture?.key;
+    if (textureKey && this.poolsByTexture.has(textureKey)) {
+      if (this.poolsByTexture.get(textureKey)!.release(proj)) {
+        return;
+      }
+    }
+    for (const pool of this.poolsByTexture.values()) {
+      if (pool.release(proj)) {
+        return;
+      }
+    }
+    proj.setActive(false);
+    proj.setVisible(false);
+    if (proj.body) {
+      proj.body.enable = false;
+      proj.body.stop();
+    }
+    proj.destroy();
   }
 
   public clear(): void {

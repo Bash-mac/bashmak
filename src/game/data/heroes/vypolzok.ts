@@ -11,8 +11,8 @@ export const VYPOLZOK_HERO: HeroDefinition = {
   posterKey: 'hero_card_worm',
   stats: {
     maxHp: 100,
-    speed: 170,
-    damage: 10,
+    speed: 154,
+    damage: 13,
     armor: 0,
     attackSpeed: 1.3,
   },
