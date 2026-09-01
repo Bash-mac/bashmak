@@ -33,7 +33,7 @@ const HERO_DOSSIER_DATA: Record<string, HeroDossierExtra> = {
     statsBars: { hp: 3, speed: 4, damage: 3, mass: 4, special: 4 },
     artConfig: { x: 148, y: -52, w: 192, h: 269 },
     weaponName: 'ТОКСИЧНЫЕ ПЛЕВКИ',
-    weaponDesc: 'Плевок сгустками кислоты. Создает лужи замедления (-35% врагам).',
+    weaponDesc: 'Плевок сгустками кислоты. Создает лужи замедления.',
     traitName: 'СЛИЗИСТЫЙ СЛЕД',
     traitDesc: 'Оставляет дорожку слизи. Выползок на ней получает +20% скорости и реген HP.',
     favorites: 'SLIME SODA\nГРЯЗЬ\nПОСПАТЬ И ПОЖРАТЬ',
@@ -73,9 +73,44 @@ const HERO_DOSSIER_DATA: Record<string, HeroDossierExtra> = {
 
 
 
+interface LayoutItem {
+  x: number;
+  y: number;
+  scale?: number;
+  rot?: number; // angle in degrees
+}
+
+interface LayoutConfig {
+  slot_vypolzok: LayoutItem;
+  slot_bashmak: LayoutItem;
+  slot_markovka: LayoutItem;
+  slot_baklazhan: LayoutItem;
+  header: LayoutItem;
+  hero_art: LayoutItem;
+  stats: LayoutItem;
+  weapon: LayoutItem;
+  trait: LayoutItem;
+  sticky: LayoutItem;
+  btn_battle: LayoutItem;
+}
+
+const DEFAULT_LAYOUT: LayoutConfig = {
+  slot_vypolzok: { x: -367, y: -145, scale: 0.94, rot: -6.2 },
+  slot_bashmak:  { x: -382, y: 99,   scale: 1,    rot: 2.7 },
+  slot_markovka: { x: -154, y: -139, scale: 0.98, rot: 5.2 },
+  slot_baklazhan:{ x: -171, y: 95,   scale: 1,    rot: -4.7 },
+  header:        { x: 46,   y: -258, scale: 0.94, rot: -4.5 },
+  hero_art:      { x: 181,  y: -36,  scale: 0.92, rot: 0 },
+  stats:         { x: 333,  y: -201, scale: 0.96, rot: -7.3 },
+  weapon:        { x: 322,  y: -27,  scale: 1,    rot: -7.3 },
+  trait:         { x: 332,  y: 51,   scale: 1,    rot: -7.3 },
+  sticky:        { x: 68,   y: 159,  scale: 1,    rot: 3.7 },
+  btn_battle:    { x: 441,  y: 238,  scale: 1,    rot: -13.5 },
+};
+
 export class HeroSelectModal {
   private scene: Phaser.Scene;
-  private onHeroSelected: (hero: HeroDefinition) => void;
+  private onHeroSelected: (hero: HeroDefinition, startBattle?: boolean) => void;
   private platform = createPlatformAdapter();
   private audio = AudioManager.getInstance();
   private elements: Phaser.GameObjects.GameObject[] = [];
@@ -86,11 +121,43 @@ export class HeroSelectModal {
   private rightPageElements: Phaser.GameObjects.GameObject[] = [];
   private modalContainer?: Phaser.GameObjects.Container;
 
+  // Dev layout editor
+  private isEditMode = false;
+  private selectedKey: keyof LayoutConfig | null = null;
+  private selectedElement: Phaser.GameObjects.GameObject | null = null;
+  private layout: LayoutConfig = { ...DEFAULT_LAYOUT };
+  private hudElements: Phaser.GameObjects.GameObject[] = [];
+  private selectionBox?: Phaser.GameObjects.Graphics;
+  private keydownHandler?: (event: KeyboardEvent) => void;
+  private hasInitDragHandlers = false;
 
-
-  constructor(scene: Phaser.Scene, onHeroSelected: (hero: HeroDefinition) => void) {
+  constructor(scene: Phaser.Scene, onHeroSelected: (hero: HeroDefinition, startBattle?: boolean) => void) {
     this.scene = scene;
     this.onHeroSelected = onHeroSelected;
+    this.loadLayout();
+  }
+
+  private loadLayout(): void {
+    try {
+      const saved = localStorage.getItem('bashmak_hero_layout');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        this.layout = { ...DEFAULT_LAYOUT };
+        for (const k of Object.keys(DEFAULT_LAYOUT) as (keyof LayoutConfig)[]) {
+          if (parsed[k]) {
+            this.layout[k] = { ...DEFAULT_LAYOUT[k], ...parsed[k] };
+          }
+        }
+      }
+    } catch {
+      this.layout = { ...DEFAULT_LAYOUT };
+    }
+  }
+
+  private saveLayout(): void {
+    try {
+      localStorage.setItem('bashmak_hero_layout', JSON.stringify(this.layout));
+    } catch {}
   }
 
   show(): void {
@@ -98,40 +165,117 @@ export class HeroSelectModal {
     this.isVisible = true;
     const saveManager = SaveManager.getInstance();
     this.previewedHeroId = saveManager.getSelectedHeroId();
+    this.setupKeyboard();
+    this.initGlobalDragHandlers();
     this.render();
+  }
+
+  private setupKeyboard(): void {
+    this.cleanupKeyboard();
+    this.keydownHandler = (e: KeyboardEvent) => {
+      if (!this.isVisible) return;
+      if (e.key === 'd' || e.key === 'D' || e.key === 'в' || e.key === 'В') {
+        this.isEditMode = !this.isEditMode;
+        this.render();
+        return;
+      }
+
+      if (!this.isEditMode || !this.selectedKey || !this.selectedElement) return;
+
+      const step = e.shiftKey ? 10 : 1;
+      const rotStep = e.shiftKey ? 5 : 1;
+      const scaleStep = e.shiftKey ? 0.1 : 0.02;
+      let handled = false;
+      const pos = this.layout[this.selectedKey];
+
+      // Position (Arrows)
+      if (e.key === 'ArrowLeft') { pos.x -= step; handled = true; }
+      else if (e.key === 'ArrowRight') { pos.x += step; handled = true; }
+      else if (e.key === 'ArrowUp') { pos.y -= step; handled = true; }
+      else if (e.key === 'ArrowDown') { pos.y += step; handled = true; }
+
+      // Rotation (Q / E)
+      else if (e.key === 'q' || e.key === 'Q' || e.key === 'й' || e.key === 'Й') {
+        pos.rot = Math.round(((pos.rot || 0) - rotStep) * 10) / 10;
+        handled = true;
+      }
+      else if (e.key === 'e' || e.key === 'E' || e.key === 'у' || e.key === 'У') {
+        pos.rot = Math.round(((pos.rot || 0) + rotStep) * 10) / 10;
+        handled = true;
+      }
+
+      // Scale (- / + / [ / ])
+      else if (e.key === '-' || e.key === '_' || e.key === '[') {
+        pos.scale = Math.max(0.2, Math.round(((pos.scale || 1) - scaleStep) * 100) / 100);
+        handled = true;
+      }
+      else if (e.key === '=' || e.key === '+' || e.key === ']') {
+        pos.scale = Math.min(3.0, Math.round(((pos.scale || 1) + scaleStep) * 100) / 100);
+        handled = true;
+      }
+
+      if (handled) {
+        e.preventDefault();
+        (this.selectedElement as any).x = pos.x;
+        (this.selectedElement as any).y = pos.y;
+        (this.selectedElement as any).setAngle?.(pos.rot || 0);
+        (this.selectedElement as any).setScale?.(pos.scale || 1);
+        this.saveLayout();
+        this.updateSelectionBox();
+        this.updateHud();
+      }
+    };
+    window.addEventListener('keydown', this.keydownHandler);
+  }
+
+  private cleanupKeyboard(): void {
+    if (this.keydownHandler) {
+      window.removeEventListener('keydown', this.keydownHandler);
+      this.keydownHandler = undefined;
+    }
   }
 
   private render(): void {
     this.clear();
-    const { width, height } = this.scene.cameras.main;
+    const width = this.scene.scale.width;
+    const height = this.scene.scale.height;
 
-    // 1. Dark Atmospheric Overlay (Full Screen)
-    const overlay = this.scene.add
-      .rectangle(width / 2, height / 2, width, height, 0x02050c, 0.92)
+    // 1. Cover Background (Fills 100% of any screen aspect ratio with zero black bars, blocks click-through)
+    const bgScale = Math.max(width / 1280, height / 720);
+    const bg = this.scene.add
+      .image(width / 2, height / 2, 'menu_bg')
+      .setScale(bgScale)
       .setScrollFactor(0)
       .setDepth(10000)
       .setInteractive();
-    this.elements.push(overlay);
+    this.elements.push(bg);
 
-    // 2. Master Responsive Modal Container (Virtual Viewport 1280x720)
+    // 2. Universal Scalable UI Container (1280x720 centered & fit to visible area)
     const virtualW = 1280;
     const virtualH = 720;
-    const modalScale = Math.min((width * 0.98) / virtualW, (height * 0.98) / virtualH);
+    const uiScale = Math.min(width / virtualW, height / virtualH);
 
     const modalContainer = this.scene.add
       .container(width / 2, height / 2)
       .setDepth(10001)
       .setScrollFactor(0)
-      .setScale(modalScale);
+      .setScale(uiScale);
     this.modalContainer = modalContainer;
     this.elements.push(modalContainer);
 
-    // 3. Dossier Book Background (1280x720)
-    const bookBg = this.scene.add
-      .image(0, 0, 'hero_dossier_bg')
-      .setDisplaySize(virtualW, virtualH)
+    // 3. Clean Sliced Dossier Book Base (1160x680)
+    const book = this.scene.add
+      .image(0, 0, 'dossier_book')
+      .setDisplaySize(1160, 680)
       .setOrigin(0.5);
-    modalContainer.add(bookBg);
+    modalContainer.add(book);
+
+    // Metal Binder Clip on Top Binding
+    const clip = this.scene.add
+      .image(-28, -320, 'metal_binder_clip')
+      .setDisplaySize(54, 62)
+      .setOrigin(0.5);
+    modalContainer.add(clip);
 
     // 4. Close Button (Top-Right of Book)
     const closeBtnX = virtualW / 2 - 45;
@@ -170,6 +314,9 @@ export class HeroSelectModal {
 
     // 6. Right Page: Dynamic Hero Dossier
     this.renderRightPageDossier(modalContainer);
+
+    // 7. Dev Layout Editor HUD
+    this.renderDevHud(modalContainer);
   }
 
   private renderLeftPagePolaroids(container: Phaser.GameObjects.Container): void {
@@ -187,40 +334,63 @@ export class HeroSelectModal {
       window.location.search.includes('dev=1')
     );
 
-    const slots = [
-      { id: 'hero_vypolzok', x: -356, y: -80, rot: -0.02, polKey: 'polaroid_vypolzok' },
-      { id: 'hero_bashmak',  x: -160, y: -80, rot: 0.03,  polKey: 'polaroid_bashmak' },
-      { id: 'hero_markovka', x: -356, y: 175, rot: 0.02,  polKey: 'polaroid_markovka' },
-      { id: 'hero_baklazhan',x: -160, y: 175, rot: -0.03, polKey: 'polaroid_baklazhan' },
+    const slots: Array<{
+      id: string;
+      x: number;
+      y: number;
+      rot?: number;
+      scale?: number;
+      polKey: string;
+      tapeKey: string;
+      key: keyof LayoutConfig;
+      name: string;
+    }> = [
+      { id: 'hero_vypolzok', ...this.layout.slot_vypolzok, polKey: 'polaroid_vypolzok', tapeKey: 'tape_green_1', key: 'slot_vypolzok', name: 'Выползок' },
+      { id: 'hero_bashmak',  ...this.layout.slot_bashmak,  polKey: 'polaroid_bashmak',  tapeKey: 'tape_green_2', key: 'slot_bashmak',  name: 'Башмак' },
+      { id: 'hero_markovka', ...this.layout.slot_markovka, polKey: 'polaroid_markovka', tapeKey: 'tape_green_3', key: 'slot_markovka', name: 'Морковка' },
+      { id: 'hero_baklazhan',...this.layout.slot_baklazhan,polKey: 'polaroid_baklazhan',tapeKey: 'tape_green_4', key: 'slot_baklazhan',name: 'Баклажан' },
     ];
 
     slots.forEach((slot) => {
       const hero = getHeroById(slot.id);
-      const isLocked = !isDev && slot.id !== 'hero_vypolzok' && slot.id !== 'hero_markovka';
+      const isLocked = !isDev && slot.id !== 'hero_vypolzok' && slot.id !== 'hero_markovka' && slot.id !== 'hero_baklazhan';
       const isSelected = slot.id === currentSelectedId;
 
       const polContainer = this.scene.add
         .container(slot.x, slot.y)
-        .setRotation(slot.rot)
-        .setScale(isSelected ? 1.05 : 1.0);
+        .setAngle(slot.rot ?? 0)
+        .setScale((slot.scale ?? 1) * (isSelected ? 1.04 : 1.0));
       container.add(polContainer);
       this.leftPageElements.push(polContainer);
 
-      const photo = this.scene.add
-        .image(0, -16, slot.polKey)
-        .setDisplaySize(142, 142)
+      // 1. Sliced Polaroid Frame
+      const frame = this.scene.add
+        .image(0, 0, 'polaroid_frame')
+        .setDisplaySize(176, 202)
         .setOrigin(0.5);
+      polContainer.add(frame);
 
-
+      // 2. Hero Photo Inside Frame
+      const photo = this.scene.add
+        .image(0, -18, slot.polKey)
+        .setDisplaySize(136, 136)
+        .setOrigin(0.5);
       polContainer.add(photo);
 
+      // 3. Green Scotch Tape on Top Corner
+      const tape = this.scene.add
+        .image(-48, -88, slot.tapeKey)
+        .setDisplaySize(52, 26)
+        .setRotation(-0.32);
+      polContainer.add(tape);
+
       if (isLocked) {
-        photo.setTint(0x333333);
+        photo.setTint(0x222222);
         const polChains = this.scene.add
-          .image(0, -16, 'chains_pod')
-          .setDisplaySize(120, 120)
+          .image(0, -18, 'chains_pod')
+          .setDisplaySize(130, 130)
           .setOrigin(0.5)
-          .setAlpha(0.9);
+          .setAlpha(0.92);
         polContainer.add(polChains);
       }
 
@@ -248,7 +418,7 @@ export class HeroSelectModal {
         polContainer.add(lockBadge);
 
         const lockText = this.scene.add
-          .text(0, 49, 'СЕКРЕТНО ', {
+          .text(0, 49, 'СЕКРЕТНО', {
             fontSize: '10.5px',
             color: '#fecaca',
             fontFamily: 'Gagalin',
@@ -257,39 +427,38 @@ export class HeroSelectModal {
         polContainer.add(lockText);
       }
 
+      if (this.isEditMode) {
+        this.makeDraggable(polContainer, slot.key, slot.name, 176, 202, 0, 0);
+      } else {
+        const hit = this.scene.add
+          .rectangle(0, 0, 176, 202, 0x000000, 0)
+          .setInteractive({ useHandCursor: true });
+        polContainer.add(hit);
 
-      const hit = this.scene.add
-        .rectangle(0, 10, 160, 200, 0x000000, 0)
-        .setInteractive({ useHandCursor: true });
-      polContainer.add(hit);
+        hit.on('pointerover', () => {
+          polContainer.setScale(1.06);
+          this.audio.playClick();
+        });
 
-      hit.on('pointerover', () => {
-        polContainer.setScale(1.04);
-        this.audio.playClick();
-      });
+        hit.on('pointerout', () => {
+          polContainer.setScale(isSelected ? 1.04 : 1.0);
+        });
 
-      hit.on('pointerout', () => {
-        polContainer.setScale(1.0);
-      });
-
-      hit.on('pointerdown', () => {
-        this.platform.vibrate(20);
-        this.audio.playClick();
-        this.previewedHeroId = slot.id;
-        if (!isLocked) {
-          saveManager.setSelectedHeroId(slot.id);
-        }
-        if (this.modalContainer) {
-          this.renderLeftPagePolaroids(this.modalContainer);
-          this.renderRightPageDossier(this.modalContainer);
-        }
-      });
+        hit.on('pointerdown', () => {
+          this.platform.vibrate(20);
+          this.audio.playClick();
+          this.previewedHeroId = slot.id;
+          if (!isLocked) {
+            saveManager.setSelectedHeroId(slot.id);
+          }
+          if (this.modalContainer) {
+            this.renderLeftPagePolaroids(this.modalContainer);
+            this.renderRightPageDossier(this.modalContainer);
+          }
+        });
+      }
     });
   }
-
-
-
-
 
   private renderRightPageDossier(container: Phaser.GameObjects.Container): void {
     this.rightPageElements.forEach((el) => el.destroy());
@@ -299,16 +468,16 @@ export class HeroSelectModal {
     const hero = getHeroById(this.previewedHeroId);
     const extra = HERO_DOSSIER_DATA[this.previewedHeroId] || HERO_DOSSIER_DATA['hero_vypolzok'];
 
-
     const isDev = typeof window !== 'undefined' && (
       window.location.search.includes('dev=1')
     );
-    const isLocked = !isDev && this.previewedHeroId !== 'hero_vypolzok' && this.previewedHeroId !== 'hero_markovka';
+    const isLocked = !isDev && this.previewedHeroId !== 'hero_vypolzok' && this.previewedHeroId !== 'hero_markovka' && this.previewedHeroId !== 'hero_baklazhan';
 
-    // 1. Title & Subtitle Header (Aligned to -7.5 deg Top Edge of the Book Page)
+    // 1. Title & Subtitle Header
     const headerContainer = this.scene.add
-      .container(20, -255)
-      .setRotation(Phaser.Math.DegToRad(-7.5));
+      .container(this.layout.header.x, this.layout.header.y)
+      .setAngle(this.layout.header.rot ?? -7.5)
+      .setScale(this.layout.header.scale ?? 1);
     container.add(headerContainer);
     this.rightPageElements.push(headerContainer);
 
@@ -334,12 +503,20 @@ export class HeroSelectModal {
       .setOrigin(0, 0);
     headerContainer.add(subText);
 
+    this.makeDraggable(headerContainer, 'header', 'Заголовок', 300, 90, 150, 40);
 
     // 2. Full Body Hero Character Art
     const charKey = 'char_' + hero.id.replace('hero_', '');
     const cfg = extra.artConfig;
+    const heroContainer = this.scene.add
+      .container(this.layout.hero_art.x, this.layout.hero_art.y)
+      .setAngle(this.layout.hero_art.rot ?? 0)
+      .setScale(this.layout.hero_art.scale ?? 1);
+    container.add(heroContainer);
+    this.rightPageElements.push(heroContainer);
+
     const heroSprite = this.scene.add
-      .image(cfg.x, cfg.y, charKey)
+      .image(0, 0, charKey)
       .setDisplaySize(cfg.w, cfg.h)
       .setOrigin(0.5);
 
@@ -347,44 +524,55 @@ export class HeroSelectModal {
       heroSprite.setTint(0x222222);
     }
 
-    this.scene.tweens.add({
-      targets: heroSprite,
-      scaleY: heroSprite.scaleY * 1.02,
-      duration: 1400,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut',
-    });
-
-    container.add(heroSprite);
-    this.rightPageElements.push(heroSprite);
-
-    if (isLocked) {
-      const chains = this.scene.add
-        .image(cfg.x, cfg.y, 'chains_pod')
-        .setDisplaySize(300, 300)
-        .setOrigin(0.5);
-
+    if (!this.isEditMode) {
       this.scene.tweens.add({
-        targets: chains,
-        angle: { from: -1.5, to: 1.5 },
-        y: cfg.y + 3,
-        duration: 1600,
+        targets: heroSprite,
+        scaleY: heroSprite.scaleY * 1.02,
+        duration: 1400,
         yoyo: true,
         repeat: -1,
         ease: 'Sine.easeInOut',
       });
-
-      container.add(chains);
-      this.rightPageElements.push(chains);
     }
 
-    // 3. Stats Note (Graph Paper Section - Perfectly Aligned to -7.3 deg Paper Grid)
+    heroContainer.add(heroSprite);
+
+    if (isLocked) {
+      const chains = this.scene.add
+        .image(0, 0, 'chains_pod')
+        .setDisplaySize(300, 300)
+        .setOrigin(0.5);
+
+      if (!this.isEditMode) {
+        this.scene.tweens.add({
+          targets: chains,
+          angle: { from: -1.5, to: 1.5 },
+          y: 3,
+          duration: 1600,
+          yoyo: true,
+          repeat: -1,
+          ease: 'Sine.easeInOut',
+        });
+      }
+
+      heroContainer.add(chains);
+    }
+
+    this.makeDraggable(heroContainer, 'hero_art', 'Арт героя', cfg.w, cfg.h, 0, 0);
+
+    // 3. Stats Note (Graph Paper Note with Red Pin)
     const statsContainer = this.scene.add
-      .container(315, -182)
-      .setRotation(Phaser.Math.DegToRad(-7.3));
+      .container(this.layout.stats.x, this.layout.stats.y)
+      .setAngle(this.layout.stats.rot ?? -7.3)
+      .setScale(this.layout.stats.scale ?? 1);
     container.add(statsContainer);
     this.rightPageElements.push(statsContainer);
+
+    const statsBackdrop = this.scene.add
+      .image(80, 58, 'note_stats_backdrop')
+      .setDisplaySize(248, 216)
+      .setOrigin(0.5);
+    statsContainer.add(statsBackdrop);
 
     const statLabels = [
       { name: 'ЗДОРОВЬЕ', val: extra.statsBars.hp, max: 5 },
@@ -417,10 +605,13 @@ export class HeroSelectModal {
       }
     });
 
-    // 4. Weapon Section (Aligned to Right Column Stream: x=315, -7.3 deg)
+    this.makeDraggable(statsContainer, 'stats', 'Характеристики', 248, 216, 80, 58);
+
+    // 4. Weapon Section
     const weaponContainer = this.scene.add
-      .container(315, -30)
-      .setRotation(Phaser.Math.DegToRad(-7.3));
+      .container(this.layout.weapon.x, this.layout.weapon.y)
+      .setAngle(this.layout.weapon.rot ?? -7.3)
+      .setScale(this.layout.weapon.scale ?? 1);
     container.add(weaponContainer);
     this.rightPageElements.push(weaponContainer);
 
@@ -444,10 +635,13 @@ export class HeroSelectModal {
       .setOrigin(0, 0);
     weaponContainer.add(wepDesc);
 
-    // 5. Trait Section (Aligned to Right Column Stream: x=315, -7.3 deg, closer to weapon)
+    this.makeDraggable(weaponContainer, 'weapon', 'Оружие', 240, 70, 115, 30);
+
+    // 5. Trait Section
     const traitContainer = this.scene.add
-      .container(315, 52)
-      .setRotation(Phaser.Math.DegToRad(-7.3));
+      .container(this.layout.trait.x, this.layout.trait.y)
+      .setAngle(this.layout.trait.rot ?? -7.3)
+      .setScale(this.layout.trait.scale ?? 1);
     container.add(traitContainer);
     this.rightPageElements.push(traitContainer);
 
@@ -471,85 +665,134 @@ export class HeroSelectModal {
       .setOrigin(0, 0);
     traitContainer.add(traitDesc);
 
-    // 6. Sticky Note "ЛЮБИТ" (Aligned to -7.3 deg Sticky Paper)
+    this.makeDraggable(traitContainer, 'trait', 'Трейт', 240, 70, 115, 30);
+
+    // 6. Sticky Note "ЛЮБИТ"
     const stickyContainer = this.scene.add
-      .container(0, 174)
-      .setRotation(Phaser.Math.DegToRad(-7.3));
+      .container(this.layout.sticky.x, this.layout.sticky.y)
+      .setAngle(this.layout.sticky.rot ?? 3.7)
+      .setScale(this.layout.sticky.scale ?? 1);
     container.add(stickyContainer);
     this.rightPageElements.push(stickyContainer);
 
+    const stickyBackdrop = this.scene.add
+      .image(58, 52, 'paper_note_small')
+      .setDisplaySize(162, 148)
+      .setOrigin(0.5);
+    stickyContainer.add(stickyBackdrop);
+
+    // Tilted text sub-container aligned with the drawn inner frame (-5.5 deg)
+    const textSub = this.scene.add
+      .container(12, 14)
+      .setAngle(-5.5);
+    stickyContainer.add(textSub);
+
     const stickyHeader = this.scene.add
-      .text(4, 12, 'ЛЮБИТ: ', {
-        fontSize: '13px',
+      .text(0, 0, 'ЛЮБИТ:', {
+        fontSize: '13.5px',
         color: '#7f1d1d',
         fontFamily: 'Gagalin',
         stroke: '#000000',
         strokeThickness: 2,
       })
       .setOrigin(0, 0);
-    stickyContainer.add(stickyHeader);
+    textSub.add(stickyHeader);
 
     const stickyText = this.scene.add
-      .text(4, 30, extra.favorites, {
+      .text(0, 18, extra.favorites, {
         fontSize: '11px',
         color: '#020617',
         fontFamily: 'Boingster',
-        wordWrap: { width: 96 },
-        lineSpacing: 2,
+        wordWrap: { width: 116 },
+        lineSpacing: 1.5,
       })
       .setOrigin(0, 0);
-    stickyContainer.add(stickyText);
+    textSub.add(stickyText);
 
+    this.makeDraggable(stickyContainer, 'sticky', 'Стикер Любит', 162, 148, 58, 52);
 
-    // 7. Red Action Button "TO BATTLE! / В БОЙ!" (Aligned to -13.5 deg Red Stamp Plate)
-    const btnX = 434;
-    const btnY = 247;
-    const btnRotation = Phaser.Math.DegToRad(-13.5);
+    // 7. Red Action Button "В БОЙ!"
+    const btnBaseScale = this.layout.btn_battle.scale ?? 1;
+    const btnBaseAngle = this.layout.btn_battle.rot ?? -13.5;
 
-    const btnLabel = isLocked
-      ? 'ЗАКРЫТО '
-      : 'В БОЙ! ';
+    const btnContainer = this.scene.add
+      .container(this.layout.btn_battle.x, this.layout.btn_battle.y)
+      .setAngle(btnBaseAngle)
+      .setScale(btnBaseScale);
+    container.add(btnContainer);
+    this.rightPageElements.push(btnContainer);
 
+    const btnBackdrop = this.scene.add
+      .image(0, 0, 'btn_battle_red_plate')
+      .setDisplaySize(340, 96)
+      .setOrigin(0.5);
+    btnContainer.add(btnBackdrop);
+
+    const btnLabel = isLocked ? 'ЗАКРЫТО' : 'В БОЙ!';
     const actionText = this.scene.add
-      .text(btnX, btnY, btnLabel, {
-        fontSize: '26px',
-        color: isLocked ? '#94a3b8' : '#ffffff',
+      .text(0, -2, btnLabel, {
+        fontSize: '32px',
+        color: isLocked ? '#94a3b8' : '#fff1f2',
         fontFamily: 'Gagalin',
         stroke: '#450a0a',
-        strokeThickness: 5,
+        strokeThickness: 6,
+        shadow: {
+          offsetX: 0,
+          offsetY: 3,
+          color: '#1a0505',
+          blur: 4,
+          fill: true,
+          stroke: true,
+        },
       })
-      .setRotation(btnRotation)
       .setOrigin(0.5);
-    container.add(actionText);
-    this.rightPageElements.push(actionText);
+    btnContainer.add(actionText);
 
-    const btnHit = this.scene.add
-      .rectangle(btnX, btnY, 340, 95, 0x000000, 0)
-      .setRotation(btnRotation)
-      .setInteractive({ useHandCursor: isLocked ? false : true });
-    container.add(btnHit);
-    this.rightPageElements.push(btnHit);
+    if (this.isEditMode) {
+      this.makeDraggable(btnContainer, 'btn_battle', 'Кнопка В бой', 340, 96, 0, 0);
+    } else if (!isLocked) {
+      btnBackdrop.setInteractive({ useHandCursor: true });
 
-    if (!isLocked) {
-      btnHit.on('pointerover', () => {
-        actionText.setScale(1.08);
-      });
-      btnHit.on('pointerout', () => {
-        actionText.setScale(1.0);
-      });
-      btnHit.on('pointerdown', () => {
-        this.platform.vibrate(40);
-        this.audio.playLevelUp();
-
+      btnBackdrop.on('pointerover', () => {
+        this.scene.tweens.killTweensOf(btnContainer);
         this.scene.tweens.add({
-          targets: actionText,
-          scaleX: 0.9,
-          scaleY: 0.9,
-          duration: 100,
+          targets: btnContainer,
+          scaleX: btnBaseScale * 1.07,
+          scaleY: btnBaseScale * 1.07,
+          angle: btnBaseAngle + 2,
+          duration: 120,
+          ease: 'Back.easeOut',
+        });
+      });
+
+      btnBackdrop.on('pointerout', () => {
+        this.scene.tweens.killTweensOf(btnContainer);
+        this.scene.tweens.add({
+          targets: btnContainer,
+          scaleX: btnBaseScale,
+          scaleY: btnBaseScale,
+          angle: btnBaseAngle,
+          duration: 120,
+          ease: 'Quad.easeOut',
+        });
+      });
+
+      btnBackdrop.on('pointerdown', () => {
+        AudioManager.getInstance().init();
+        AudioManager.getInstance().playClick();
+        this.platform.vibrate(30);
+
+        this.scene.tweens.killTweensOf(btnContainer);
+        this.scene.tweens.add({
+          targets: btnContainer,
+          scaleX: btnBaseScale * 0.92,
+          scaleY: btnBaseScale * 0.92,
+          duration: 70,
           yoyo: true,
+          ease: 'Quad.easeOut',
           onComplete: () => {
             saveManager.setSelectedHeroId(this.previewedHeroId);
-            this.onHeroSelected(hero);
+            this.onHeroSelected(hero, true);
             this.hide();
           },
         });
@@ -557,12 +800,255 @@ export class HeroSelectModal {
     }
   }
 
+  private activeDrag: {
+    key: keyof LayoutConfig;
+    target: Phaser.GameObjects.Container | Phaser.GameObjects.GameObject;
+    startX: number;
+    startY: number;
+    itemStartX: number;
+    itemStartY: number;
+  } | null = null;
+
+  private makeDraggable(
+    target: Phaser.GameObjects.Container | Phaser.GameObjects.GameObject,
+    key: keyof LayoutConfig,
+    displayName: string,
+    width: number = 200,
+    height: number = 100,
+    offsetX: number = 0,
+    offsetY: number = 0
+  ): void {
+    if (!this.modalContainer) return;
+
+    (target as any).layoutKey = key;
+    (target as any).displayName = displayName;
+
+    if (this.isEditMode) {
+      // Add a visible drag outline and hit area
+      const hitZone = this.scene.add
+        .rectangle(offsetX, offsetY, width, height, 0x22c55e, 0.08)
+        .setStrokeStyle(1.5, 0x22c55e, 0.7)
+        .setInteractive({ useHandCursor: true });
+
+      if (target instanceof Phaser.GameObjects.Container) {
+        target.add(hitZone);
+      } else {
+        hitZone.setPosition((target as any).x + offsetX, (target as any).y + offsetY);
+        this.modalContainer.add(hitZone);
+      }
+
+      hitZone.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+        if (!this.isEditMode) return;
+        this.selectedKey = key;
+        this.selectedElement = target;
+        this.activeDrag = {
+          key,
+          target,
+          startX: pointer.x,
+          startY: pointer.y,
+          itemStartX: (target as any).x,
+          itemStartY: (target as any).y,
+        };
+        this.updateSelectionBox();
+        this.updateHud();
+      });
+    }
+  }
+
+  private initGlobalDragHandlers(): void {
+    if (this.hasInitDragHandlers) return;
+    this.hasInitDragHandlers = true;
+
+    this.scene.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
+      if (!this.activeDrag || !this.isEditMode || !this.modalContainer) return;
+      const modalScale = this.modalContainer.scaleX || 1;
+      const dx = (pointer.x - this.activeDrag.startX) / modalScale;
+      const dy = (pointer.y - this.activeDrag.startY) / modalScale;
+
+      const newX = Math.round(this.activeDrag.itemStartX + dx);
+      const newY = Math.round(this.activeDrag.itemStartY + dy);
+
+      (this.activeDrag.target as any).x = newX;
+      (this.activeDrag.target as any).y = newY;
+      this.layout[this.activeDrag.key].x = newX;
+      this.layout[this.activeDrag.key].y = newY;
+
+      this.updateSelectionBox();
+      this.updateHud();
+    });
+
+    this.scene.input.on('pointerup', () => {
+      if (this.activeDrag) {
+        this.activeDrag = null;
+        this.saveLayout();
+      }
+    });
+
+    // Mouse wheel: Scale or Rotate
+    this.scene.input.on('wheel', (pointer: Phaser.Input.Pointer, _gameObjects: any, _deltaX: number, deltaY: number) => {
+      if (!this.isEditMode || !this.selectedKey || !this.selectedElement) return;
+      const pos = this.layout[this.selectedKey];
+      if (!pos) return;
+
+      const isAltOrCtrl = pointer.event?.altKey || pointer.event?.ctrlKey;
+      if (isAltOrCtrl) {
+        const rotDir = deltaY > 0 ? 1 : -1;
+        const rotStep = pointer.event?.shiftKey ? 5 : 1;
+        pos.rot = Math.round(((pos.rot || 0) + rotDir * rotStep) * 10) / 10;
+        (this.selectedElement as any).setAngle?.(pos.rot || 0);
+      } else {
+        const scaleStep = pointer.event?.shiftKey ? 0.1 : 0.02;
+        const stepVal = deltaY > 0 ? -scaleStep : scaleStep;
+        pos.scale = Math.min(3.0, Math.max(0.2, Math.round(((pos.scale || 1) + stepVal) * 100) / 100));
+        (this.selectedElement as any).setScale?.(pos.scale || 1);
+      }
+
+      this.saveLayout();
+      this.updateSelectionBox();
+      this.updateHud();
+    });
+  }
+
+  private renderDevHud(container: Phaser.GameObjects.Container): void {
+    this.hudElements.forEach((el) => el.destroy());
+    this.hudElements = [];
+    if (this.selectionBox) {
+      this.selectionBox.destroy();
+      this.selectionBox = undefined;
+    }
+
+    if (!this.isEditMode) return;
+
+    const hudBar = this.scene.add.container(0, -325);
+    container.add(hudBar);
+    this.hudElements.push(hudBar);
+
+    const bgGfx = this.scene.add.graphics();
+    bgGfx.fillStyle(0x1e293b, 0.95);
+    bgGfx.lineStyle(2, 0x22c55e, 1);
+    bgGfx.fillRoundedRect(-590, -18, 1180, 36, 6);
+    bgGfx.strokeRoundedRect(-590, -18, 1180, 36, 6);
+    hudBar.add(bgGfx);
+
+    const toggleBtn = this.scene.add
+      .text(-570, 0, '[D] РАЗМЕТКА: ВКЛ', {
+        fontSize: '14px',
+        color: '#4ade80',
+        fontFamily: 'Gagalin',
+      })
+      .setOrigin(0, 0.5)
+      .setInteractive({ useHandCursor: true });
+    hudBar.add(toggleBtn);
+
+    toggleBtn.on('pointerdown', () => {
+      this.isEditMode = false;
+      this.render();
+    });
+
+    const copyBtn = this.scene.add
+      .text(380, 0, '[ СКОПИРОВАТЬ КОНФИГ ]', {
+        fontSize: '13px',
+        color: '#fbbf24',
+        fontFamily: 'Gagalin',
+      })
+      .setOrigin(0, 0.5)
+      .setInteractive({ useHandCursor: true });
+    hudBar.add(copyBtn);
+
+    copyBtn.on('pointerdown', () => {
+      const text = JSON.stringify(this.layout, null, 2);
+      try {
+        navigator.clipboard?.writeText(text);
+      } catch {}
+      console.log('--- НОВЫЕ КООРДИНАТЫ HERO_SELECT ---');
+      console.log(text);
+      copyBtn.setText('[ СКОПИРОВАНО В БУФЕР! ]');
+      this.scene.time.delayedCall(1500, () => {
+        if (copyBtn.active) copyBtn.setText('[ СКОПИРОВАТЬ КОНФИГ ]');
+      });
+    });
+
+    const resetBtn = this.scene.add
+      .text(260, 0, '[ СБРОСИТЬ ]', {
+        fontSize: '13px',
+        color: '#ef4444',
+        fontFamily: 'Gagalin',
+      })
+      .setOrigin(0, 0.5)
+      .setInteractive({ useHandCursor: true });
+    hudBar.add(resetBtn);
+
+    resetBtn.on('pointerdown', () => {
+      this.layout = { ...DEFAULT_LAYOUT };
+      this.saveLayout();
+      this.render();
+    });
+
+    this.selectionBox = this.scene.add.graphics();
+    container.add(this.selectionBox);
+    this.hudElements.push(this.selectionBox);
+
+    this.updateHud();
+  }
+
+  private updateHud(): void {
+    if (!this.modalContainer) return;
+    const existingStatus = this.hudElements.find((el) => (el as any).isStatusText);
+    if (existingStatus) {
+      existingStatus.destroy();
+      this.hudElements = this.hudElements.filter((el) => el !== existingStatus);
+    }
+
+    if (!this.isEditMode) return;
+
+    let info = 'Стрелки: сдвиг | Q/E: поворот | -/+: масштаб | Колесо мыши (Alt: поворот)';
+    if (this.selectedKey && this.layout[this.selectedKey]) {
+      const pos = this.layout[this.selectedKey];
+      const name = (this.selectedElement as any)?.displayName || this.selectedKey;
+      info = `${name} | X: ${pos.x}, Y: ${pos.y} | Масштаб: ${(pos.scale ?? 1).toFixed(2)}x | Угол: ${pos.rot ?? 0}°`;
+    }
+
+    const hudBar = this.hudElements[0] as Phaser.GameObjects.Container;
+    if (hudBar) {
+      const status = this.scene.add
+        .text(-380, 0, info, {
+          fontSize: '12px',
+          color: '#ffffff',
+          fontFamily: 'Gagalin',
+        })
+        .setOrigin(0, 0.5);
+      (status as any).isStatusText = true;
+      hudBar.add(status);
+      this.hudElements.push(status);
+    }
+  }
+
+  private updateSelectionBox(): void {
+    if (!this.selectionBox || !this.selectedElement || !this.isEditMode) {
+      this.selectionBox?.clear();
+      return;
+    }
+
+    this.selectionBox.clear();
+    this.selectionBox.lineStyle(2, 0x22c55e, 0.9);
+    const el = this.selectedElement as any;
+    const x = el.x;
+    const y = el.y;
+
+    this.selectionBox.strokeRect(x - 60, y - 60, 120, 120);
+    this.selectionBox.fillStyle(0x22c55e, 0.2);
+    this.selectionBox.fillRect(x - 60, y - 60, 120, 120);
+  }
+
   hide(): void {
+    this.cleanupKeyboard();
     this.clear();
     this.isVisible = false;
   }
 
   private clear(): void {
+    this.hudElements.forEach((el) => el.destroy());
+    this.hudElements = [];
     this.rightPageElements.forEach((el) => {
       this.scene.tweens.killTweensOf(el);
       el.destroy();

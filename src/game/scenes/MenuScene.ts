@@ -144,9 +144,12 @@ export class MenuScene extends Phaser.Scene {
     if (typeof window !== 'undefined' && window.location.search.includes('grimoire=1')) {
       this.time.delayedCall(300, () => this.grimoireModal.show());
     }
-    this.heroSelectModal = new HeroSelectModal(this, (hero) => {
+    this.heroSelectModal = new HeroSelectModal(this, (hero, startBattle) => {
       if (this.selectedHeroText) {
         this.selectedHeroText.setText(`[ ${hero.name.toUpperCase()} ]`);
+      }
+      if (startBattle) {
+        this.startGame();
       }
     });
 

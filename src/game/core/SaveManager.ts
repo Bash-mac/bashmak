@@ -39,7 +39,7 @@ export class SaveManager {
     return {
       goo: 0,
       powerUps: {},
-      unlockedHeroIds: ['hero_vypolzok'],
+      unlockedHeroIds: ['hero_vypolzok', 'hero_markovka', 'hero_baklazhan'],
       selectedHeroId: 'hero_vypolzok',
       stats: {
         totalRuns: 0,
@@ -60,10 +60,12 @@ export class SaveManager {
         let selected = parsed.selectedHeroId || 'hero_vypolzok';
         if (selected === 'hero_worm') selected = 'hero_vypolzok';
 
-        let unlocked = parsed.unlockedHeroIds || ['hero_vypolzok'];
+        let unlocked: string[] = parsed.unlockedHeroIds || ['hero_vypolzok', 'hero_markovka', 'hero_baklazhan'];
         if (unlocked.includes('hero_worm') && !unlocked.includes('hero_vypolzok')) {
           unlocked = unlocked.map((id: string) => (id === 'hero_worm' ? 'hero_vypolzok' : id));
         }
+        if (!unlocked.includes('hero_markovka')) unlocked.push('hero_markovka');
+        if (!unlocked.includes('hero_baklazhan')) unlocked.push('hero_baklazhan');
 
         return {
           ...this.getDefaultData(),

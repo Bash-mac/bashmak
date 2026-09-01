@@ -252,7 +252,7 @@ export class GameScene extends Phaser.Scene {
 
     const sprite = this.playerEntity.sprite;
     if (sprite?.active && this.playerEntity.isAlive) {
-      const heroPrefix = this.currentHero?.id === 'hero_markovka' ? 'markovka' : 'vypolzok';
+      const heroPrefix = this.currentHero?.id === 'hero_markovka' ? 'markovka' : this.currentHero?.id === 'hero_baklazhan' ? 'baklazhan' : 'vypolzok';
       if (this.anims.exists(`${heroPrefix}_anim_hurt`)) sprite.play(`${heroPrefix}_anim_hurt`);
       sprite.setData('isHurt', true);
       this.time.delayedCall(160, () => {
@@ -301,7 +301,7 @@ export class GameScene extends Phaser.Scene {
     const sprite = this.playerEntity.sprite;
     if (sprite?.active) {
       sprite.setVelocity(0, 0);
-      const heroPrefix = this.currentHero?.id === 'hero_markovka' ? 'markovka' : 'vypolzok';
+      const heroPrefix = this.currentHero?.id === 'hero_markovka' ? 'markovka' : this.currentHero?.id === 'hero_baklazhan' ? 'baklazhan' : 'vypolzok';
       if (this.anims.exists(`${heroPrefix}_anim_dead`)) sprite.play(`${heroPrefix}_anim_dead`);
       else this.tweens.add({ targets: sprite, angle: 90, scaleX: sprite.scaleX * 1.3, scaleY: sprite.scaleY * 0.6, alpha: 0.5, duration: 350, ease: 'Bounce.easeOut' });
     }
@@ -340,7 +340,7 @@ export class GameScene extends Phaser.Scene {
 
       const sprite = this.playerEntity.sprite;
       if (!sprite.getData('isHurt') && !sprite.getData('isAttacking')) {
-        const heroPrefix = this.currentHero?.id === 'hero_markovka' ? 'markovka' : 'vypolzok';
+        const heroPrefix = this.currentHero?.id === 'hero_markovka' ? 'markovka' : this.currentHero?.id === 'hero_baklazhan' ? 'baklazhan' : 'vypolzok';
         const targetAnim = isMoving ? `${heroPrefix}_anim_run` : `${heroPrefix}_anim_idle`;
         if (this.anims.exists(targetAnim)) sprite.play(targetAnim, true);
       }

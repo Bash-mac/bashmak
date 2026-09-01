@@ -57,7 +57,7 @@ export class HUD {
     const mask = maskGfx.createGeometryMask();
 
     const heroId = scene.registry.get('selectedHeroId') || 'hero_vypolzok';
-    const initAvatarKey = heroId === 'hero_markovka' ? 'hud_face_smug_markovka' : 'hud_face_smug';
+    const initAvatarKey = heroId === 'hero_markovka' ? 'hud_face_smug_markovka' : heroId === 'hero_baklazhan' ? 'portrait_baklazhan' : 'hud_face_smug';
     this.avatarImage = scene.add.image(avatarX, avatarY, scene.textures.exists(initAvatarKey) ? initAvatarKey : 'face_smug')
       .setScrollFactor(0)
       .setDepth(9000);
@@ -343,6 +343,10 @@ export class HUD {
       smugKey = 'hud_face_smug_markovka';
       boredKey = 'hud_face_bored_markovka';
       injuredKey = 'hud_face_injured_markovka';
+    } else if (heroId === 'hero_baklazhan') {
+      smugKey = 'portrait_baklazhan';
+      boredKey = 'portrait_baklazhan';
+      injuredKey = 'portrait_baklazhan';
     }
 
     let targetKey = smugKey;

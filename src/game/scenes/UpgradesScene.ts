@@ -41,7 +41,8 @@ export class UpgradesScene extends Phaser.Scene {
   private levelMaxTx!: Phaser.GameObjects.Text;
   private descTx!: Phaser.GameObjects.Text;
   private pips: Phaser.GameObjects.Image[] = [];
-  private buyZone!: Phaser.GameObjects.Rectangle;
+  private buyBtn!: Phaser.GameObjects.Container;
+  private buyBg!: Phaser.GameObjects.Image;
   private buyTx!: Phaser.GameObjects.Text;
   // Atmosphere & Parallax
   private bgImage!: Phaser.GameObjects.Image;
@@ -191,15 +192,16 @@ export class UpgradesScene extends Phaser.Scene {
       align: 'center',
       wordWrap: { width: 148 },
     }).setOrigin(0.5, 0.5).setAngle(-2.5);
-    const btnBaseY = 114;
-    this.buyZone = this.add.rectangle(17, btnBaseY, 220, 44, 0x000000, 0).setAngle(-2.8).setInteractive({ useHandCursor: true });
-    this.buyTx = this.add.text(17, btnBaseY, '', { fontFamily: 'Gagalin, monospace', fontSize: '14px', color: '#1c1917', stroke: '#ca8a04', strokeThickness: 1, wordWrap: { width: 200 }, align: 'center' }).setOrigin(0.5, 0.5).setAngle(-2.8);
-    this.buyZone.on('pointerdown', () => { this.buyTx.y = btnBaseY + 2; this.onBuy(); });
-    this.buyZone.on('pointerup',   () => { this.buyTx.y = btnBaseY; });
-    this.buyZone.on('pointerout',  () => { this.buyTx.y = btnBaseY; this.buyTx.setScale(1); });
-    this.buyZone.on('pointerover', () => this.buyTx.setScale(1.05));
+    this.buyBg = this.add.image(0, 0, 'lab_badge_yellow').setDisplaySize(210, 44);
+    this.buyTx = this.add.text(0, 1, '', { fontFamily: 'Gagalin, monospace', fontSize: '14px', color: '#1c1917', stroke: '#ca8a04', strokeThickness: 1, wordWrap: { width: 200 }, align: 'center' }).setOrigin(0.5, 0.5);
+    this.buyBtn = this.add.container(17, 125, [this.buyBg, this.buyTx]).setAngle(-2.8);
+    this.buyBg.setInteractive({ useHandCursor: true });
+    this.buyBg.on('pointerdown', () => { this.buyBtn.y = 125 + 2; this.onBuy(); });
+    this.buyBg.on('pointerup',   () => { this.buyBtn.y = 125; });
+    this.buyBg.on('pointerout',  () => { this.buyBtn.y = 125; this.buyBtn.setScale(1); });
+    this.buyBg.on('pointerover', () => this.buyBtn.setScale(1.05));
     this.clipContainer = this.add.container(CX, CY, [
-      shadow, clip, this.titleTx, this.sketch, this.levelLeftTx, this.levelRightTx, this.levelMaxTx, ...this.pips, this.descTx, this.buyZone, this.buyTx,
+      shadow, clip, this.titleTx, this.sketch, this.levelLeftTx, this.levelRightTx, this.levelMaxTx, ...this.pips, this.descTx, this.buyBtn,
     ]);
     this.tweens.add({ targets: this.clipContainer, angle: { from: -0.3, to: 0.3 }, duration: 5500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     this.root.add(this.clipContainer);
@@ -322,13 +324,13 @@ export class UpgradesScene extends Phaser.Scene {
     }
     if (isMax) {
       this.buyTx.setText('МАКСИМУМ').setColor('#78716c').setStroke('#44403c', 1);
-      this.buyZone.disableInteractive();
+      this.buyBg.disableInteractive().setAlpha(0.5);
     } else if (canBuy) {
       this.buyTx.setText(`ПРОКАЧАТЬ (${cost} GOO)`).setColor('#1c1917').setStroke('#ca8a04', 1);
-      this.buyZone.setInteractive({ useHandCursor: true });
+      this.buyBg.setInteractive({ useHandCursor: true }).setAlpha(1);
     } else {
       this.buyTx.setText(`НУЖНО ${cost} GOO`).setColor('#991b1b').setStroke('#fca5a5', 1);
-      this.buyZone.disableInteractive();
+      this.buyBg.disableInteractive().setAlpha(0.75);
     }
   }
   private onBuy(): void {
@@ -337,7 +339,7 @@ export class UpgradesScene extends Phaser.Scene {
     this.audio.playUpgradeBuy();
     this.cameras.main.shake(90, 0.0035);
     this.plat.vibrate(60);
-    this.tweens.add({ targets: this.buyTx, scaleX: 0.92, scaleY: 0.92, duration: 60, yoyo: true, ease: 'Back.easeOut' });
+    this.tweens.add({ targets: this.buyBtn, scaleX: 0.92, scaleY: 0.92, duration: 60, yoyo: true, ease: 'Back.easeOut' });
     this.popNotice(`${item.name} +1!`);
     this.refreshAll();
   }

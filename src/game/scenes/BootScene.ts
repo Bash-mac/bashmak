@@ -116,84 +116,15 @@ export class BootScene extends Phaser.Scene {
     this.load.image('prop_slime_source', '/assets/sprites/map/props/prop_slime_source.webp');
 
     // --- 90s Gross-Out HD UI System Assets ---
-    // 1. Hero Selection Dossier & Cutout Assets
     this.load.image('hero_dossier_bg', '/assets/menu/hero_dossier_bg.webp');
-    this.load.image('polaroid_vypolzok', '/assets/ui/hero_modal/polaroid_vypolzok.webp');
-    this.load.image('polaroid_bashmak', '/assets/ui/hero_modal/polaroid_bashmak.webp');
-    this.load.image('polaroid_markovka', '/assets/ui/hero_modal/polaroid_markovka.webp');
-    this.load.image('polaroid_baklazhan', '/assets/ui/hero_modal/polaroid_baklazhan.webp');
-    this.load.image('char_vypolzok', '/assets/ui/hero_modal/char_vypolzok.webp');
-    this.load.image('char_markovka', '/assets/ui/hero_modal/char_markovka.webp');
-    this.load.image('char_bashmak', '/assets/ui/hero_modal/char_bashmak.webp');
-    this.load.image('char_baklazhan', '/assets/ui/hero_modal/char_baklazhan.webp');
-    this.load.image('hero_card_worm', '/assets/ui/posters/hero_card_worm.webp');
-    this.load.image('hero_card_bashmak', '/assets/ui/posters/hero_card_bashmak.webp');
-    this.load.image('hero_card_markovka', '/assets/ui/posters/hero_card_markovka.webp');
-    this.load.image('hero_card_baklazhan', '/assets/ui/posters/hero_card_baklazhan.webp');
-    this.load.image('chains_pod', '/assets/ui/hero_modal/chains_pod.webp');
-
-    // 2. Card Frames (512x768)
-    this.load.image('card_frame_standard', '/assets/ui/frames/card_frame_standard.webp');
-    this.load.image('card_frame_gold', '/assets/ui/frames/card_frame_gold.webp');
-    this.load.image('card_frame_consumable', '/assets/ui/frames/card_frame_consumable.webp');
-
-    // 3. Action Buttons (512x205) - Blank Frames for Multi-language Localization
-    this.load.image('btn_frame_green', '/assets/ui/buttons/btn_frame_green.webp');
-    this.load.image('btn_frame_gold', '/assets/ui/buttons/btn_frame_gold.webp');
-    this.load.image('btn_frame_red', '/assets/ui/buttons/btn_frame_red.webp');
-    this.load.image('btn_frame_dark', '/assets/ui/buttons/btn_frame_dark.webp');
-
-    // 4. HUD Overlays
-    this.load.image('hud_avatar_badge_frame', '/assets/ui/hud/hud_avatar_badge_frame.webp');
-    this.load.image('hud_bar_frame', '/assets/ui/hud/hud_bar_frame.webp');
-    this.load.image('hud_bar_fill_hp', '/assets/ui/hud/hud_bar_fill_hp.webp');
-    this.load.image('hud_bar_fill_xp', '/assets/ui/hud/hud_bar_fill_xp.webp');
-    this.load.image('hud_slot_frame', '/assets/ui/hud/hud_slot_frame.webp');
-
-    // 4b. Pause Modal Kit
-    this.load.image('pause_panel', '/assets/ui/pause/pause_panel.webp');
-    this.load.image('pause_ribbon_stats', '/assets/ui/pause/pause_ribbon_stats.webp');
-    this.load.image('pause_ribbon_section', '/assets/ui/pause/pause_ribbon_section.webp');
-    this.load.image('pause_slot_empty', '/assets/ui/pause/pause_slot_empty.webp');
-    this.load.image('pause_icon_play', '/assets/ui/pause/pause_icon_play.webp');
-    this.load.image('pause_icon_grimoire', '/assets/ui/pause/pause_icon_grimoire.webp');
-    this.load.image('pause_icon_restart', '/assets/ui/pause/pause_icon_restart.webp');
-    this.load.image('pause_icon_home', '/assets/ui/pause/pause_icon_home.webp');
-
-    // 5. Square Icons (256x256) - Weapons, Tomes, Evolutions
-    this.load.image('icon_weapon_slime_spit', '/assets/ui/icons/icon_weapon_slime_spit.webp');
-    this.load.image('icon_weapon_carrot_barrage', '/assets/ui/icons/icon_weapon_carrot_barrage.webp');
-    this.load.image('icon_weapon_lace_whip', '/assets/ui/icons/icon_weapon_lace_whip.webp');
-    this.load.image('icon_weapon_mega_boot', '/assets/ui/icons/icon_weapon_mega_boot.webp');
-    this.load.image('icon_weapon_eggplant_roll', '/assets/ui/icons/icon_weapon_eggplant_roll.webp');
-    this.load.image('icon_weapon_acid_trail', '/assets/ui/icons/icon_weapon_acid_trail.webp');
-    this.load.image('icon_weapon_orbiting_flies', '/assets/ui/icons/icon_weapon_orbiting_flies.webp');
-    this.load.image('icon_weapon_toilet_lid', '/assets/ui/icons/icon_weapon_toilet_lid.webp');
-    this.load.image('icon_weapon_piezo_taser', '/assets/ui/icons/icon_weapon_piezo_taser.webp');
-
-    this.load.image('icon_tome_area', '/assets/ui/icons/icon_tome_area.webp');
-    this.load.image('icon_tome_armor', '/assets/ui/icons/icon_tome_armor.webp');
-    this.load.image('icon_tome_attack_speed', '/assets/ui/icons/icon_tome_attack_speed.webp');
-    this.load.image('icon_tome_crit', '/assets/ui/icons/icon_tome_crit.webp');
-    this.load.image('icon_tome_damage', '/assets/ui/icons/icon_tome_damage.webp');
-    this.load.image('icon_tome_hp_regen', '/assets/ui/icons/icon_tome_hp_regen.webp');
-    this.load.image('icon_tome_lifesteal', '/assets/ui/icons/icon_tome_lifesteal.webp');
-    this.load.image('icon_tome_magnet', '/assets/ui/icons/icon_tome_magnet.webp');
-    this.load.image('icon_tome_quantity', '/assets/ui/icons/icon_tome_quantity.webp');
-    this.load.image('icon_tome_speed', '/assets/ui/icons/icon_tome_speed.webp');
-
-    this.load.image('icon_evo_acid_tsunami', '/assets/ui/icons/icon_evo_acid_tsunami.webp');
-    this.load.image('icon_evo_typhoon_flail', '/assets/ui/icons/icon_evo_typhoon_flail.webp');
-    this.load.image('icon_evo_gatling_carrot', '/assets/ui/icons/icon_evo_gatling_carrot.webp');
-    this.load.image('icon_evo_planetary_cataclysm', '/assets/ui/icons/icon_evo_planetary_cataclysm.webp');
-
-    // 5b. Grimoire UI Modular Frame & Row Assets
-    this.load.image('grimoire_frame', '/assets/ui/grimoire/grimoire_frame.webp');
-    this.load.image('grimoire_bg_brick', '/assets/ui/grimoire/grimoire_bg_brick.webp');
-    this.load.image('grimoire_row_acid', '/assets/ui/grimoire/grimoire_row_acid.webp');
-    this.load.image('grimoire_row_electric', '/assets/ui/grimoire/grimoire_row_electric.webp');
-    this.load.image('grimoire_row_fire', '/assets/ui/grimoire/grimoire_row_fire.webp');
-    this.load.image('grimoire_row_void', '/assets/ui/grimoire/grimoire_row_void.webp');
+    ['dossier_book', 'note_stats_backdrop', 'polaroid_frame', 'btn_battle_red_plate', 'paper_note_small', 'header_crown_plate', 'metal_binder_clip', 'tape_green_1', 'tape_green_2', 'tape_green_3', 'tape_green_4', 'slime_drip_wide', 'slime_puddle_flat', 'graffiti_skull_cross', 'graffiti_skull_drip', 'graffiti_crown_mini', 'polaroid_vypolzok', 'polaroid_bashmak', 'polaroid_markovka', 'polaroid_baklazhan', 'char_vypolzok', 'char_markovka', 'char_bashmak', 'char_baklazhan', 'chains_pod'].forEach(k => this.load.image(k, `/assets/ui/hero_modal/${k}.webp`));
+    ['hero_card_worm', 'hero_card_bashmak', 'hero_card_markovka', 'hero_card_baklazhan'].forEach(k => this.load.image(k, `/assets/ui/posters/${k}.webp`));
+    ['card_frame_standard', 'card_frame_gold', 'card_frame_consumable'].forEach(k => this.load.image(k, `/assets/ui/frames/${k}.webp`));
+    ['btn_frame_green', 'btn_frame_gold', 'btn_frame_red', 'btn_frame_dark'].forEach(k => this.load.image(k, `/assets/ui/buttons/${k}.webp`));
+    ['hud_avatar_badge_frame', 'hud_bar_frame', 'hud_bar_fill_hp', 'hud_bar_fill_xp', 'hud_slot_frame'].forEach(k => this.load.image(k, `/assets/ui/hud/${k}.webp`));
+    ['pause_panel', 'pause_ribbon_stats', 'pause_ribbon_section', 'pause_slot_empty', 'pause_icon_play', 'pause_icon_grimoire', 'pause_icon_restart', 'pause_icon_home'].forEach(k => this.load.image(k, `/assets/ui/pause/${k}.webp`));
+    ['icon_weapon_slime_spit', 'icon_weapon_carrot_barrage', 'icon_weapon_lace_whip', 'icon_weapon_mega_boot', 'icon_weapon_eggplant_roll', 'icon_weapon_acid_trail', 'icon_weapon_orbiting_flies', 'icon_weapon_toilet_lid', 'icon_weapon_piezo_taser', 'icon_tome_area', 'icon_tome_armor', 'icon_tome_attack_speed', 'icon_tome_crit', 'icon_tome_damage', 'icon_tome_hp_regen', 'icon_tome_lifesteal', 'icon_tome_magnet', 'icon_tome_quantity', 'icon_tome_speed', 'icon_evo_acid_tsunami', 'icon_evo_typhoon_flail', 'icon_evo_gatling_carrot', 'icon_evo_planetary_cataclysm'].forEach(k => this.load.image(k, `/assets/ui/icons/${k}.webp`));
+    ['grimoire_frame', 'grimoire_bg_brick', 'grimoire_row_acid', 'grimoire_row_electric', 'grimoire_row_fire', 'grimoire_row_void'].forEach(k => this.load.image(k, `/assets/ui/grimoire/${k}.webp`));
 
     // 6. Enemy Sprites & Death VFX
     for (let i = 1; i <= 3; i++) {
@@ -220,26 +151,8 @@ export class BootScene extends Phaser.Scene {
     this.createVypolzokAnimations();
     this.createMarkovkaAnimations();
     this.createEnemyAnimations();
+    this.createCombatVfxAnimations();
     this.scene.start('MenuScene');
-  }
-
-  private createEnemyAnimations(): void {
-    [
-      { key: 'anim_fodder_run', prefix: 'tex_fodder_run_', count: 3, rate: 8 },
-      { key: 'anim_crawler_run', prefix: 'tex_crawler_run_', count: 3, rate: 8 },
-      { key: 'anim_sprinter_run', prefix: 'tex_sprinter_run_', count: 4, rate: 10 },
-      { key: 'anim_tank_run', prefix: 'tex_tank_run_', count: 3, rate: 6 },
-      { key: 'anim_exploder_run', prefix: 'tex_exploder_run_', count: 4, rate: 8 },
-      { key: 'anim_miniboss_run', prefix: 'tex_miniboss_run_', count: 4, rate: 8 },
-      { key: 'anim_boss_run', prefix: 'tex_boss_run_', count: 4, rate: 8 },
-    ].forEach(e => this.anims.create({ key: e.key, frames: Array.from({ length: e.count }, (_, i) => ({ key: `${e.prefix}${i + 1}` })), frameRate: e.rate, repeat: -1 }));
-
-    this.anims.create({
-      key: 'vfx_anim_enemy_dead',
-      frames: Array.from({ length: 3 }, (_, i) => ({ key: `tex_enemy_dead_${i + 1}` })),
-      frameRate: 14,
-      repeat: 0,
-    });
   }
 
   private createVypolzokAnimations(): void {
@@ -430,8 +343,28 @@ export class BootScene extends Phaser.Scene {
       frameRate: 14,
       repeat: 0,
     });
+  }
 
-    // 8. VFX: Arcada Effector Electric Zap & Muzzle
+  private createEnemyAnimations(): void {
+    [
+      { key: 'anim_fodder_run', prefix: 'tex_fodder_run_', count: 3, rate: 8 },
+      { key: 'anim_crawler_run', prefix: 'tex_crawler_run_', count: 3, rate: 8 },
+      { key: 'anim_sprinter_run', prefix: 'tex_sprinter_run_', count: 4, rate: 10 },
+      { key: 'anim_tank_run', prefix: 'tex_tank_run_', count: 3, rate: 6 },
+      { key: 'anim_exploder_run', prefix: 'tex_exploder_run_', count: 4, rate: 8 },
+      { key: 'anim_miniboss_run', prefix: 'tex_miniboss_run_', count: 4, rate: 8 },
+      { key: 'anim_boss_run', prefix: 'tex_boss_run_', count: 4, rate: 8 },
+    ].forEach(e => this.anims.create({ key: e.key, frames: Array.from({ length: e.count }, (_, i) => ({ key: `${e.prefix}${i + 1}` })), frameRate: e.rate, repeat: -1 }));
+
+    this.anims.create({
+      key: 'vfx_anim_enemy_dead',
+      frames: Array.from({ length: 3 }, (_, i) => ({ key: `tex_enemy_dead_${i + 1}` })),
+      frameRate: 14,
+      repeat: 0,
+    });
+  }
+
+  private createCombatVfxAnimations(): void {
     this.anims.create({
       key: 'vfx_anim_electro_zap',
       frames: this.anims.generateFrameNumbers('vfx_electro_zap', { start: 0, end: 11 }),
