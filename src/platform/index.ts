@@ -16,3 +16,29 @@ export function createPlatformAdapter(): IPlatformAdapter {
   }
   return new BrowserPlatformAdapter();
 }
+
+export function isAdminUser(platform?: IPlatformAdapter): boolean {
+  if (typeof window === 'undefined') return false;
+  const host = window.location.hostname;
+  if (host === 'localhost' || host === '127.0.0.1') return true;
+
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('admin') === 'maks' || urlParams.get('admin') === '1299608887') return true;
+  if (typeof localStorage !== 'undefined' && localStorage.getItem('bashmak_admin') === 'true') return true;
+
+  const tgUser = platform?.getUser?.();
+  if (tgUser) {
+    if (String(tgUser.id) === '1299608887') return true;
+    if (tgUser.username && tgUser.username.toLowerCase() === 'maks87878') return true;
+  }
+
+  // Also check raw window.Telegram if adapter not yet ready
+  const rawTg = (window as any).Telegram?.WebApp?.initDataUnsafe?.user;
+  if (rawTg) {
+    if (String(rawTg.id) === '1299608887') return true;
+    if (rawTg.username && String(rawTg.username).toLowerCase() === 'maks87878') return true;
+  }
+
+  return false;
+}
+

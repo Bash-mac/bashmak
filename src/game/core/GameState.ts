@@ -17,7 +17,7 @@ export class GameState {
   // Progression
   public level = 1;
   public currentXp = 0;
-  public nextLevelXp = 21; // Level 2 requires 21 XP (calculateXpForLevel(1))
+  public nextLevelXp = 5; // Level 2 requires 5 XP (calculateXpForLevel(1))
 
   // Dynamic weapon & tome slots (from SaveManager meta-upgrades)
   public maxWeaponSlots = 2;
@@ -60,7 +60,7 @@ export class GameState {
   }
 
   public getPowerScore(): number {
-    let score = 0;
+    let score = (this.level - 1) * 0.25;
     const utilityTomes = new Set<string>([
       'tome_speed',
       'tome_magnet',
@@ -69,13 +69,18 @@ export class GameState {
       'tome_lifesteal',
     ]);
     for (const [id, lvl] of this.activeUpgrades.entries()) {
-      if (utilityTomes.has(id)) {
-        score += lvl * 0.2;
+      if (id.startsWith('evo_')) {
+        score += 8.0; // Evolution represents massive power jump
+      } else if (utilityTomes.has(id)) {
+        score += lvl * 0.3;
       } else {
-        score += lvl * 1.0;
+        score += lvl * 1.2;
       }
     }
-    return Math.max(1, score);
+    const multishotMult = this.playerModifiers.multishotCount > 1 ? (1 + (this.playerModifiers.multishotCount - 1) * 0.4) : 1;
+    const combatMult = (1 + this.playerModifiers.damagePercentBonus * 0.5) * (1 + this.playerModifiers.attackSpeedBonus * 0.5) * multishotMult;
+    score *= combatMult;
+    return Math.max(1, Math.round(score * 10) / 10);
   }
 
   private createDefaultModifiers(): PlayerModifiers {
@@ -240,15 +245,16 @@ export class GameState {
     this.playerModifiers = this.createDefaultModifiers();
     this.powerWindowTimerMs = 0;
     this.pendingLevelUps = 0;
-    this.rerollsRemaining = 2;
-    this.skipsRemaining = 2;
+    this.rerollsRemaining = saveManager.getMaxRerolls();
+    this.skipsRemaining = saveManager.getMaxSkips();
   }
 
   public getActiveWeapons(pool: UpgradeDefinition[]): string[] {
     const list: string[] = [];
     for (const [id, lvl] of this.activeUpgrades.entries()) {
-      if (lvl > 0 && pool.find((u) => u.id === id)?.category === 'weapon') {
-        list.push(id);
+      if (lvl > 0) {
+        const isWeapon = pool.find((u) => u.id === id)?.category === 'weapon' || id.startsWith('evo_');
+        if (isWeapon) list.push(id);
       }
     }
     return list;
@@ -273,12 +279,20 @@ export class GameState {
   }
 
   /**
-   * Smooth power curve: XP(n) = 12 + 8.5 * n^1.75
-   * Lvl 1: 21, Lvl 2: 41, Lvl 3: 70, Lvl 5: 154, Lvl 10: 490, Lvl 15: 984, Lvl 20: 1620
+   * 3-tier piecewise progression curve for 10-12 min session:
+   * - Tier 1 (Levels 1-5): Fast early pacing. 5 + (lvl - 1) * 8. Cumulative to L5 = 68 XP.
+   * - Tier 2 (Levels 6-15): Deliberate farming. Math.floor(37 + (lvl - 5) * 16 + Math.pow(lvl - 5, 1.2) * 4). Cumulative to L15 ~1,200 XP.
+   * - Tier 3 (Levels 16+): Dense endgame push. Math.floor(250 + (lvl - 15) * 35 + Math.pow(lvl - 15, 1.5) * 8). Level 28 requires cumulative ~6,500-7,500 XP.
    */
   public calculateXpForLevel(lvl: number): number {
-    const n = Math.max(1, lvl);
-    return Math.round(12 + Math.pow(n, 1.75) * 8.5);
+    const n = Math.max(1, Math.floor(lvl));
+    if (n <= 5) {
+      return 5 + (n - 1) * 8;
+    }
+    if (n <= 15) {
+      return Math.floor(37 + (n - 5) * 16 + Math.pow(n - 5, 1.2) * 4);
+    }
+    return Math.floor(250 + (n - 15) * 35 + Math.pow(n - 15, 1.5) * 8);
   }
 
   updateTime(deltaSeconds: number): void {

@@ -73,15 +73,23 @@ export class LootSystem {
     this.chestPool = new ObjectPool<Phaser.Types.Physics.Arcade.SpriteWithDynamicBody>(scene, {
       create: () => {
         const chest = this.chestsGroup.create(0, 0, 'drop_chest') as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
-        chest.setScale(0.75);
-        chest.setCircle(20, 0, 0);
+        chest.setScale(0.38);
+        if (chest.body) {
+          const targetRadius = 24;
+          const bodyRadius = targetRadius / 0.38;
+          chest.body.setCircle(
+            bodyRadius,
+            (chest.width - bodyRadius * 2) / 2,
+            (chest.height - bodyRadius * 2) / 2
+          );
+        }
         chest.setDepth(6);
         return chest;
       },
       onRelease: (chest) => {
         this.scene.tweens.killTweensOf(chest);
         chest.clearTint();
-        chest.setScale(0.75);
+        chest.setScale(0.38);
       },
       maxSize: 10,
     });
@@ -91,14 +99,23 @@ export class LootSystem {
     this.consumablePool = new ObjectPool<Phaser.Types.Physics.Arcade.SpriteWithDynamicBody>(scene, {
       create: () => {
         const item = this.consumablesGroup.create(0, 0, 'drop_nuke') as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
-        item.setScale(0.75);
-        item.setCircle(18, 0, 0);
+        item.setScale(0.34);
+        if (item.body) {
+          const targetRadius = 20;
+          const bodyRadius = targetRadius / 0.34;
+          item.body.setCircle(
+            bodyRadius,
+            (item.width - bodyRadius * 2) / 2,
+            (item.height - bodyRadius * 2) / 2
+          );
+        }
         item.setDepth(6);
         return item;
       },
       onRelease: (item) => {
         this.scene.tweens.killTweensOf(item);
         item.clearTint();
+        item.setScale(0.34);
         item.setData('armed', false);
         item.setData('consumableType', undefined);
       },
@@ -177,19 +194,19 @@ export class LootSystem {
   private applyGemVisualTier(gem: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody, value: number): void {
     if (value >= 50) {
       gem.setTexture('drop_xp_big');
-      gem.setTint(0xec4899); // Mega radioactive blob (pink/magenta)
+      gem.setTint(0xfacc15); // Golden radio-slime (50+)
       gem.setScale(0.40);
     } else if (value >= 15) {
       gem.setTexture('drop_xp_big');
-      gem.setTint(0xfacc15); // Golden radio-slime
+      gem.setTint(0xa855f7); // Purple nuclear bubble (15-49)
       gem.setScale(0.34);
     } else if (value >= 5) {
       gem.setTexture('drop_xp_big');
-      gem.clearTint(); // Cyan-blue nuclear bubble
+      gem.clearTint(); // Cyan-blue nuclear bubble (5-14)
       gem.setScale(0.28);
     } else {
       gem.setTexture('drop_xp_small');
-      gem.clearTint(); // Green slime snot
+      gem.clearTint(); // Green slime snot (<5)
       gem.setScale(0.24);
     }
   }
@@ -292,19 +309,19 @@ export class LootSystem {
   public spawnChest(x: number, y: number): void {
     const chest = this.chestPool.get();
     chest.setPosition(x, y);
-    chest.setScale(0.1);
+    chest.setScale(0.08);
     this.scene.tweens.add({
       targets: chest,
-      scaleX: 0.75,
-      scaleY: 0.75,
+      scaleX: 0.38,
+      scaleY: 0.38,
       duration: 350,
       ease: 'Back.easeOut',
       onComplete: () => {
         if (chest.active) {
           this.scene.tweens.add({
             targets: chest,
-            scaleX: 0.84,
-            scaleY: 0.84,
+            scaleX: 0.43,
+            scaleY: 0.43,
             duration: 500,
             yoyo: true,
             repeat: -1,
@@ -328,7 +345,7 @@ export class LootSystem {
     item.setPosition(x, y - 5);
     item.setData('consumableType', chosenType);
     item.setData('armed', false);
-    item.setScale(0.2);
+    item.setScale(0.1);
 
     const targetX = x + (Math.random() - 0.5) * 45;
     const targetY = y + 15 + Math.random() * 20;
@@ -338,8 +355,8 @@ export class LootSystem {
       targets: item,
       x: targetX,
       y: { from: y - 28, to: targetY },
-      scaleX: 0.75,
-      scaleY: 0.75,
+      scaleX: 0.34,
+      scaleY: 0.34,
       duration: 400,
       ease: 'Bounce.easeOut',
       onComplete: () => {
@@ -348,8 +365,8 @@ export class LootSystem {
         item.setData('armed', true);
         this.scene.tweens.add({
           targets: item,
-          scaleX: 0.85,
-          scaleY: 0.85,
+          scaleX: 0.39,
+          scaleY: 0.39,
           duration: 450,
           yoyo: true,
           repeat: -1,

@@ -91,12 +91,32 @@ export class CollisionManager {
           splat.play('vfx_anim_impact_splat').once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => splat.destroy());
         }
 
+        // Knockback on hit: push enemy along projectile travel vector
+        const body = proj.body as Phaser.Physics.Arcade.Body | undefined;
+        let kbVx = 0;
+        let kbVy = 0;
+        const kbMult = gameState.playerModifiers.knockbackMultiplier || 1.0;
+        if (body && (Math.abs(body.velocity.x) > 1 || Math.abs(body.velocity.y) > 1)) {
+          const spd = Math.hypot(body.velocity.x, body.velocity.y) || 1;
+          const kbForce = (proj.getData('isCarrot') ? 230 : 180) * kbMult;
+          kbVx = (body.velocity.x / spd) * kbForce;
+          kbVy = (body.velocity.y / spd) * kbForce;
+        } else {
+          const angle = Phaser.Math.Angle.Between(player.x, player.y, enemy.x, enemy.y);
+          const kbForce = 180 * kbMult;
+          kbVx = Math.cos(angle) * kbForce;
+          kbVy = Math.sin(angle) * kbForce;
+        }
+        enemy.applyKnockback(kbVx, kbVy, 120);
+
         if (proj.getData('isSlimeSpit')) {
           enemy.applySlow(0.30, 1300);
           const splashRadius = 65 * (1 + (gameState.playerModifiers.attackAreaBonus || 0));
           const splashDmg = Math.max(4, Math.round(damage * 0.65));
           combatSystem.applyAreaDamage(player, enemiesMap, proj.x, proj.y, splashRadius, splashDmg, enemy.id, (splashEnemy) => {
             splashEnemy.applySlow(0.25, 1000);
+            const splashAngle = Phaser.Math.Angle.Between(proj.x, proj.y, splashEnemy.x, splashEnemy.y);
+            splashEnemy.applyKnockback(Math.cos(splashAngle) * 160 * kbMult, Math.sin(splashAngle) * 160 * kbMult, 100);
             if (damageNumbers) damageNumbers.showDamage(splashEnemy.x, splashEnemy.y, splashDmg, false);
             if (splashEnemy.sprite) hazardSystem.flashSprite(scene, splashEnemy.sprite, 0x84cc16);
           });
@@ -247,7 +267,6 @@ export class CollisionManager {
 
       const gooCount = Phaser.Math.Between(3, 5);
       lootSystem.spawnGoo(cx, cy, gooCount);
-      gameState.addXp(50);
     });
   }
 }

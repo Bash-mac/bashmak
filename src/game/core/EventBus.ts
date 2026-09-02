@@ -12,6 +12,7 @@ export interface GameEvents {
   'player:levelUp': { newLevel: number };
   'ui:pause_requested': void;
   'ui:secret_debug_requested': void;
+  'ui:toggleDebug': void;
   'run:started': void;
   'run:ended': { won: boolean; timeSurvived: number; kills: number; level: number; score?: number; gooCollected?: number };
 }

@@ -39,6 +39,14 @@ export class EventDirector {
     this.trackedTarget = undefined;
   }
 
+  public getTriggeredEvents(): ReadonlySet<string> {
+    return this.triggeredEvents;
+  }
+
+  public isEventTriggered(eventId: string): boolean {
+    return this.triggeredEvents.has(eventId);
+  }
+
   public update(runTimeSeconds: number, ctx: EventDirectorContext): void {
     // 1. 01:30 (90s): Golden Piñata Runner
     if (runTimeSeconds >= 90 && !this.triggeredEvents.has('event_pinata')) {
@@ -85,8 +93,9 @@ export class EventDirector {
     ctx.audio.playLevelUp();
 
     const p = ctx.getPlayerPos();
+    const { maxRadius } = ctx.spawnManager.getViewport();
     const angle = Math.random() * Math.PI * 2;
-    const dist = 320;
+    const dist = maxRadius + 90;
     const x = p.x + Math.cos(angle) * dist;
     const y = p.y + Math.sin(angle) * dist;
 
@@ -263,11 +272,13 @@ export class EventDirector {
     ctx.audio.playLevelUp();
 
     const p = ctx.getPlayerPos();
+    const { maxRadius } = ctx.spawnManager.getViewport();
     const angle = Math.random() * Math.PI * 2;
-    const dist = 420;
+    const dist = maxRadius + 100;
     const bx = p.x + Math.cos(angle) * dist;
     const by = p.y + Math.sin(angle) * dist;
 
+    ctx.spawnManager.miniBossSpawned = true;
     ctx.spawnManager.spawnDirect(MINI_BOSS_ELITE, bx, by, { hpMultiplier: 1.8, speedMultiplier: 1.0 });
 
     // Escort units
@@ -316,11 +327,13 @@ export class EventDirector {
     ctx.audio.playLevelUp();
 
     const p = ctx.getPlayerPos();
+    const { maxRadius } = ctx.spawnManager.getViewport();
     const angle = Math.random() * Math.PI * 2;
-    const dist = 450;
+    const dist = maxRadius + 120;
     const bx = p.x + Math.cos(angle) * dist;
     const by = p.y + Math.sin(angle) * dist;
 
+    ctx.spawnManager.bossSpawned = true;
     ctx.spawnManager.spawnDirect(BOSS_KURGAN, bx, by, { hpMultiplier: 2.5, speedMultiplier: 1.0 });
 
     ctx.scene.time.delayedCall(50, () => {

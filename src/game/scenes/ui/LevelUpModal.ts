@@ -3,7 +3,7 @@ import type { UpgradeDefinition } from '../../data/definitions';
 import { ALL_UPGRADES } from '../../data/upgrades';
 import { GameState } from '../../core/GameState';
 import { createPlatformAdapter } from '../../../platform';
-import { getReadyEvolution, type EvolutionRecipe } from '../../data/evolutions';
+import { getReadyEvolution, EVOLUTION_RECIPES, type EvolutionRecipe } from '../../data/evolutions';
 import { AudioManager } from '../../audio/AudioManager';
 
 interface CardActionItem {
@@ -620,11 +620,18 @@ export class LevelUpModal {
 
     for (const [id, lvl] of activeUpgradesMap.entries()) {
       const def = upgradeDefsMap.get(id);
-      if (!def) continue;
-      if (def.category === 'weapon') {
-        equippedWeapons.push({ def, lvl });
-      } else if (def.category === 'tome') {
-        equippedTomes.push({ def, lvl });
+      const evo = EVOLUTION_RECIPES.find((e) => e.id === id);
+      if (evo) {
+        equippedWeapons.push({
+          def: { id: evo.id, name: evo.name, category: 'weapon', iconKey: evo.iconKey, maxLevel: 1, levels: [] },
+          lvl: 1,
+        });
+      } else if (def) {
+        if (def.category === 'weapon') {
+          equippedWeapons.push({ def, lvl });
+        } else if (def.category === 'tome') {
+          equippedTomes.push({ def, lvl });
+        }
       }
     }
 

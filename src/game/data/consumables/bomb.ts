@@ -5,7 +5,7 @@ export const CONSUMABLE_BOMB: UpgradeDefinition = {
   id: CONSUMABLE_IDS.BOMB,
   name: 'Бомба-волна',
   category: 'consumable',
-  iconKey: 'icon_tome_area',
+  iconKey: 'icon_consumable_bomb',
   isConsumable: true,
   maxLevel: 999,
   levels: [

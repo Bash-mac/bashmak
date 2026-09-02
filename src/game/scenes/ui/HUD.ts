@@ -3,6 +3,7 @@ import { EventBus } from '../../core/EventBus';
 import type { GameState } from '../../core/GameState';
 import { ALL_UPGRADES } from '../../data/upgrades';
 import { EVOLUTION_RECIPES } from '../../data/evolutions';
+import { isAdminUser } from '../../../platform';
 import { getHeroById } from '../../data/heroes';
 
 interface HudSlot {
@@ -206,6 +207,26 @@ export class HUD {
       fontFamily: '"Gagalin", "Balsamiq Sans", monospace',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(9006);
     this.elements.push(this.pauseText);
+
+    const platform = (scene as any).platform;
+    if (isAdminUser(platform)) {
+      const devX = pauseX - 58;
+      const devBtn = scene.add.rectangle(devX, pauseY, 56, 32, 0x0369a1, 0.95)
+        .setStrokeStyle(2, 0x38bdf8)
+        .setScrollFactor(0)
+        .setDepth(9005)
+        .setInteractive({ useHandCursor: true });
+      const devText = scene.add.text(devX, pauseY, 'DEV', {
+        fontSize: '12px',
+        fontStyle: 'bold',
+        color: '#ffffff',
+        fontFamily: '"Gagalin", "Balsamiq Sans", monospace',
+      }).setOrigin(0.5).setScrollFactor(0).setDepth(9006);
+      devBtn.on('pointerdown', () => {
+        EventBus.getInstance().emit('ui:toggleDebug');
+      });
+      this.elements.push(devBtn, devText);
+    }
 
     // 4. Dynamic Weapons & Tomes Build Slots (Bottom Center, 2 rows)
     const state = (scene as any).gameState as GameState | undefined;

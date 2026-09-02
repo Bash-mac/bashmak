@@ -81,4 +81,15 @@ export class BrowserPlatformAdapter implements IPlatformAdapter {
       // Fullscreen not permitted without direct user gesture
     }
   }
+
+  share(text: string, url?: string): void {
+    const shareUrl = url || window.location.href;
+    if (navigator.share) {
+      navigator.share({ title: 'Bashmak', text, url: shareUrl }).catch(() => {});
+    } else if (navigator.clipboard) {
+      navigator.clipboard.writeText(`${text}\n${shareUrl}`).then(() => {
+        console.log('[BrowserPlatformAdapter] Link copied to clipboard');
+      }).catch(() => {});
+    }
+  }
 }

@@ -13,6 +13,8 @@ const ORGAN_MAP: Record<string, { organ: string; sketch: string; plateDx: number
   power_revive:       { organ: 'organ_clone',     sketch: 'sketch_clone',    plateDx: -0.0355, plateDy: 0.3892 },
   power_weapon_slots: { organ: 'organ_tentacle',  sketch: 'sketch_tentacle', plateDx: -0.0169, plateDy: 0.4099 },
   power_tome_slots:   { organ: 'organ_bag',       sketch: 'sketch_bag',      plateDx:  0.0292, plateDy: 0.3808 },
+  power_rerolls:      { organ: 'organ_eye',       sketch: 'sketch_eye',      plateDx: -0.0120, plateDy: 0.4010 },
+  power_skips:        { organ: 'organ_tentacle',  sketch: 'sketch_tentacle', plateDx: -0.0169, plateDy: 0.4099 },
 };
 const SLOTS = [
   { x: -310, y: 28, size:  95, alpha: 0.40, depth: 0 },
@@ -76,14 +78,8 @@ export class UpgradesScene extends Phaser.Scene {
       this.tgtParallaxX = ((p.x - width / 2) / (width / 2)) * 6;
       this.tgtParallaxY = ((p.y - height / 2) / (height / 2)) * 4;
     });
-    this.buildGodRays();
-    this.buildDecor();
-    this.buildCarousel();
-    this.buildAtmosphere();
-    this.buildClipboard();
-    this.buildTerminal();
-    this.buildArrows();
-    this.refreshAll();
+    this.buildGodRays(); this.buildDecor(); this.buildCarousel(); this.buildAtmosphere();
+    this.buildClipboard(); this.buildTerminal(); this.buildArrows(); this.refreshAll();
   }
   private ensureVfxTextures(): void {
     if (!this.textures.exists('vfx_soft_glow')) {

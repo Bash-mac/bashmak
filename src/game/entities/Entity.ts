@@ -86,6 +86,7 @@ export class Entity {
   }
 
   applySlow(percent: number, durationMs: number): void {
+    if (this.definition?.archetype === 'tank' || this.definition?.archetype === 'boss') return;
     this.slowAmount = percent;
     this.slowTimer = durationMs;
   }
@@ -96,8 +97,10 @@ export class Entity {
   }
 
   applyKnockback(vx: number, vy: number, durationMs = 120): void {
+    const isTank = this.definition?.archetype === 'tank' || this.definition?.archetype === 'boss';
     const mass = this.definition?.mass ?? 1;
-    const factor = mass > 1 ? Math.max(0.1, 1 / Math.sqrt(mass)) : 1;
+    let factor = mass > 1 ? Math.max(0.1, 1 / Math.sqrt(mass)) : 1;
+    if (isTank) factor *= 0.2; // 80% knockback resistance for heavy tanks
     this.knockbackVx = vx * factor;
     this.knockbackVy = vy * factor;
     this.knockbackTimer = durationMs;

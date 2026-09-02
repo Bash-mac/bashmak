@@ -27,6 +27,7 @@ export class SaveManager {
   private data: SaveData;
   private apiClient: GameApiClient;
   private activeRunId: string | null = null;
+  public lastRunWasRecord = false;
 
   private constructor() {
     this.apiClient = GameApiClient.getInstance();
@@ -203,6 +204,14 @@ export class SaveManager {
     return Math.min(5, 2 + this.getPowerUpLevel('power_tome_slots'));
   }
 
+  public getMaxRerolls(): number {
+    return Math.min(5, 2 + this.getPowerUpLevel('power_rerolls'));
+  }
+
+  public getMaxSkips(): number {
+    return Math.min(5, 2 + this.getPowerUpLevel('power_skips'));
+  }
+
   public buyPowerUp(id: string): boolean {
     const def = META_POWERUPS.find((p) => p.id === id);
     if (!def) return false;
@@ -334,10 +343,13 @@ export class SaveManager {
     const runId = this.activeRunId || `run_${Date.now()}`;
     this.activeRunId = null;
 
+    const prevBestTime = this.data.stats.bestSurvivalTimeSec || 0;
+    this.lastRunWasRecord = prevBestTime > 0 ? (result.timeSurvived > prevBestTime) : (result.timeSurvived >= 120);
+
     this.data.stats.totalRuns += 1;
     this.data.stats.totalKills += result.kills;
     this.data.stats.bestSurvivalTimeSec = Math.max(
-      this.data.stats.bestSurvivalTimeSec,
+      prevBestTime,
       result.timeSurvived
     );
     this.data.stats.bestKills = Math.max(this.data.stats.bestKills, result.kills);

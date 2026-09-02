@@ -15,5 +15,5 @@ export const MINI_BOSS_ELITE: EnemyDefinition = {
     damage: 18,
     armor: 1,
   },
-  xpReward: 30,
+  xpReward: 35,
 };

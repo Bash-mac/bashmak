@@ -127,6 +127,8 @@ export class EnemyAISystem {
 
       if (def?.archetype === 'boss') {
         this.handleBossAI(enemy, delta, angleToPlayer, ctx);
+      } else if (def?.archetype === 'tank') {
+        this.handleTankAI(enemy, delta, angleToPlayer, distToPlayer, spd, sepX, sepY);
       } else if (enemy.sprite.getData('stampedeDir')) {
         let stampedeTimer = (enemy.sprite.getData('stampedeTimer') as number) ?? 2600;
         stampedeTimer -= delta;
@@ -252,5 +254,76 @@ export class EnemyAISystem {
       boss.sprite?.setFlipX(bvx < 0);
       if (boss.sprite) boss.sprite.rotation = 0;
     }
+  }
+
+  private handleTankAI(
+    tank: Entity,
+    delta: number,
+    angleToPlayer: number,
+    distToPlayer: number,
+    spd: number,
+    sepX: number,
+    sepY: number
+  ): void {
+    const spr = tank.sprite;
+    if (!spr) return;
+
+    // 1. Charging state (High speed ramming)
+    let chargeTimer = (spr.getData('chargeTimer') as number) ?? 0;
+    if (chargeTimer > 0) {
+      chargeTimer -= delta;
+      spr.setData('chargeTimer', chargeTimer);
+      const cvx = (spr.getData('chargeVx') as number) ?? 0;
+      const cvy = (spr.getData('chargeVy') as number) ?? 0;
+      spr.setVelocity(cvx, cvy);
+      spr.setFlipX(cvx < 0);
+      spr.rotation = 0;
+
+      if (chargeTimer <= 0) {
+        spr.clearTint();
+        spr.setData('chargeCooldown', 3000 + Math.random() * 1500);
+      }
+      return;
+    }
+
+    // 2. Telegraph state (Locked in place, pulsing angry red)
+    let telegraphTimer = (spr.getData('telegraphTimer') as number) ?? 0;
+    if (telegraphTimer > 0) {
+      telegraphTimer -= delta;
+      spr.setData('telegraphTimer', telegraphTimer);
+      spr.setVelocity(0, 0);
+
+      if (telegraphTimer <= 0) {
+        // Launch Charge!
+        const chargeSpeed = 260;
+        const lockAngle = (spr.getData('lockedAngle') as number) ?? angleToPlayer;
+        spr.setData('chargeVx', Math.cos(lockAngle) * chargeSpeed);
+        spr.setData('chargeVy', Math.sin(lockAngle) * chargeSpeed);
+        spr.setData('chargeTimer', 950);
+        spr.setTint(0xf97316); // Orange fiery charge
+      }
+      return;
+    }
+
+    // 3. Cooldown check
+    let cooldown = (spr.getData('chargeCooldown') as number) ?? (1000 + Math.random() * 2000);
+    cooldown -= delta;
+    spr.setData('chargeCooldown', cooldown);
+
+    // Trigger charge telegraph if close enough and off cooldown
+    if (cooldown <= 0 && distToPlayer >= 150 && distToPlayer <= 320) {
+      spr.setData('telegraphTimer', 400);
+      spr.setData('lockedAngle', angleToPlayer);
+      spr.setTint(0xef4444); // Red warning telegraph
+      spr.setVelocity(0, 0);
+      return;
+    }
+
+    // 4. Default Tank March (heavy, unstoppable advance)
+    const vx = Math.cos(angleToPlayer) * spd + sepX * 0.4;
+    const vy = Math.sin(angleToPlayer) * spd + sepY * 0.4;
+    spr.setVelocity(vx, vy);
+    spr.setFlipX(vx < 0);
+    spr.rotation = 0;
   }
 }

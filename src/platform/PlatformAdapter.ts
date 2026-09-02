@@ -19,4 +19,5 @@ export interface IPlatformAdapter {
   hapticNotification?(type?: 'error' | 'success' | 'warning'): void;
   hapticSelection?(): void;
   requestFullscreen?(): void;
+  share?(text: string, url?: string): void;
 }

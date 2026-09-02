@@ -33,8 +33,10 @@ export class CarrotBarrageWeapon implements IWeapon {
     if ((mods.carrotBarrageLevel ?? 0) <= 0) return;
     const carrotLevel = mods.carrotBarrageLevel;
 
-    const baseSpeed = (ctx.player.stats.attackSpeed ?? 1.4) * (1 + mods.attackSpeedBonus);
-    const baseInterval = 1000 / baseSpeed;
+    const isGatling = mods.isGatlingCarrotEvolved === true;
+    const speedMult = isGatling ? 1.75 : 1.0;
+    const baseSpeed = (ctx.player.stats.attackSpeed ?? 1.4) * (1 + mods.attackSpeedBonus) * speedMult;
+    const baseInterval = (isGatling ? 380 : 1000) / baseSpeed;
 
     this.attackTimer += delta;
     if (this.attackTimer < baseInterval) return;
@@ -42,6 +44,7 @@ export class CarrotBarrageWeapon implements IWeapon {
     this.attackTimer = 0;
 
     let damage = Math.round(ctx.player.stats.damage * 0.85) * (1 + mods.damagePercentBonus);
+    if (isGatling) damage = Math.round(damage * 1.35);
 
     // 10 Stacks Kill-Streak Mega Shot
     let isSuperCrit = false;
@@ -49,8 +52,12 @@ export class CarrotBarrageWeapon implements IWeapon {
       mods.killStreakStacks = 0;
       isSuperCrit = true;
       damage *= 2.0;
-    } else if (mods.critChance > 0 && Math.random() < mods.critChance) {
-      damage *= mods.critMultiplier;
+    } else {
+      const effectiveCritChance = (mods.critChance || 0) + (isGatling ? 0.25 : 0);
+      if (effectiveCritChance > 0 && Math.random() < effectiveCritChance) {
+        damage *= mods.critMultiplier;
+        if (isGatling) isSuperCrit = true;
+      }
     }
 
     // Target closest enemy in range (360°), or default to movement/facing direction
@@ -83,16 +90,16 @@ export class CarrotBarrageWeapon implements IWeapon {
       }
     }
 
-    const carrotsCount = 1 + (carrotLevel >= 3 ? 2 : 0) + (carrotLevel >= 5 ? 2 : 0) + (mods.multishotCount > 1 ? mods.multishotCount - 1 : 0);
-    const spreadAngle = 0.20;
+    const carrotsCount = (isGatling ? 6 : (1 + (carrotLevel >= 3 ? 2 : 0) + (carrotLevel >= 5 ? 2 : 0))) + (mods.multishotCount > 1 ? mods.multishotCount - 1 : 0);
+    const spreadAngle = isGatling ? 0.16 : 0.20;
     const startAngle = -((carrotsCount - 1) * spreadAngle) / 2;
-    const repeatInterval = 55;
+    const repeatInterval = isGatling ? 35 : 55;
 
     for (let i = 0; i < carrotsCount; i++) {
       ctx.scene.time.delayedCall(i * repeatInterval, () => {
         if (!ctx.player.isAlive || !ctx.player.sprite?.active) return;
         const angle = baseAngle + startAngle + i * spreadAngle;
-        const carrotPierce = 1 + (carrotLevel >= 3 ? 1 : 0) + (carrotLevel >= 5 ? 1 : 0) + (mods.pierceCount || 0);
+        const carrotPierce = (isGatling ? 4 : (1 + (carrotLevel >= 3 ? 1 : 0) + (carrotLevel >= 5 ? 1 : 0))) + (mods.pierceCount || 0);
         this.fireCarrotBoomerang(ctx, angle, damage, isSuperCrit, carrotPierce);
         if (i === 0) AudioManager.getInstance().playClick();
       });

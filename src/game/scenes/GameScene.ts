@@ -8,6 +8,7 @@ import { LevelUpModal } from './ui/LevelUpModal';
 import { GameOverModal } from './ui/GameOverModal';
 import { PauseModal } from './ui/PauseModal';
 import { GrimoireModal } from './ui/GrimoireModal';
+import { DebugModal } from './ui/DebugModal';
 import { CombatSystem } from '../combat/CombatSystem';
 import { CollisionManager } from '../combat/CollisionManager';
 import { SpawnManager } from '../spawning/SpawnManager';
@@ -16,7 +17,7 @@ import { EnemyFactory } from '../spawning/EnemyFactory';
 import { HeroFactory } from '../entities/HeroFactory';
 import type { Entity } from '../entities/Entity';
 import type { HeroDefinition } from '../data/definitions';
-import { createPlatformAdapter } from '../../platform';
+import { createPlatformAdapter, isAdminUser } from '../../platform';
 import { MapGenerator, type MapObjects } from '../map/MapGenerator';
 import { WeaponManager } from '../combat/WeaponManager';
 import { EnemyAISystem } from '../ai/EnemyAISystem';
@@ -32,7 +33,7 @@ import { EnemyPool } from '../pools/EnemyPool';
 export class GameScene extends Phaser.Scene {
   private inputManager!: InputManager; private hud!: HUD;
   private levelUpModal!: LevelUpModal; private gameOverModal!: GameOverModal;
-  private pauseModal!: PauseModal; private grimoireModal!: GrimoireModal;
+  private pauseModal!: PauseModal; private grimoireModal!: GrimoireModal; private debugModal!: DebugModal;
   private combatSystem = new CombatSystem();
   private spawnManager!: SpawnManager;
   private eventDirector = new EventDirector();
@@ -88,9 +89,16 @@ export class GameScene extends Phaser.Scene {
     this.gameOverModal = new GameOverModal(this);
     this.pauseModal = new PauseModal(this);
     this.grimoireModal = new GrimoireModal(this);
+    this.debugModal = new DebugModal(this);
 
     this.input.keyboard?.on('keydown-ESC', () => this.togglePause());
     this.input.keyboard?.on('keydown-P', () => this.togglePause());
+    this.input.keyboard?.on('keydown-BACKQUOTE', () => {
+      if (isAdminUser(this.platform)) this.debugModal.toggle(this.getDebugCtx());
+    });
+    this.unbindEvents.push(EventBus.getInstance().on('ui:toggleDebug', () => {
+      if (isAdminUser(this.platform)) this.debugModal.toggle(this.getDebugCtx());
+    }));
 
     const onLvlDone = () => {
       if (this.gameState.pendingLevelUps > 0) this.levelUpModal.show();
@@ -151,11 +159,14 @@ export class GameScene extends Phaser.Scene {
     } else {
       this.vfxPool.spawnEnemyDeath(data.x, data.y, (enemy.definition?.displayScale ?? 0.3) * (enemy.isChampion ? 1.8 : 1.2));
       this.lootSystem.spawnGem(data.x, data.y, enemy.isChampion ? data.xpValue * 5 : data.xpValue, this.playerEntity.x, this.playerEntity.y);
-      if (enemy.isChampion) {
+      const isRunner = enemy.sprite?.getData('isRunner') === true;
+      const isBoss = enemy.definition?.archetype === 'boss' || enemy.type === 'boss';
+      if (isRunner || isBoss) {
         this.lootSystem.spawnChest(data.x, data.y);
+        this.lootSystem.spawnGoo(data.x, data.y, isBoss ? 25 : 15);
+      } else if (enemy.isChampion) {
         this.lootSystem.spawnGoo(data.x, data.y, 10);
-      } else if (enemy.definition?.archetype === 'boss') this.lootSystem.spawnGoo(data.x, data.y, 25);
-      else if (enemy.type === 'boss' || (enemy.definition?.stats.maxHp ?? 0) >= 150) this.lootSystem.spawnGoo(data.x, data.y, 5);
+      } else if ((enemy.definition?.stats.maxHp ?? 0) >= 150) this.lootSystem.spawnGoo(data.x, data.y, 5);
       else if (Math.random() < 0.16) this.lootSystem.spawnGoo(data.x, data.y, 1);
       if (enemy.sprite) this.enemyPool.release(enemy.sprite);
       enemy.sprite = undefined;
@@ -203,6 +214,23 @@ export class GameScene extends Phaser.Scene {
 
   private resumeGame(): void {
     this.pauseModal.clear(); this.grimoireModal.hide(); this.isGamePaused = false; this.physics.resume(); this.inputManager.setEnabled(true);
+  }
+
+  private pauseForModal(): void {
+    this.isGamePaused = true; this.physics.pause(); this.inputManager.setEnabled(false);
+    this.playerEntity.sprite?.setVelocity(0, 0);
+    (this.enemiesGroup.getChildren() as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody[]).forEach((s) => s.body?.setVelocity(0, 0));
+    (this.playerProjectilesGroup.getChildren() as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody[]).forEach((s) => s.body?.setVelocity(0, 0));
+  }
+
+  private getDebugCtx() {
+    return {
+      scene: this, player: this.playerEntity, gameState: this.gameState,
+      spawnManager: this.spawnManager, lootSystem: this.lootSystem,
+      enemiesMap: this.enemiesMap, combatSystem: this.combatSystem,
+      hud: this.hud, resumeGame: () => this.resumeGame(),
+      pauseGame: () => this.pauseForModal(),
+    };
   }
 
   private getHazardCtx() {
@@ -349,7 +377,7 @@ export class GameScene extends Phaser.Scene {
     this.unbindEvents.forEach((u) => u());
     this.unbindEvents = [];
     this.audio.stopBgm();
-    this.hud?.destroy(); this.levelUpModal?.destroy(); this.gameOverModal?.clear(); this.pauseModal?.destroy();
+    this.hud?.destroy(); this.levelUpModal?.destroy(); this.gameOverModal?.clear(); this.pauseModal?.destroy(); this.debugModal?.destroy();
     this.grimoireModal?.destroy(); this.inputManager.destroy();
     this.lootSystem.clear(); this.hazardSystem.clear(); this.heroTraitSystem.clear(); this.eventDirector.reset();
     this.enemyAISystem.reset(); this.enemyPool?.clear();

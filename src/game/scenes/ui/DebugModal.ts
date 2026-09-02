@@ -11,7 +11,7 @@ import type { LootSystem } from '../../loot/LootSystem';
 import type { CombatSystem } from '../../combat/CombatSystem';
 import type { HUD } from './HUD';
 import { AudioManager } from '../../audio/AudioManager';
-import { ARMORED_SLUG, MINI_BOSS_ELITE, BOSS_KURGAN } from '../../data/enemies';
+import { ARMORED_SLUG, MINI_BOSS_ELITE, BOSS_KURGAN, SPRINTER_BUG } from '../../data/enemies';
 
 export interface DebugContext {
   scene: Phaser.Scene;
@@ -24,6 +24,17 @@ export interface DebugContext {
   hud: HUD;
   resumeGame: () => void;
   pauseGame: () => void;
+}
+
+export interface LiveBalanceConfig {
+  weaponDamageMult: number;
+  weaponSpeedMult: number;
+  extraProjectiles: number;
+  extraPierce: number;
+  knockbackMult: number;
+  mobHpMult: number;
+  mobSpeedMult: number;
+  spawnRateMult: number;
 }
 
 export class DebugModal {
@@ -39,8 +50,33 @@ export class DebugModal {
   private maxScrollY = 0;
   private wheelHandler?: (pointer: Phaser.Input.Pointer, deltaX: number, deltaY: number) => void;
 
+  public liveBalance: LiveBalanceConfig = {
+    weaponDamageMult: 1.0,
+    weaponSpeedMult: 1.0,
+    extraProjectiles: 0,
+    extraPierce: 0,
+    knockbackMult: 1.0,
+    mobHpMult: 1.0,
+    mobSpeedMult: 1.0,
+    spawnRateMult: 1.0,
+  };
+
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
+  }
+
+  public applyLiveBalance(ctx: DebugContext): void {
+    const mods = ctx.gameState.playerModifiers;
+    mods.damagePercentBonus = Number((this.liveBalance.weaponDamageMult - 1.0).toFixed(2));
+    mods.attackSpeedBonus = Number((this.liveBalance.weaponSpeedMult - 1.0).toFixed(2));
+    mods.multishotCount = 1 + this.liveBalance.extraProjectiles + (mods.tomeQuantity || 0);
+    mods.pierceCount = this.liveBalance.extraPierce;
+    mods.knockbackMultiplier = Number(this.liveBalance.knockbackMult.toFixed(2));
+
+    ctx.spawnManager.debugHpMult = Number(this.liveBalance.mobHpMult.toFixed(2));
+    ctx.spawnManager.debugSpeedMult = Number(this.liveBalance.mobSpeedMult.toFixed(2));
+    ctx.spawnManager.debugSpawnRateMult = Number(this.liveBalance.spawnRateMult.toFixed(2));
+    ctx.spawnManager.isSpawnPaused = this.isSpawnPaused;
   }
 
   public toggle(ctx: DebugContext): void {
@@ -81,8 +117,8 @@ export class DebugModal {
 
     // 3. Header Title
     const title = this.scene.add
-      .text(centerX - boxW / 2 + 20, centerY - boxH / 2 + 22, 'SECRET DEV CONSOLE [TEST ONLY]', {
-        fontSize: isMobile ? '13px' : '16px',
+      .text(centerX - boxW / 2 + 18, centerY - boxH / 2 + 22, 'ADMIN / BALANCE STUDIO', {
+        fontSize: isMobile ? '12px' : '15px',
         fontStyle: 'bold',
         color: '#38bdf8',
         fontFamily: 'monospace',
@@ -91,6 +127,52 @@ export class DebugModal {
       .setScrollFactor(0)
       .setDepth(30002);
     this.elements.push(title);
+
+    // Copy Config Button [📋 ЭКСПОРТ]
+    const copyBtnX = centerX + boxW / 2 - 135;
+    const copyBtnY = centerY - boxH / 2 + 22;
+    const copyBtn = this.scene.add
+      .rectangle(copyBtnX, copyBtnY, isMobile ? 120 : 160, 28, 0x16a34a, 0.95)
+      .setStrokeStyle(1.5, 0x4ade80)
+      .setScrollFactor(0)
+      .setDepth(30002)
+      .setInteractive({ useHandCursor: true });
+    const copyText = this.scene.add
+      .text(copyBtnX, copyBtnY, isMobile ? '📋 ЭКСПОРТ' : '📋 КОПИРОВАТЬ КОНФИГ', {
+        fontSize: isMobile ? '10px' : '11px',
+        fontStyle: 'bold',
+        color: '#ffffff',
+        fontFamily: 'monospace',
+      })
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(30003);
+
+    copyBtn.on('pointerdown', () => {
+      const config = {
+        weaponDamageMult: Number(this.liveBalance.weaponDamageMult.toFixed(2)),
+        weaponSpeedMult: Number(this.liveBalance.weaponSpeedMult.toFixed(2)),
+        extraProjectiles: this.liveBalance.extraProjectiles,
+        extraPierce: this.liveBalance.extraPierce,
+        knockbackMult: Number(this.liveBalance.knockbackMult.toFixed(2)),
+        mobHpMult: Number(this.liveBalance.mobHpMult.toFixed(2)),
+        mobSpeedMult: Number(this.liveBalance.mobSpeedMult.toFixed(2)),
+        spawnRateMult: Number(this.liveBalance.spawnRateMult.toFixed(2)),
+      };
+      const json = JSON.stringify(config, null, 2);
+      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        navigator.clipboard.writeText(json).catch(() => {});
+      }
+      copyText.setText('СКОПИРОВАНО!');
+      copyBtn.setFillStyle(0x22c55e);
+      this.scene.time.delayedCall(1500, () => {
+        if (copyText.active) {
+          copyText.setText(isMobile ? '📋 ЭКСПОРТ' : '📋 КОПИРОВАТЬ КОНФИГ');
+          copyBtn.setFillStyle(0x16a34a);
+        }
+      });
+    });
+    this.elements.push(copyBtn, copyText);
 
     // Close Button [X]
     const closeBtn = this.scene.add
@@ -114,9 +196,9 @@ export class DebugModal {
 
     // 4. Tab Navigation Buttons
     const tabs: { id: 'weapons' | 'cheats' | 'spawn'; label: string }[] = [
-      { id: 'weapons', label: 'ОРУЖИЕ И ТОМА' },
-      { id: 'cheats', label: 'ЧИТЫ И ХАРАКТЕРИСТИКИ' },
-      { id: 'spawn', label: 'СПАВН И ВРЕМЯ' },
+      { id: 'weapons', label: 'БАЛАНС ОРУЖИЯ' },
+      { id: 'spawn', label: 'БАЛАНС СПАВНА' },
+      { id: 'cheats', label: 'ЧИТЫ И ПРОКАЧКА' },
     ];
     const tabW = (boxW - 40) / tabs.length;
     const tabH = 32;
@@ -194,21 +276,142 @@ export class DebugModal {
     isMobile: boolean
   ): number {
     if (!this.scrollContainer) return 0;
+    const leftX = centerX - w / 2;
+    let curY = topY + 14;
 
+    // --- Section 1: Live Balance Steppers ---
+    const sec1Title = this.scene.add
+      .text(leftX, curY, '⚙️ ЖИВЫЕ МОДИФИКАТОРЫ ОРУЖИЯ (ONLINE TUNING):', {
+        fontSize: '12px',
+        fontStyle: 'bold',
+        color: '#38bdf8',
+        fontFamily: 'monospace',
+      })
+      .setOrigin(0, 0.5)
+      .setScrollFactor(0);
+    this.scrollContainer.add(sec1Title);
+    curY += 24;
+
+    const steppers = [
+      {
+        label: 'МНОЖИТЕЛЬ УРОНА',
+        val: `${this.liveBalance.weaponDamageMult.toFixed(1)}x`,
+        minus: () => {
+          this.liveBalance.weaponDamageMult = Math.max(0.2, Number((this.liveBalance.weaponDamageMult - 0.1).toFixed(1)));
+          this.applyLiveBalance(ctx);
+          this.show(ctx);
+        },
+        plus: () => {
+          this.liveBalance.weaponDamageMult = Math.min(5.0, Number((this.liveBalance.weaponDamageMult + 0.1).toFixed(1)));
+          this.applyLiveBalance(ctx);
+          this.show(ctx);
+        },
+        reset: () => {
+          this.liveBalance.weaponDamageMult = 1.0;
+          this.applyLiveBalance(ctx);
+          this.show(ctx);
+        },
+      },
+      {
+        label: 'СКОРОСТЬ АТАКИ',
+        val: `${this.liveBalance.weaponSpeedMult.toFixed(1)}x`,
+        minus: () => {
+          this.liveBalance.weaponSpeedMult = Math.max(0.2, Number((this.liveBalance.weaponSpeedMult - 0.1).toFixed(1)));
+          this.applyLiveBalance(ctx);
+          this.show(ctx);
+        },
+        plus: () => {
+          this.liveBalance.weaponSpeedMult = Math.min(4.0, Number((this.liveBalance.weaponSpeedMult + 0.1).toFixed(1)));
+          this.applyLiveBalance(ctx);
+          this.show(ctx);
+        },
+        reset: () => {
+          this.liveBalance.weaponSpeedMult = 1.0;
+          this.applyLiveBalance(ctx);
+          this.show(ctx);
+        },
+      },
+      {
+        label: 'ДОП. СНАРЯДЫ (MULTISHOT)',
+        val: `+${this.liveBalance.extraProjectiles}`,
+        minus: () => {
+          this.liveBalance.extraProjectiles = Math.max(0, this.liveBalance.extraProjectiles - 1);
+          this.applyLiveBalance(ctx);
+          this.show(ctx);
+        },
+        plus: () => {
+          this.liveBalance.extraProjectiles = Math.min(8, this.liveBalance.extraProjectiles + 1);
+          this.applyLiveBalance(ctx);
+          this.show(ctx);
+        },
+        reset: () => {
+          this.liveBalance.extraProjectiles = 0;
+          this.applyLiveBalance(ctx);
+          this.show(ctx);
+        },
+      },
+      {
+        label: 'ПРОБИТИЕ (PIERCE)',
+        val: `+${this.liveBalance.extraPierce}`,
+        minus: () => {
+          this.liveBalance.extraPierce = Math.max(0, this.liveBalance.extraPierce - 1);
+          this.applyLiveBalance(ctx);
+          this.show(ctx);
+        },
+        plus: () => {
+          this.liveBalance.extraPierce = Math.min(10, this.liveBalance.extraPierce + 1);
+          this.applyLiveBalance(ctx);
+          this.show(ctx);
+        },
+        reset: () => {
+          this.liveBalance.extraPierce = 0;
+          this.applyLiveBalance(ctx);
+          this.show(ctx);
+        },
+      },
+      {
+        label: 'ОТТАЛКИВАНИЕ (KNOCKBACK)',
+        val: `${this.liveBalance.knockbackMult.toFixed(1)}x`,
+        minus: () => {
+          this.liveBalance.knockbackMult = Math.max(0.0, Number((this.liveBalance.knockbackMult - 0.2).toFixed(1)));
+          this.applyLiveBalance(ctx);
+          this.show(ctx);
+        },
+        plus: () => {
+          this.liveBalance.knockbackMult = Math.min(4.0, Number((this.liveBalance.knockbackMult + 0.2).toFixed(1)));
+          this.applyLiveBalance(ctx);
+          this.show(ctx);
+        },
+        reset: () => {
+          this.liveBalance.knockbackMult = 1.0;
+          this.applyLiveBalance(ctx);
+          this.show(ctx);
+        },
+      },
+    ];
+
+    steppers.forEach((s) => {
+      const rowObjs = this.createStepperRow(leftX, curY, w, s.label, s.val, s.minus, s.plus, s.reset);
+      this.scrollContainer!.add(rowObjs);
+      curY += 36;
+    });
+
+    curY += 16;
+
+    // --- Section 2: Weapons & Tomes Levels ---
     const weapons = ALL_UPGRADES.filter((u) => u.category === 'weapon');
     const tomes = ALL_UPGRADES.filter((u) => u.category === 'tome');
 
     const colW = isMobile ? w : (w - 20) / 2;
-    const leftX = centerX - w / 2;
     const rightX = isMobile ? leftX : leftX + colW + 20;
     const rowH = 34;
 
-    let leftY = topY + 28;
-    let rightY = isMobile ? topY + 28 + (weapons.length + 1) * rowH + 20 : topY + 28;
+    let leftY = curY + 24;
+    let rightY = isMobile ? curY + 24 + (weapons.length + 1) * rowH + 20 : curY + 24;
 
     // --- Left Column Header: WEAPONS ---
     const wpnHeader = this.scene.add
-      .text(leftX, topY + 8, `ОРУЖИЕ (${weapons.length})`, {
+      .text(leftX, curY + 6, `ОРУЖИЕ (${weapons.length})`, {
         fontSize: '13px',
         fontStyle: 'bold',
         color: '#38bdf8',
@@ -516,23 +719,117 @@ export class DebugModal {
     _isMobile: boolean
   ): number {
     if (!this.scrollContainer) return 0;
-    const colW = (w - 20) / 2;
-    let leftY = topY + 24;
-    let rightY = topY + 24;
-    const btnH = 38;
-    const gap = 12;
+    const leftX = centerX - w / 2;
+    let curY = topY + 14;
 
-    // --- Col 1: Spawn Specific Entities ---
-    // Spawn Chest
-    const chestBtn = this.createBigBtn(centerX - w / 4, leftY, colW, btnH, 'SPAWN TREASURE CHEST', 0xeab308, () => {
+    // --- Section 1: Live Enemy & Wave Steppers ---
+    const sec1Title = this.scene.add
+      .text(leftX, curY, '⚙️ ЖИВЫЕ МОДИФИКАТОРЫ ВРАГОВ И СПАВНА:', {
+        fontSize: '12px',
+        fontStyle: 'bold',
+        color: '#f87171',
+        fontFamily: 'monospace',
+      })
+      .setOrigin(0, 0.5)
+      .setScrollFactor(0);
+    this.scrollContainer.add(sec1Title);
+    curY += 24;
+
+    const spawnSteppers = [
+      {
+        label: 'ЗДОРОВЬЕ ВРАГОВ (MOB HP)',
+        val: `${this.liveBalance.mobHpMult.toFixed(1)}x`,
+        minus: () => {
+          this.liveBalance.mobHpMult = Math.max(0.2, Number((this.liveBalance.mobHpMult - 0.1).toFixed(1)));
+          this.applyLiveBalance(ctx);
+          this.show(ctx);
+        },
+        plus: () => {
+          this.liveBalance.mobHpMult = Math.min(5.0, Number((this.liveBalance.mobHpMult + 0.1).toFixed(1)));
+          this.applyLiveBalance(ctx);
+          this.show(ctx);
+        },
+        reset: () => {
+          this.liveBalance.mobHpMult = 1.0;
+          this.applyLiveBalance(ctx);
+          this.show(ctx);
+        },
+      },
+      {
+        label: 'СКОРОСТЬ ВРАГОВ (SPEED)',
+        val: `${this.liveBalance.mobSpeedMult.toFixed(1)}x`,
+        minus: () => {
+          this.liveBalance.mobSpeedMult = Math.max(0.2, Number((this.liveBalance.mobSpeedMult - 0.1).toFixed(1)));
+          this.applyLiveBalance(ctx);
+          this.show(ctx);
+        },
+        plus: () => {
+          this.liveBalance.mobSpeedMult = Math.min(3.0, Number((this.liveBalance.mobSpeedMult + 0.1).toFixed(1)));
+          this.applyLiveBalance(ctx);
+          this.show(ctx);
+        },
+        reset: () => {
+          this.liveBalance.mobSpeedMult = 1.0;
+          this.applyLiveBalance(ctx);
+          this.show(ctx);
+        },
+      },
+      {
+        label: 'ПЛОТНОСТЬ СПАВНА (DENSITY)',
+        val: `${this.liveBalance.spawnRateMult.toFixed(1)}x`,
+        minus: () => {
+          this.liveBalance.spawnRateMult = Math.max(0.2, Number((this.liveBalance.spawnRateMult - 0.1).toFixed(1)));
+          this.applyLiveBalance(ctx);
+          this.show(ctx);
+        },
+        plus: () => {
+          this.liveBalance.spawnRateMult = Math.min(4.0, Number((this.liveBalance.spawnRateMult + 0.1).toFixed(1)));
+          this.applyLiveBalance(ctx);
+          this.show(ctx);
+        },
+        reset: () => {
+          this.liveBalance.spawnRateMult = 1.0;
+          this.applyLiveBalance(ctx);
+          this.show(ctx);
+        },
+      },
+    ];
+
+    spawnSteppers.forEach((s) => {
+      const rowObjs = this.createStepperRow(leftX, curY, w, s.label, s.val, s.minus, s.plus, s.reset);
+      this.scrollContainer!.add(rowObjs);
+      curY += 36;
+    });
+
+    curY += 16;
+
+    // --- Section 2: Spawn Shortcuts & Time Control ---
+    const colW = (w - 20) / 2;
+    let leftY = curY + 24;
+    let rightY = curY + 24;
+    const btnH = 36;
+    const gap = 10;
+
+    // Col 1: Spawn Specific Entities
+    const spawnTitle = this.scene.add
+      .text(centerX - w / 4, curY + 6, 'ТОЧЕЧНЫЙ СПАВН:', {
+        fontSize: '12px',
+        fontStyle: 'bold',
+        color: '#eab308',
+        fontFamily: 'monospace',
+      })
+      .setOrigin(0.5, 0.5)
+      .setScrollFactor(0);
+    this.scrollContainer.add(spawnTitle);
+
+    const chestBtn = this.createBigBtn(centerX - w / 4, leftY, colW, btnH, 'СУНДУК МУТАЦИИ', 0xeab308, () => {
       ctx.lootSystem.spawnChest(ctx.player.x, ctx.player.y - 40);
       this.hide(ctx);
     });
     this.scrollContainer.add([chestBtn.bg, chestBtn.text]);
     leftY += btnH + gap;
 
-    // Spawn Champion Mob
-    const champBtn = this.createBigBtn(centerX - w / 4, leftY, colW, btnH, 'SPAWN CHAMPION MUTANT', 0x854d0e, () => {
+    const champBtn = this.createBigBtn(centerX - w / 4, leftY, colW, btnH, 'СПАВН ЧЕМПИОНА', 0x854d0e, () => {
       const pos = ctx.spawnManager.getScreenPerimeterPosition();
       ctx.spawnManager.spawnDirect(ARMORED_SLUG, pos.x, pos.y, { hpMultiplier: 4.2, speedMultiplier: 1.1, damageMultiplier: 1.25 }, true);
       this.hide(ctx);
@@ -540,8 +837,15 @@ export class DebugModal {
     this.scrollContainer.add([champBtn.bg, champBtn.text]);
     leftY += btnH + gap;
 
-    // Spawn Miniboss (Elite Rat)
-    const ratBtn = this.createBigBtn(centerX - w / 4, leftY, colW, btnH, 'SPAWN MINIBOSS (5:00)', 0x9f1239, () => {
+    const runnerBtn = this.createBigBtn(centerX - w / 4, leftY, colW, btnH, 'ЗОЛОТОЙ БЕГУНЕЦ', 0xca8a04, () => {
+      const pos = ctx.spawnManager.getScreenPerimeterPosition();
+      ctx.spawnManager.spawnDirect(SPRINTER_BUG, pos.x, pos.y, { hpMultiplier: 3.5, speedMultiplier: 1.25, damageMultiplier: 0.5 }, true);
+      this.hide(ctx);
+    });
+    this.scrollContainer.add([runnerBtn.bg, runnerBtn.text]);
+    leftY += btnH + gap;
+
+    const ratBtn = this.createBigBtn(centerX - w / 4, leftY, colW, btnH, 'МИНИ-БОСС ХРЯКОГЛОТ (5:00)', 0x9f1239, () => {
       const pos = ctx.spawnManager.getScreenPerimeterPosition();
       ctx.spawnManager.spawnDirect(MINI_BOSS_ELITE, pos.x, pos.y, { hpMultiplier: 2.0, speedMultiplier: 1.0, damageMultiplier: 1.0 }, false);
       this.hide(ctx);
@@ -549,8 +853,7 @@ export class DebugModal {
     this.scrollContainer.add([ratBtn.bg, ratBtn.text]);
     leftY += btnH + gap;
 
-    // Spawn Boss (Kurgan Roach)
-    const bossBtn = this.createBigBtn(centerX - w / 4, leftY, colW, btnH, 'SPAWN BOSS (8:00)', 0x7f1d1d, () => {
+    const bossBtn = this.createBigBtn(centerX - w / 4, leftY, colW, btnH, 'БОСС КУРГАН (8:00)', 0x7f1d1d, () => {
       const pos = ctx.spawnManager.getScreenPerimeterPosition();
       ctx.spawnManager.spawnDirect(BOSS_KURGAN, pos.x, pos.y, { hpMultiplier: 3.0, speedMultiplier: 1.0, damageMultiplier: 1.0 }, false);
       this.hide(ctx);
@@ -558,28 +861,52 @@ export class DebugModal {
     this.scrollContainer.add([bossBtn.bg, bossBtn.text]);
     leftY += btnH + gap;
 
-    // --- Col 2: Time & Spawn Controller ---
-    // Time +1 Min
-    const t1Btn = this.createBigBtn(centerX + w / 4, rightY, colW, btnH, 'RUN TIME: +1 MIN', 0x0284c7, () => {
+    // Col 2: Time & Wave State
+    const timeTitle = this.scene.add
+      .text(centerX + w / 4, curY + 6, 'ВРЕМЯ ЗАБЕГА И СПАВНЕР:', {
+        fontSize: '12px',
+        fontStyle: 'bold',
+        color: '#38bdf8',
+        fontFamily: 'monospace',
+      })
+      .setOrigin(0.5, 0.5)
+      .setScrollFactor(0);
+    this.scrollContainer.add(timeTitle);
+
+    const t1Btn = this.createBigBtn(centerX + w / 4, rightY, colW, btnH, 'ВРЕМЯ: +1 МИНУТА', 0x0284c7, () => {
       ctx.gameState.runTime += 60;
       this.show(ctx);
     });
     this.scrollContainer.add([t1Btn.bg, t1Btn.text]);
     rightY += btnH + gap;
 
-    // Time +5 Min
-    const t5Btn = this.createBigBtn(centerX + w / 4, rightY, colW, btnH, 'RUN TIME: +5 MIN', 0x0369a1, () => {
+    const t3Btn = this.createBigBtn(centerX + w / 4, rightY, colW, btnH, 'ВРЕМЯ: +3 МИНУТЫ', 0x0369a1, () => {
+      ctx.gameState.runTime += 180;
+      this.show(ctx);
+    });
+    this.scrollContainer.add([t3Btn.bg, t3Btn.text]);
+    rightY += btnH + gap;
+
+    const t5Btn = this.createBigBtn(centerX + w / 4, rightY, colW, btnH, 'ВРЕМЯ: +5 МИНУТ', 0x075985, () => {
       ctx.gameState.runTime += 300;
       this.show(ctx);
     });
     this.scrollContainer.add([t5Btn.bg, t5Btn.text]);
     rightY += btnH + gap;
 
-    // Spawn Toggle
-    const toggleSpawnBtn = this.createBigBtn(centerX + w / 4, rightY, colW, btnH, `SPAWNING: ${this.isSpawnPaused ? 'PAUSED' : 'ACTIVE'}`, this.isSpawnPaused ? 0xdc2626 : 0x16a34a, () => {
-      this.isSpawnPaused = !this.isSpawnPaused;
-      this.show(ctx);
-    });
+    const toggleSpawnBtn = this.createBigBtn(
+      centerX + w / 4,
+      rightY,
+      colW,
+      btnH,
+      `СПАВН: ${this.isSpawnPaused ? 'ПАУЗА' : 'АКТИВЕН'}`,
+      this.isSpawnPaused ? 0xdc2626 : 0x16a34a,
+      () => {
+        this.isSpawnPaused = !this.isSpawnPaused;
+        ctx.spawnManager.isSpawnPaused = this.isSpawnPaused;
+        this.show(ctx);
+      }
+    );
     this.scrollContainer.add([toggleSpawnBtn.bg, toggleSpawnBtn.text]);
     rightY += btnH + gap;
 
@@ -646,7 +973,58 @@ export class DebugModal {
     return { bg, text };
   }
 
+  private createStepperRow(
+    x: number,
+    y: number,
+    w: number,
+    label: string,
+    valStr: string,
+    onMinus: () => void,
+    onPlus: () => void,
+    onReset: () => void
+  ): Phaser.GameObjects.GameObject[] {
+    const isMobile = this.scene.cameras.main.width < 760;
+    const labelW = isMobile ? Math.floor(w * 0.44) : Math.floor(w * 0.50);
+    const btnW = isMobile ? 32 : 38;
+    const btnH = 26;
+    const valW = isMobile ? 55 : 68;
+
+    const rowBg = this.scene.add
+      .rectangle(x + w / 2, y, w, 32, 0x111827, 0.85)
+      .setStrokeStyle(1, 0x374151)
+      .setScrollFactor(0);
+
+    const titleText = this.scene.add
+      .text(x + 8, y, label, {
+        fontSize: isMobile ? '10px' : '11px',
+        fontStyle: 'bold',
+        color: '#f1f5f9',
+        fontFamily: 'monospace',
+      })
+      .setOrigin(0, 0.5)
+      .setScrollFactor(0);
+
+    const minusBtn = this.createSmallBtn(x + labelW + btnW / 2, y, '-', 0xdc2626, onMinus, btnW, btnH);
+
+    const valText = this.scene.add
+      .text(x + labelW + btnW + valW / 2, y, valStr, {
+        fontSize: '11.5px',
+        fontStyle: 'bold',
+        color: '#facc15',
+        fontFamily: 'monospace',
+      })
+      .setOrigin(0.5, 0.5)
+      .setScrollFactor(0);
+
+    const plusBtn = this.createSmallBtn(x + labelW + btnW + valW + btnW / 2, y, '+', 0x16a34a, onPlus, btnW, btnH);
+
+    const resetBtn = this.createSmallBtn(x + w - 20, y, 'R', 0x475569, onReset, 26, btnH);
+
+    return [rowBg, titleText, minusBtn.bg, minusBtn.text, valText, plusBtn.bg, plusBtn.text, resetBtn.bg, resetBtn.text];
+  }
+
   public hide(ctx: DebugContext): void {
+    this.applyLiveBalance(ctx);
     this.clear();
     this.isVisible = false;
     ctx.resumeGame();

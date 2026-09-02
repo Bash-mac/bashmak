@@ -58,7 +58,7 @@ export class PiezoTaserWeapon implements IWeapon {
     ctx.vfxPool?.spawnPiezoHit(tx, ty, level >= 5 ? 0.75 : 0.5);
 
     if (level >= 3) {
-      primaryTarget.applySlow(0.80, 800); // 80% micro-paralysis
+      primaryTarget.applySlow(0.35, 500); // 35% electric jolt
     }
 
     if (ctx.damageNumbers) {
@@ -84,7 +84,7 @@ export class PiezoTaserWeapon implements IWeapon {
         ctx.combatSystem.applyDamage(ctx.player, secTarget, secDmg);
         if (secTarget.sprite) ctx.flashSprite?.(secTarget.sprite, 0xa3e635);
         ctx.vfxPool?.spawnPiezoHit(secTarget.x, secTarget.y, 0.35);
-        if (level >= 3) secTarget.applySlow(0.50, 1500);
+        if (level >= 3) secTarget.applySlow(0.20, 600);
         if (ctx.damageNumbers) {
           ctx.damageNumbers.showDamage(secTarget.x, secTarget.y, secDmg, isSecCrit);
         }

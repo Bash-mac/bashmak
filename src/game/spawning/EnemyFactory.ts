@@ -58,8 +58,8 @@ export class EnemyFactory {
 
     const isBoss = definition.archetype === 'boss' || definition.archetype === 'miniboss';
     const speedJitter = isBoss ? 1.0 : 0.88 + Math.random() * 0.24;
-    const champHpMult = isChampion ? 2.6 : 1.0;
-    const champDmgMult = isChampion ? 1.25 : 1.0;
+    const champHpMult = isChampion ? 7.5 : 1.0;
+    const champDmgMult = isChampion ? 1.35 : 1.0;
 
     const scaledMaxHp = Math.round(definition.stats.maxHp * hpMult * champHpMult);
     const scaledDamage = Math.round(definition.stats.damage * dmgMult * champDmgMult);

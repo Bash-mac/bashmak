@@ -156,4 +156,36 @@ export const META_POWERUPS: MetaPowerUpDefinition[] = [
       return `Слотов томов: ${2 + lvl} (макс. 5)`;
     },
   },
+  {
+    id: 'power_rerolls',
+    name: 'Третий глаз',
+    comicName: 'MUTANT EYE',
+    description: '+1 дополнительный реролл карточек при повышении уровня.',
+    icon: 'icon_tome_attack_speed',
+    maxLevel: 3,
+    baseCost: 140,
+    costMultiplier: 1.8,
+    getCost(lvl: number) {
+      return Math.round(this.baseCost * Math.pow(this.costMultiplier, lvl));
+    },
+    getBonusText(lvl: number) {
+      return `Рероллов: ${2 + lvl} (макс. 5)`;
+    },
+  },
+  {
+    id: 'power_skips',
+    name: 'Тактический пропуск',
+    comicName: 'TACTICAL SKIP',
+    description: '+1 дополнительный пропуск карточек при повышении уровня.',
+    icon: 'icon_tome_crit',
+    maxLevel: 3,
+    baseCost: 120,
+    costMultiplier: 1.8,
+    getCost(lvl: number) {
+      return Math.round(this.baseCost * Math.pow(this.costMultiplier, lvl));
+    },
+    getBonusText(lvl: number) {
+      return `Пропусков: ${2 + lvl} (макс. 5)`;
+    },
+  },
 ];

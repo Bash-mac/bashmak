@@ -124,8 +124,9 @@ export class BootScene extends Phaser.Scene {
     ['btn_frame_green', 'btn_frame_gold', 'btn_frame_red', 'btn_frame_dark'].forEach(k => this.load.image(k, `/assets/ui/buttons/${k}.webp`));
     ['hud_avatar_badge_frame', 'hud_bar_frame', 'hud_bar_fill_hp', 'hud_bar_fill_xp', 'hud_slot_frame'].forEach(k => this.load.image(k, `/assets/ui/hud/${k}.webp`));
     ['pause_panel', 'pause_ribbon_stats', 'pause_ribbon_section', 'pause_slot_empty', 'pause_icon_play', 'pause_icon_grimoire', 'pause_icon_restart', 'pause_icon_home'].forEach(k => this.load.image(k, `/assets/ui/pause/${k}.webp`));
-    ['icon_weapon_slime_spit', 'icon_weapon_carrot_barrage', 'icon_weapon_lace_whip', 'icon_weapon_mega_boot', 'icon_weapon_eggplant_roll', 'icon_weapon_acid_trail', 'icon_weapon_orbiting_flies', 'icon_weapon_toilet_lid', 'icon_weapon_piezo_taser', 'icon_tome_area', 'icon_tome_armor', 'icon_tome_attack_speed', 'icon_tome_crit', 'icon_tome_damage', 'icon_tome_hp_regen', 'icon_tome_lifesteal', 'icon_tome_magnet', 'icon_tome_quantity', 'icon_tome_speed', 'icon_evo_acid_tsunami', 'icon_evo_typhoon_flail', 'icon_evo_gatling_carrot', 'icon_evo_planetary_cataclysm'].forEach(k => this.load.image(k, `/assets/ui/icons/${k}.webp`));
+    ['icon_weapon_slime_spit', 'icon_weapon_carrot_barrage', 'icon_weapon_lace_whip', 'icon_weapon_mega_boot', 'icon_weapon_eggplant_roll', 'icon_weapon_acid_trail', 'icon_weapon_orbiting_flies', 'icon_weapon_toilet_lid', 'icon_weapon_piezo_taser', 'icon_tome_area', 'icon_tome_armor', 'icon_tome_attack_speed', 'icon_tome_crit', 'icon_tome_damage', 'icon_tome_hp_regen', 'icon_tome_lifesteal', 'icon_tome_magnet', 'icon_tome_quantity', 'icon_tome_speed', 'icon_evo_acid_tsunami', 'icon_evo_typhoon_flail', 'icon_evo_gatling_carrot', 'icon_evo_planetary_cataclysm', 'icon_consumable_bomb', 'icon_consumable_medkit', 'icon_consumable_score'].forEach(k => this.load.image(k, `/assets/ui/icons/${k}.webp`));
     ['grimoire_frame', 'grimoire_bg_brick', 'grimoire_row_acid', 'grimoire_row_electric', 'grimoire_row_fire', 'grimoire_row_void'].forEach(k => this.load.image(k, `/assets/ui/grimoire/${k}.webp`));
+    ['protocol_header', 'protocol_badge_police', 'protocol_tape_meta', 'protocol_paper_dossier', 'protocol_paper_stats', 'protocol_stamp_shame', 'protocol_plate_id', 'protocol_plate_rusty', 'protocol_stamp_skull', 'portrait_vypolzok_flattened', 'portrait_vypolzok_eye', 'portrait_vypolzok_win', 'portrait_markovka_win', 'portrait_markovka_beaten', 'portrait_markovka_eye'].forEach(k => this.load.image(k, `/assets/ui/gameover/${k}.webp`));
 
     // 6. Enemy Sprites & Death VFX
     for (let i = 1; i <= 3; i++) {
@@ -145,6 +146,7 @@ export class BootScene extends Phaser.Scene {
     this.load.image('drop_xp_small', '/assets/sprites/drop/drop_xp_small.webp');
     this.load.image('drop_xp_big', '/assets/sprites/drop/drop_xp_big.webp');
     this.load.image('drop_goo', '/assets/sprites/drop/drop_goo.webp');
+    ['drop_chest', 'drop_nuke', 'drop_magnet', 'drop_freeze', 'drop_frenzy'].forEach(k => this.load.image(k, `/assets/sprites/drop/${k}.webp`));
   }
 
   create(): void {

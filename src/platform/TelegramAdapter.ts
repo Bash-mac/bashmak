@@ -30,6 +30,7 @@ declare global {
         setHeaderColor?: (color: string) => void;
         setBackgroundColor?: (color: string) => void;
         disableVerticalSwipes?: () => void;
+        openTelegramLink?: (url: string) => void;
         HapticFeedback?: {
           impactOccurred: (style: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft') => void;
           notificationOccurred: (type: 'error' | 'success' | 'warning') => void;
@@ -137,6 +138,16 @@ export class TelegramPlatformAdapter implements IPlatformAdapter {
       } catch {
         // Ignore haptic errors
       }
+    }
+  }
+
+  share(text: string, url?: string): void {
+    const shareUrl = url || window.location.href;
+    const tgUrl = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(text)}`;
+    if (this.webApp?.openTelegramLink) {
+      this.webApp.openTelegramLink(tgUrl);
+    } else {
+      window.open(tgUrl, '_blank');
     }
   }
 }

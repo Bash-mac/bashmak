@@ -15,5 +15,5 @@ export const BOSS_KURGAN: EnemyDefinition = {
     damage: 22,
     armor: 2,
   },
-  xpReward: 100,
+  xpReward: 150,
 };
