@@ -3,6 +3,7 @@ import { GameState } from '../../core/GameState';
 import { SaveManager } from '../../core/SaveManager';
 import { createPlatformAdapter } from '../../../platform';
 import { AudioManager } from '../../audio/AudioManager';
+import { RunVerdictSystem } from '../../core/RunVerdictSystem';
 import {
   GameOverEditor,
   type GameOverLayoutConfig,
@@ -73,8 +74,10 @@ export class GameOverModal {
     const timeSurvived = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     const heroId = state.currentHeroId || 'hero_vypolzok';
     const isCarrot = heroId === 'hero_markovka';
-    const heroName = isCarrot ? 'Морковка' : 'Выползок';
     const heroTag = isCarrot ? 'MRKVK-777' : 'VPLZOK-666';
+
+    const snapshot = RunVerdictSystem.createSnapshot(this.won);
+    const verdictData = RunVerdictSystem.evaluate(snapshot);
 
     const layout = this.editor.layout;
 
@@ -154,8 +157,7 @@ export class GameOverModal {
     this.editor.attach('statsPaper', statsPaper, 'Бланк диагноза', 330, 425);
 
     // Diagnosis Text Stamp
-    const { diagnosisTitle, fiascoReason } = this.getDiagnosis(state, isRecord);
-    const diagText = this.createText(layout.diagnosis, diagnosisTitle, {
+    const diagText = this.createText(layout.diagnosis, verdictData.diagnosisTitle, {
       fontSize: '18px',
       color: isRecord ? '#15803d' : '#b91c1c',
       fontStyle: 'bold',
@@ -177,7 +179,7 @@ export class GameOverModal {
       { key: 'statKills', name: 'Строка Киллы', val: `${state.kills} шт.`, alignRight: true },
       { key: 'statDrink', name: 'Строка Выпито', val: `${drinkAmount} л`, alignRight: true },
       { key: 'statTeeth', name: 'Строка Зубы', val: `${lostTeeth}`, alignRight: true },
-      { key: 'statFiasco', name: 'Строка Фиаско', val: fiascoReason, alignRight: false },
+      { key: 'statFiasco', name: 'Строка Фиаско', val: verdictData.fiascoReason, alignRight: false },
     ];
 
     for (const row of statRows) {
@@ -193,30 +195,30 @@ export class GameOverModal {
     }
 
     // --- Stamps ---
-    const shameStamp = this.createImage(layout.shameStamp, 'protocol_stamp_shame', 110, 90);
-    this.editor.attach('shameStamp', shameStamp, 'Штамп позора', 110, 90);
+    const stampKey = isRecord ? 'protocol_stamp_shame_1' : 'protocol_stamp_shame';
+    const stampW = isRecord ? 120 : 110;
+    const stampH = isRecord ? 80 : 90;
+    const shameStamp = this.createImage(layout.shameStamp, stampKey, stampW, stampH);
+    this.editor.attach('shameStamp', shameStamp, isRecord ? 'Штамп рекорда' : 'Штамп позора', stampW, stampH);
 
     const skullStamp = this.createImage(layout.skullStamp, 'protocol_stamp_skull', 50, 55);
     this.editor.attach('skullStamp', skullStamp, 'Череп штамп', 50, 55);
 
     // --- Verdict Text ---
-    const verdictString = isRecord ? 'РЕКОРД КОЛЛЕКТОРА ПОБИТ' : 'СКИЛЛ НЕ ОБНАРУЖЕН';
-    const verdictText = this.createText(layout.verdict, verdictString, {
+    const verdictText = this.createText(layout.verdict, verdictData.verdict, {
       fontSize: '24px',
       color: isRecord ? '#16a34a' : '#6b21a8',
       fontStyle: 'bold',
       fontFamily: '"Gagalin", monospace',
+      align: 'center',
+      wordWrap: { width: 320 },
       stroke: isRecord ? '#bbf7d0' : '#f3e8ff',
       strokeThickness: 3,
     }, 0.5, 0.5);
     this.editor.attach('verdict', verdictText, 'Текст вердикта', 350, 45);
 
     // --- Challenge Callout ---
-    const challengeMessage = isRecord
-      ? `Мой ${heroName} поставил новый рекорд: ${timeSurvived}! Попробуй побить мой счет!`
-      : `Мой ${heroName} продержался ${timeSurvived}. Докажи, что ты не больший лузер - побей мой счет!`;
-
-    const challengeText = this.createText(layout.challenge, `"${challengeMessage}"`, {
+    const challengeText = this.createText(layout.challenge, `"${verdictData.shareMessage}"`, {
       fontSize: '12px',
       color: '#facc15',
       fontFamily: '"Balsamiq Sans", monospace',
@@ -226,7 +228,7 @@ export class GameOverModal {
     this.editor.attach('challenge', challengeText, 'Цитата вызова', 600, 30);
 
     // --- Action Buttons ---
-    this.renderButtons(layout, challengeMessage);
+    this.renderButtons(layout, verdictData.shareMessage);
 
     // Render dev HUD
     this.editor.renderHud();
@@ -408,25 +410,6 @@ export class GameOverModal {
     this.modalContainer?.add(txt);
     this.elements.push(txt);
     return txt;
-  }
-
-  private getDiagnosis(state: GameState, isRecord: boolean): { diagnosisTitle: string; fiascoReason: string } {
-    if (isRecord) {
-      return { diagnosisTitle: 'РЕКОРД СЕКТОРА ПОБИТ!', fiascoReason: 'СДОХ, НО С РЕКОРДОМ' };
-    }
-    if (state.runTime < 90) {
-      return {
-        diagnosisTitle: state.runTime < 45 ? 'САМОЛИКВИДАЦИЯ ОТ ИСПУГА' : 'ЗАТОПТАН ПЛАНКТОНОМ',
-        fiascoReason: 'СТАЯ МЕЛКИХ ТВАРЕЙ',
-      };
-    }
-    if (state.kills > 250) {
-      return { diagnosisTitle: 'РАЗМАЗАН ТОЛПОЙ ПО СТЕНЕ', fiascoReason: 'ПЕРЕДОЗ ОРДОЙ' };
-    }
-    if (state.gooCollected > 400) {
-      return { diagnosisTitle: 'УМЕР ОТ ЖАДНОСТИ', fiascoReason: 'ПОГОНЯ ЗА СЛИЗЬЮ' };
-    }
-    return { diagnosisTitle: 'РАЗОБРАН НА СУВЕНИРЫ', fiascoReason: 'ЛОБОВОЙ ТАРАН' };
   }
 
   private clearRenderElements(): void {
