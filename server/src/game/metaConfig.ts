@@ -13,8 +13,8 @@ export const SERVER_META_POWERUPS: Record<string, ServerMetaPowerUp> = {
   power_greed: { id: 'power_greed', maxLevel: 5, baseCost: 100, costMultiplier: 1.5 },
   power_regen: { id: 'power_regen', maxLevel: 3, baseCost: 250, costMultiplier: 2.0 },
   power_revive: { id: 'power_revive', maxLevel: 1, baseCost: 600, costMultiplier: 1.0 },
-  power_weapon_slots: { id: 'power_weapon_slots', maxLevel: 3, baseCost: 180, costMultiplier: 2.0 },
-  power_tome_slots: { id: 'power_tome_slots', maxLevel: 3, baseCost: 150, costMultiplier: 2.0 },
+  power_weapon_slots: { id: 'power_weapon_slots', maxLevel: 3, baseCost: 350, costMultiplier: 2.0 },
+  power_tome_slots: { id: 'power_tome_slots', maxLevel: 3, baseCost: 350, costMultiplier: 2.0 },
 };
 
 export function getPowerUpCost(def: ServerMetaPowerUp, currentLevel: number): number {
@@ -36,6 +36,6 @@ export function getTotalSpentGooOnPowerUps(powerUps: Record<string, number>): nu
   return total;
 }
 
-export const VALID_HERO_IDS = ['hero_vypolzok', 'hero_bashmak', 'hero_markovka', 'hero_baklazhan'];
-export const DEFAULT_UNLOCKED_HEROES = ['hero_vypolzok', 'hero_markovka', 'hero_baklazhan'];
+export const VALID_HERO_IDS = ['hero_vypolzok', 'hero_markovka'];
+export const DEFAULT_UNLOCKED_HEROES = ['hero_vypolzok', 'hero_markovka'];
 export const DEFAULT_SELECTED_HERO = 'hero_vypolzok';

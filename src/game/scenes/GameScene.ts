@@ -29,11 +29,13 @@ import { ProjectilePool } from '../combat/ProjectilePool';
 import { DamageNumberPool } from '../combat/DamageNumberPool';
 import { VfxPool } from '../combat/VfxPool';
 import { EnemyPool } from '../pools/EnemyPool';
+import { AutoplayBot } from '../bot/AutoplayBot';
 
 export class GameScene extends Phaser.Scene {
   private inputManager!: InputManager; private hud!: HUD;
   private levelUpModal!: LevelUpModal; private gameOverModal!: GameOverModal;
   private pauseModal!: PauseModal; private grimoireModal!: GrimoireModal; private debugModal!: DebugModal;
+  private autoplayBot!: AutoplayBot;
   private combatSystem = new CombatSystem();
   private spawnManager!: SpawnManager;
   private eventDirector = new EventDirector();
@@ -68,11 +70,10 @@ export class GameScene extends Phaser.Scene {
   }
 
   create(): void {
-    const worldSize = 4000;
     this.physics.resume(); this.cameras.main.resetFX(); this.gameState.reset(); this.weaponManager.reset();
     this.enemiesMap.clear(); this.enemyIdCounter = 0; this.isGamePaused = false; this.playerIframeTimerMs = 0; this.isDying = false;
 
-    this.mapObjects = MapGenerator.createWorld(this, worldSize);
+    this.mapObjects = MapGenerator.createWorld(this);
     this.enemiesGroup = this.physics.add.group();
     this.enemyPool = new EnemyPool(this, this.enemiesGroup);
     this.playerProjectilesGroup = this.physics.add.group();
@@ -80,7 +81,7 @@ export class GameScene extends Phaser.Scene {
     this.projectilePool = new ProjectilePool(this, this.playerProjectilesGroup);
     this.vfxPool = new VfxPool(this);
     this.lootSystem = new LootSystem(this, this.damageNumbersPool);
-    const { playerEntity, currentHero } = HeroFactory.createPlayer(this, worldSize / 2, worldSize / 2, this.gameState, this.saveManager);
+    const { playerEntity, currentHero } = HeroFactory.createPlayer(this, 0, 0, this.gameState, this.saveManager);
     this.playerEntity = playerEntity; this.currentHero = currentHero;
     this.saveManager.startRunSession(this.currentHero.id);
 
@@ -111,6 +112,7 @@ export class GameScene extends Phaser.Scene {
       },
       () => { if (this.gameState.pendingLevelUps > 0) this.gameState.pendingLevelUps--; onLvlDone(); }
     );
+    this.autoplayBot = new AutoplayBot(this, this.playerEntity, this.enemiesMap, this.lootSystem, this.inputManager, this.gameState, this.levelUpModal);
 
     this.spawnManager = new SpawnManager(
       () => ({ x: this.playerEntity.x, y: this.playerEntity.y, vx: this.playerEntity.sprite?.body?.velocity.x ?? 0, vy: this.playerEntity.sprite?.body?.velocity.y ?? 0 }),
@@ -122,10 +124,10 @@ export class GameScene extends Phaser.Scene {
       () => ({ halfW: this.cameras.main.width / (2 * this.cameras.main.zoom), halfH: this.cameras.main.height / (2 * this.cameras.main.zoom) }),
       () => this.enemiesMap.size, () => this.gameState.getPowerScore()
     );
+    this.debugModal.applyLiveBalance(this.getDebugCtx());
 
     if (this.playerEntity.sprite) {
       this.cameras.main.startFollow(this.playerEntity.sprite, true, 0.1, 0.1);
-      this.cameras.main.setBounds(0, 0, worldSize, worldSize);
     }
     CollisionManager.setup({
       scene: this, player: this.playerEntity, enemiesMap: this.enemiesMap, enemiesGroup: this.enemiesGroup,
@@ -182,6 +184,14 @@ export class GameScene extends Phaser.Scene {
     if (this.currentHero?.id === 'hero_markovka') this.heroTraitSystem.onEnemyKilledByMarkovka(this.getTraitCtx());
   }
 
+  private onEnemyDespawned(enemy: Entity): void {
+    if (enemy.sprite) {
+      this.enemyPool.release(enemy.sprite);
+      enemy.sprite = undefined;
+    }
+    this.enemiesMap.delete(enemy.id);
+  }
+
   private onPlayerLevelUp(): void {
     this.isGamePaused = true; this.physics.pause(); this.inputManager.setEnabled(false);
     this.playerEntity.sprite?.setVelocity(0, 0);
@@ -229,7 +239,7 @@ export class GameScene extends Phaser.Scene {
       spawnManager: this.spawnManager, lootSystem: this.lootSystem,
       enemiesMap: this.enemiesMap, combatSystem: this.combatSystem,
       hud: this.hud, resumeGame: () => this.resumeGame(),
-      pauseGame: () => this.pauseForModal(),
+      pauseGame: () => this.pauseForModal(), autoplayBot: this.autoplayBot,
     };
   }
 
@@ -258,7 +268,7 @@ export class GameScene extends Phaser.Scene {
 
     const sprite = this.playerEntity.sprite;
     if (sprite?.active && this.playerEntity.isAlive) {
-      const heroPrefix = this.currentHero?.id === 'hero_markovka' ? 'markovka' : this.currentHero?.id === 'hero_baklazhan' ? 'baklazhan' : 'vypolzok';
+      const heroPrefix = this.currentHero?.id === 'hero_markovka' ? 'markovka' : 'vypolzok';
       if (this.anims.exists(`${heroPrefix}_anim_hurt`)) sprite.play(`${heroPrefix}_anim_hurt`);
       sprite.setData('isHurt', true);
       this.time.delayedCall(160, () => {
@@ -307,7 +317,7 @@ export class GameScene extends Phaser.Scene {
     const sprite = this.playerEntity.sprite;
     if (sprite?.active) {
       sprite.setVelocity(0, 0);
-      const heroPrefix = this.currentHero?.id === 'hero_markovka' ? 'markovka' : this.currentHero?.id === 'hero_baklazhan' ? 'baklazhan' : 'vypolzok';
+      const heroPrefix = this.currentHero?.id === 'hero_markovka' ? 'markovka' : 'vypolzok';
       if (this.anims.exists(`${heroPrefix}_anim_dead`)) sprite.play(`${heroPrefix}_anim_dead`);
       else this.tweens.add({ targets: sprite, angle: 90, scaleX: sprite.scaleX * 1.3, scaleY: sprite.scaleY * 0.6, alpha: 0.5, duration: 350, ease: 'Bounce.easeOut' });
     }
@@ -317,6 +327,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   override update(_time: number, delta: number): void {
+    this.autoplayBot?.update(delta);
     if (this.isGamePaused || !this.playerEntity.isAlive || this.isDying) return;
 
     const deltaSeconds = delta / 1000;
@@ -346,7 +357,7 @@ export class GameScene extends Phaser.Scene {
 
       const sprite = this.playerEntity.sprite;
       if (!sprite.getData('isHurt') && !sprite.getData('isAttacking')) {
-        const heroPrefix = this.currentHero?.id === 'hero_markovka' ? 'markovka' : this.currentHero?.id === 'hero_baklazhan' ? 'baklazhan' : 'vypolzok';
+        const heroPrefix = this.currentHero?.id === 'hero_markovka' ? 'markovka' : 'vypolzok';
         const targetAnim = isMoving ? `${heroPrefix}_anim_run` : `${heroPrefix}_anim_idle`;
         if (this.anims.exists(targetAnim)) sprite.play(targetAnim, true);
       }
@@ -356,6 +367,7 @@ export class GameScene extends Phaser.Scene {
     this.enemyAISystem.update(delta, {
       scene: this, player: this.playerEntity, enemiesMap: this.enemiesMap, spawnManager: this.spawnManager,
       onExploderTrigger: (e) => this.hazardSystem.startExploderFuse(e, this, (ex) => this.hazardSystem.detonateExploder(ex, this.getHazardCtx())),
+      onEnemyDespawned: (e) => this.onEnemyDespawned(e),
       flashSprite: (_s, c) => this.hazardSystem.flashSprite(this, _s, c),
     });
 
@@ -371,6 +383,7 @@ export class GameScene extends Phaser.Scene {
     this.spawnManager.update(delta, this.gameState.runTime);
     this.eventDirector.update(this.gameState.runTime, { scene: this, spawnManager: this.spawnManager, lootSystem: this.lootSystem, audio: this.audio, getPlayerPos: () => ({ x: this.playerEntity.x, y: this.playerEntity.y }) });
     this.hazardSystem.update(delta, this.getHazardCtx());
+    this.mapObjects.update(this.playerEntity.x, this.playerEntity.y, this.cameras.main.scrollX, this.cameras.main.scrollY);
   }
 
   private shutdown(): void {
@@ -378,9 +391,9 @@ export class GameScene extends Phaser.Scene {
     this.unbindEvents = [];
     this.audio.stopBgm();
     this.hud?.destroy(); this.levelUpModal?.destroy(); this.gameOverModal?.clear(); this.pauseModal?.destroy(); this.debugModal?.destroy();
-    this.grimoireModal?.destroy(); this.inputManager.destroy();
+    this.grimoireModal?.destroy(); this.inputManager.destroy(); this.autoplayBot?.destroy();
     this.lootSystem.clear(); this.hazardSystem.clear(); this.heroTraitSystem.clear(); this.eventDirector.reset();
-    this.enemyAISystem.reset(); this.enemyPool?.clear();
+    this.enemyAISystem.reset(); this.enemyPool?.clear(); this.mapObjects?.destroy();
     this.projectilePool?.clear(); this.damageNumbersPool?.clear(); this.vfxPool?.clear(); this.weaponManager.reset();
   }
 }

@@ -346,14 +346,14 @@ export class HeroSelectModal {
       name: string;
     }> = [
       { id: 'hero_vypolzok', ...this.layout.slot_vypolzok, polKey: 'polaroid_vypolzok', tapeKey: 'tape_green_1', key: 'slot_vypolzok', name: 'Выползок' },
-      { id: 'hero_bashmak',  ...this.layout.slot_bashmak,  polKey: 'polaroid_bashmak',  tapeKey: 'tape_green_2', key: 'slot_bashmak',  name: 'Башмак' },
+      // { id: 'hero_bashmak',  ...this.layout.slot_bashmak,  polKey: 'polaroid_bashmak',  tapeKey: 'tape_green_2', key: 'slot_bashmak',  name: 'Башмак' },
       { id: 'hero_markovka', ...this.layout.slot_markovka, polKey: 'polaroid_markovka', tapeKey: 'tape_green_3', key: 'slot_markovka', name: 'Морковка' },
-      { id: 'hero_baklazhan',...this.layout.slot_baklazhan,polKey: 'polaroid_baklazhan',tapeKey: 'tape_green_4', key: 'slot_baklazhan',name: 'Баклажан' },
+      // { id: 'hero_baklazhan',...this.layout.slot_baklazhan,polKey: 'polaroid_baklazhan',tapeKey: 'tape_green_4', key: 'slot_baklazhan',name: 'Баклажан' },
     ];
 
     slots.forEach((slot) => {
       const hero = getHeroById(slot.id);
-      const isLocked = !isDev && slot.id !== 'hero_vypolzok' && slot.id !== 'hero_markovka' && slot.id !== 'hero_baklazhan';
+      const isLocked = !isDev && slot.id !== 'hero_vypolzok' && slot.id !== 'hero_markovka';
       const isSelected = slot.id === currentSelectedId;
 
       const polContainer = this.scene.add
@@ -471,7 +471,7 @@ export class HeroSelectModal {
     const isDev = typeof window !== 'undefined' && (
       window.location.search.includes('dev=1')
     );
-    const isLocked = !isDev && this.previewedHeroId !== 'hero_vypolzok' && this.previewedHeroId !== 'hero_markovka' && this.previewedHeroId !== 'hero_baklazhan';
+    const isLocked = !isDev && this.previewedHeroId !== 'hero_vypolzok' && this.previewedHeroId !== 'hero_markovka';
 
     // 1. Title & Subtitle Header
     const headerContainer = this.scene.add

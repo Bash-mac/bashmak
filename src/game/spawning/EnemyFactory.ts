@@ -22,7 +22,7 @@ export class EnemyFactory {
     sprite.setScale(scale);
 
     const radius = Math.max(12, (definition.size || 16) * 0.85 * (isChampion ? 1.3 : 1.0));
-    sprite.setCollideWorldBounds(true);
+    sprite.setCollideWorldBounds(false);
     if (sprite.body) {
       const texRadius = radius / scale;
       const originW = sprite.width || 256;

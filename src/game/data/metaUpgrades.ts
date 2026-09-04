@@ -1,3 +1,5 @@
+import { BALANCE_CONFIG } from './balanceConfig';
+
 export interface MetaPowerUpDefinition {
   id: string;
   name: string;
@@ -131,10 +133,10 @@ export const META_POWERUPS: MetaPowerUpDefinition[] = [
     description: '+1 дополнительный слот под активное оружие.',
     icon: 'icon_weapon_slime_spit',
     maxLevel: 3,
-    baseCost: 180,
+    baseCost: 350,
     costMultiplier: 2.0,
     getCost(lvl: number) {
-      return Math.round(this.baseCost * Math.pow(this.costMultiplier, lvl));
+      return BALANCE_CONFIG.meta.slotUpgradeCosts[lvl] ?? 1400;
     },
     getBonusText(lvl: number) {
       return `Слотов оружия: ${2 + lvl} (макс. 5)`;
@@ -147,10 +149,10 @@ export const META_POWERUPS: MetaPowerUpDefinition[] = [
     description: '+1 дополнительный слот под пассивные фолианты.',
     icon: 'icon_tome_area',
     maxLevel: 3,
-    baseCost: 150,
+    baseCost: 350,
     costMultiplier: 2.0,
     getCost(lvl: number) {
-      return Math.round(this.baseCost * Math.pow(this.costMultiplier, lvl));
+      return BALANCE_CONFIG.meta.slotUpgradeCosts[lvl] ?? 1400;
     },
     getBonusText(lvl: number) {
       return `Слотов томов: ${2 + lvl} (макс. 5)`;

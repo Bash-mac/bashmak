@@ -10,15 +10,15 @@ export const TOME_ATTACK_SPEED: UpgradeDefinition = {
   levels: [
     {
       level: 1,
-      description: 'ГЛОБАЛЬНО: Скорость всех атак +8%.',
+      description: 'ГЛОБАЛЬНО: Скорость всех атак +16%.',
       apply: (mod) => {
         mod.tomeAttackSpeed = 1;
-        mod.attackSpeedBonus += 0.08;
+        mod.attackSpeedBonus += 0.16;
       },
     },
     {
       level: 2,
-      description: 'Скорость всех атак +16% (суммарно +16%).',
+      description: 'Скорость всех атак +24% (суммарно).',
       apply: (mod) => {
         mod.tomeAttackSpeed = 2;
         mod.attackSpeedBonus += 0.08;
@@ -26,7 +26,7 @@ export const TOME_ATTACK_SPEED: UpgradeDefinition = {
     },
     {
       level: 3,
-      description: 'Скорость всех атак +24% (суммарно +24%).',
+      description: 'Скорость всех атак +32% (суммарно).',
       apply: (mod) => {
         mod.tomeAttackSpeed = 3;
         mod.attackSpeedBonus += 0.08;
@@ -34,7 +34,7 @@ export const TOME_ATTACK_SPEED: UpgradeDefinition = {
     },
     {
       level: 4,
-      description: 'Скорость всех атак +32% (суммарно +32%).',
+      description: 'Скорость всех атак +40% (суммарно).',
       apply: (mod) => {
         mod.tomeAttackSpeed = 4;
         mod.attackSpeedBonus += 0.08;
@@ -42,7 +42,7 @@ export const TOME_ATTACK_SPEED: UpgradeDefinition = {
     },
     {
       level: 5,
-      description: 'ТУРБО-РЕЖИМ: Скорость всех атак +40% (суммарно +40%).',
+      description: 'ТУРБО-РЕЖИМ: Скорость всех атак +48% (суммарно).',
       apply: (mod) => {
         mod.tomeAttackSpeed = 5;
         mod.attackSpeedBonus += 0.08;

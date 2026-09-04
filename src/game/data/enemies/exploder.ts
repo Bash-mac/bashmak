@@ -11,7 +11,7 @@ export const EXPLODER_SPORE: EnemyDefinition = {
   mass: 2,
   stats: {
     maxHp: 16,
-    speed: 85,
+    speed: 120,
     damage: 5,
     armor: 0,
   },

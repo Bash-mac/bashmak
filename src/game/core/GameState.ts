@@ -17,7 +17,7 @@ export class GameState {
   // Progression
   public level = 1;
   public currentXp = 0;
-  public nextLevelXp = 5; // Level 2 requires 5 XP (calculateXpForLevel(1))
+  public nextLevelXp = 23; // Level 2 requires 23 XP (calculateXpForLevel(1))
 
   // Dynamic weapon & tome slots (from SaveManager meta-upgrades)
   public maxWeaponSlots = 2;
@@ -279,20 +279,16 @@ export class GameState {
   }
 
   /**
-   * 3-tier piecewise progression curve for 10-12 min session:
-   * - Tier 1 (Levels 1-5): Fast early pacing. 5 + (lvl - 1) * 8. Cumulative to L5 = 68 XP.
-   * - Tier 2 (Levels 6-15): Deliberate farming. Math.floor(37 + (lvl - 5) * 16 + Math.pow(lvl - 5, 1.2) * 4). Cumulative to L15 ~1,200 XP.
-   * - Tier 3 (Levels 16+): Dense endgame push. Math.floor(250 + (lvl - 15) * 35 + Math.pow(lvl - 15, 1.5) * 8). Level 28 requires cumulative ~6,500-7,500 XP.
+   * Continuous power curve progression calibrated for 10-12 min session:
+   * XP(lvl) = Math.round(14 + Math.pow(lvl, 1.84) * 9.4)
+   * - L1 -> L2: 23 XP
+   * - Level 5 milestone: ~1:45 (291 cumulative XP)
+   * - Level 15 milestone: ~5:20 (1,335 cumulative XP)
+   * - Level 28-30 endgame: ~10:00 (full build maxed out)
    */
   public calculateXpForLevel(lvl: number): number {
     const n = Math.max(1, Math.floor(lvl));
-    if (n <= 5) {
-      return 5 + (n - 1) * 8;
-    }
-    if (n <= 15) {
-      return Math.floor(37 + (n - 5) * 16 + Math.pow(n - 5, 1.2) * 4);
-    }
-    return Math.floor(250 + (n - 15) * 35 + Math.pow(n - 15, 1.5) * 8);
+    return Math.round(14 + Math.pow(n, 1.84) * 9.4);
   }
 
   updateTime(deltaSeconds: number): void {
@@ -334,8 +330,11 @@ export class GameState {
 
     for (const upg of normalMutations) {
       // Class exclusivity check
-      if (upg.exclusiveHeroId && upg.exclusiveHeroId !== this.currentHeroId) {
-        continue;
+      if (upg.exclusiveHeroId) {
+        const canonicalHeroId = this.currentHeroId === 'hero_worm' ? 'hero_vypolzok' : this.currentHeroId;
+        if (upg.exclusiveHeroId !== canonicalHeroId) {
+          continue;
+        }
       }
 
       const currentLvl = this.activeUpgrades.get(upg.id) || 0;

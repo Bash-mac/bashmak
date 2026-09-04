@@ -159,11 +159,11 @@ export class CollisionManager {
 
     // 4. Projectiles vs Barrels
     scene.physics.add.overlap(projectilesGroup, mapObjects.barrelsGroup, (_proj, barrelObj) => {
-      const barrel = barrelObj as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
+      const barrel = barrelObj as Phaser.Types.Physics.Arcade.SpriteWithStaticBody;
       if (!barrel.active) return;
       const bx = barrel.x;
       const by = barrel.y;
-      barrel.destroy();
+      mapObjects.releaseBarrel(barrel);
       const roll = Math.random();
       if (roll < 0.35) lootSystem.spawnGem(bx, by, 8, player.x, player.y);
       else if (roll < 0.60) lootSystem.spawnGoo(bx, by, Phaser.Math.Between(1, 3));
@@ -212,11 +212,7 @@ export class CollisionManager {
       if (!shrine.active) return;
       const sx = shrine.x;
       const sy = shrine.y;
-      const beacon = shrine.getData('beacon') as Phaser.GameObjects.GameObject | undefined;
-      beacon?.destroy();
-      const aura = shrine.getData('aura') as Phaser.GameObjects.GameObject | undefined;
-      aura?.destroy();
-      shrine.destroy();
+      mapObjects.releaseShrine(shrine);
       hazardSystem.triggerScreenWipeBlast(scene, sx, sy, ctx.getHazardCtx());
     });
 

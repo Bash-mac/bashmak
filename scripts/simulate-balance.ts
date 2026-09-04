@@ -59,6 +59,7 @@ export interface SimModifiers {
   slimeSpitLevel: number;
   carrotBarrageLevel: number;
   lightningZapLevel: number;
+  toiletLidLevel: number;
   isEvolved: boolean;
 }
 
@@ -155,7 +156,7 @@ export const WEAPON_PROFILES: Record<WeaponProfileType, WeaponProfile> = {
     preferredUpgrades: [
       'weapon_lace_whip',
       'weapon_lightning_zap',
-      'weapon_slime_spit',
+      'weapon_toilet_lid',
       'tome_armor',
       'tome_damage',
       'tome_attack_speed',
@@ -172,10 +173,10 @@ export const WEAPON_PROFILES: Record<WeaponProfileType, WeaponProfile> = {
     startingWeapon: 'weapon_slime_spit',
     preferredUpgrades: [
       'weapon_slime_spit',
-      'tome_damage',
-      'weapon_carrot_barrage',
-      'tome_attack_speed',
       'weapon_lightning_zap',
+      'weapon_toilet_lid',
+      'tome_damage',
+      'tome_attack_speed',
       'tome_quantity',
       'tome_speed',
       'tome_crit',
@@ -190,10 +191,10 @@ export const WEAPON_PROFILES: Record<WeaponProfileType, WeaponProfile> = {
     startingWeapon: 'weapon_carrot_barrage',
     preferredUpgrades: [
       'weapon_carrot_barrage',
+      'weapon_lightning_zap',
+      'weapon_toilet_lid',
       'tome_damage',
-      'weapon_slime_spit',
       'tome_attack_speed',
-      'weapon_lace_whip',
       'tome_crit',
       'tome_quantity',
       'tome_speed',
@@ -203,18 +204,18 @@ export const WEAPON_PROFILES: Record<WeaponProfileType, WeaponProfile> = {
     id: 'weapon_lightning_zap',
     name: 'Пьезо-шокер',
     heroId: 'hero_baklazhan',
-    baseHeroDamage: 14,
+    baseHeroDamage: 16,
     baseHeroSpeed: 230,
     startingWeapon: 'weapon_lightning_zap',
     preferredUpgrades: [
       'weapon_lightning_zap',
-      'weapon_lace_whip',
-      'weapon_carrot_barrage',
-      'tome_speed',
-      'tome_attack_speed',
+      'weapon_toilet_lid',
+      'weapon_homing_daggers',
       'tome_damage',
+      'tome_attack_speed',
+      'tome_crit',
+      'tome_speed',
       'tome_area',
-      'tome_hp_regen',
     ],
   },
   balanced_hybrid: {
@@ -226,8 +227,8 @@ export const WEAPON_PROFILES: Record<WeaponProfileType, WeaponProfile> = {
     startingWeapon: 'weapon_slime_spit',
     preferredUpgrades: [
       'weapon_slime_spit',
-      'weapon_lace_whip',
       'weapon_lightning_zap',
+      'weapon_toilet_lid',
       'tome_damage',
       'tome_attack_speed',
       'tome_quantity',
@@ -247,7 +248,7 @@ export const WEAPON_PROFILES: Record<WeaponProfileType, WeaponProfile> = {
  */
 export function calculateXpForLevel(lvl: number): number {
   const n = Math.max(1, lvl);
-  return Math.round(12 + Math.pow(n, 1.75) * 8.5);
+  return Math.round(13 + Math.pow(n, 1.80) * 9.0);
 }
 
 export function createDefaultModifiers(): SimModifiers {
@@ -269,6 +270,7 @@ export function createDefaultModifiers(): SimModifiers {
     slimeSpitLevel: 0,
     carrotBarrageLevel: 0,
     lightningZapLevel: 0,
+    toiletLidLevel: 0,
     isEvolved: false,
   };
 }
@@ -330,6 +332,7 @@ export class BalanceSimulator {
     let spitTimer = 0;
     let carrotTimer = 0;
     let zapTimer = 0;
+    let toiletTimer = 0;
     let spawnTimer = 0;
     let sampleTimer = 0;
     let powerWindowTimer = 0;
@@ -361,14 +364,19 @@ export class BalanceSimulator {
       const isPowerWindowActive = powerWindowTimer > 0;
       const powerHpFactor = isPowerWindowActive
         ? 1.0
-        : 1 + Math.pow(Math.max(0, powerScore - 1), 0.92) * 0.055;
+        : 1 + Math.pow(Math.max(0, powerScore - 1), 0.9) * 0.04;
 
-      // Dynamic TTK Scaling (keeping baseline fodder TTK steadily in 0.30s - 1.10s)
-      const lateFactor = minutes > 5.5 ? Math.pow(minutes - 5.5, 1.65) * 0.24 : 0;
-      const timeHpFactor = 1 + 0.25 * minutes + lateFactor;
+      // Dynamic TTK Scaling (smooth 2.5m bridge, keeping baseline fodder TTK steadily in 0.30s - 0.95s)
+      let timeHpFactor: number;
+      if (minutes <= 2.5) {
+        timeHpFactor = 1 + 0.05 * minutes;
+      } else {
+        const lateFactor = minutes > 5.5 ? Math.pow(minutes - 5.5, 1.25) * 0.12 : 0;
+        timeHpFactor = 1 + 0.05 * 2.5 + 0.16 * (minutes - 2.5) + lateFactor;
+      }
       const hpMultiplier = timeHpFactor * powerHpFactor;
-      const speedMultiplier = Math.min(2.0, 1 + 0.05 * minutes + (minutes > 7.0 ? (minutes - 7.0) * 0.10 : 0));
-      const damageMultiplier = 1 + 0.12 * minutes + (minutes > 7.0 ? (minutes - 7.0) * 0.20 : 0);
+      const speedMultiplier = Math.min(1.8, 1 + 0.04 * minutes + (minutes > 7.0 ? (minutes - 7.0) * 0.06 : 0));
+      const damageMultiplier = 1 + 0.08 * minutes + (minutes > 7.0 ? (minutes - 7.0) * 0.12 : 0);
 
       // 2. Wave Tension Rhythm ("Качели" 60-90s cycle)
       const cycleTime = time % CYCLE_LENGTH;
@@ -631,12 +639,15 @@ export class BalanceSimulator {
           }
 
           const carrotCount = (isGatling ? 6 : 1 + (cLvl >= 3 ? 2 : 0) + (cLvl >= 5 ? 2 : 0)) + (mods.multishotCount - 1);
+          const carrotPierce = 2 + (cLvl >= 3 ? 1 : 0) + (cLvl >= 5 ? 1 : 0) + mods.pierceCount;
           for (let c = 0; c < carrotCount; c++) {
-            const target = enemies[c % enemies.length];
-            if (target) {
-              const effDmg = Math.max(1, Math.round(baseCarrotDmg * 1.6 * (12 / (12 + target.armor))));
-              target.hp -= effDmg;
-              currentTickDamageDealt += effDmg;
+            for (let p = 0; p < carrotPierce; p++) {
+              const target = enemies[(c * carrotPierce + p) % enemies.length];
+              if (target) {
+                const effDmg = Math.max(1, Math.round(baseCarrotDmg * 1.1 * (12 / (12 + target.armor))));
+                target.hp -= effDmg;
+                currentTickDamageDealt += effDmg;
+              }
             }
           }
         }
@@ -647,10 +658,10 @@ export class BalanceSimulator {
         zapTimer += dt;
         const zLvl = mods.lightningZapLevel;
         const speedMult = 1.35 * (1 + mods.attackSpeedBonus * 0.8);
-        const zapInterval = (zLvl >= 5 ? 0.85 : 1.9 - (zLvl - 1) * 0.22) / speedMult;
+        const zapInterval = (zLvl >= 5 ? 0.75 : 1.6 - (zLvl - 1) * 0.20) / speedMult;
         if (zapTimer >= zapInterval && enemies.length > 0) {
           zapTimer = 0;
-          const baseZapDmg = Math.round((18 + (zLvl - 1) * 7) * (1 + mods.damagePercentBonus));
+          const baseZapDmg = Math.round((24 + (zLvl - 1) * 10) * (1 + mods.damagePercentBonus));
           const zapCrit = Math.random() < mods.critChance ? mods.critMultiplier : 1.0;
           const strikeDmg = Math.round(baseZapDmg * zapCrit);
 
@@ -659,12 +670,31 @@ export class BalanceSimulator {
           primaryTarget.hp -= effPrimary;
           currentTickDamageDealt += effPrimary;
 
-          const chainCount = 3 + (zLvl >= 2 ? 1 : 0) + (zLvl >= 5 ? 2 : 0);
+          const chainCount = 5 + (zLvl >= 2 ? 2 : 0) + (zLvl >= 5 ? 3 : 0);
           for (let ch = 1; ch <= Math.min(chainCount, enemies.length - 1); ch++) {
             const secTarget = enemies[ch];
-            const effSec = Math.max(1, Math.round(strikeDmg * 0.45 * (12 / (12 + secTarget.armor))));
+            const effSec = Math.max(1, Math.round(strikeDmg * 0.70 * (12 / (12 + secTarget.armor))));
             secTarget.hp -= effSec;
             currentTickDamageDealt += effSec;
+          }
+        }
+      }
+
+      // Weapon 5: Общее вспомогательное оружие (Toilet Lid / Homing Daggers)
+      if (mods.toiletLidLevel > 0) {
+        toiletTimer += dt;
+        const tLvl = mods.toiletLidLevel;
+        const speedMult = 1.30 * (1 + mods.attackSpeedBonus);
+        const tInterval = 0.85 / speedMult;
+        if (toiletTimer >= tInterval && enemies.length > 0) {
+          toiletTimer = 0;
+          const baseTDmg = Math.round((28 + (tLvl - 1) * 12) * (1 + mods.damagePercentBonus));
+          const hitCount = 4 + (tLvl >= 3 ? 2 : 0) + (tLvl >= 5 ? 2 : 0) + (mods.multishotCount - 1);
+          for (let h = 0; h < Math.min(hitCount, enemies.length); h++) {
+            const target = enemies[h];
+            const effTDmg = Math.max(1, Math.round(baseTDmg * (12 / (12 + target.armor))));
+            target.hp -= effTDmg;
+            currentTickDamageDealt += effTDmg;
           }
         }
       }
@@ -883,6 +913,10 @@ export class BalanceSimulator {
         mods.lightningZapLevel = newLevel;
         mods.damagePercentBonus += 0.08;
         break;
+      case 'weapon_toilet_lid':
+      case 'weapon_homing_daggers':
+        mods.damagePercentBonus += 0.10;
+        break;
       case 'tome_damage':
         mods.damagePercentBonus += 0.14;
         break;
@@ -950,8 +984,8 @@ export class BalanceSimulator {
       }
       case 'weapon_lightning_zap': {
         const lvl = Math.max(1, mods.lightningZapLevel);
-        const baseDmg = (14 + (lvl - 1) * 4.2) * (1 + mods.damagePercentBonus);
-        const interval = (1.45 - (lvl - 1) * 0.12) / (1 + mods.attackSpeedBonus * 0.70);
+        const baseDmg = (16 + (lvl - 1) * 4.5) * (1 + mods.damagePercentBonus);
+        const interval = (1.20 - (lvl - 1) * 0.08) / (1 + mods.attackSpeedBonus * 0.8);
         const attackSpeed = 1 / interval;
         const critFactor = 1 + mods.critChance * (mods.critMultiplier - 1);
         dps = baseDmg * attackSpeed * critFactor;

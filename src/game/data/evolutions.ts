@@ -1,5 +1,6 @@
 import type { GameState } from '../core/GameState';
 import { WEAPON_IDS, TOME_IDS, EVOLUTION_IDS } from './itemIds';
+import { BALANCE_CONFIG } from './balanceConfig';
 
 export interface EvolutionRecipe {
   id: string;
@@ -16,14 +17,14 @@ export interface EvolutionRecipe {
 }
 
 export const EVOLUTION_RECIPES: EvolutionRecipe[] = [
-  // 1. Слизеплюй Lv5 + Фолиант Магнетизма Lv5 -> КИСЛОТНЫЙ ЦУНАМИ
+  // 1. Слизеплюй Lv8 + Фолиант Магнетизма Lv5 -> КИСЛОТНЫЙ ЦУНАМИ
   {
     id: EVOLUTION_IDS.ACID_TSUNAMI,
     name: 'Кислотный Цунами',
     comicTitle: 'ACID TSUNAMI',
     description: 'Плевок выпускает огромные токсичные волны слизи на весь экран с перманентным DoT и замедлением врагов на 60%!',
     baseWeaponId: WEAPON_IDS.SLIME_SPIT,
-    baseWeaponName: 'Слизеплюй (Lv.5)',
+    baseWeaponName: 'Слизеплюй (Lv.8)',
     requiredTomeId: TOME_IDS.MAGNET,
     requiredTomeName: 'Липкая Жвачка (Lv.5)',
     iconKey: 'icon_evo_acid_tsunami',
@@ -31,7 +32,7 @@ export const EVOLUTION_RECIPES: EvolutionRecipe[] = [
     apply: (gameState: GameState) => {
       const mod = gameState.playerModifiers;
       mod.isAcidTsunamiEvolved = true;
-      mod.slimeSpitLevel = 6;
+      mod.slimeSpitLevel = 9;
       mod.fatSpitScale += 0.8;
       mod.splashPercent += 0.60;
       mod.slowPercent = Math.max(mod.slowPercent, 0.60);
@@ -41,7 +42,8 @@ export const EVOLUTION_RECIPES: EvolutionRecipe[] = [
     },
   },
 
-  // 2. Шнуровой Кнут Lv5 + «Двойной Зоб» Lv5 -> ТИФОННЫЙ ЦЕП
+  // 2. Шнуровой Кнут Lv5 + «Двойной Зоб» Lv5 -> ТИФОННЫЙ ЦЕП (скрыт)
+  /*
   {
     id: EVOLUTION_IDS.TYPHOON_FLAIL,
     name: 'Тифонный Цеп',
@@ -63,15 +65,16 @@ export const EVOLUTION_RECIPES: EvolutionRecipe[] = [
       gameState.triggerPowerWindow(10000);
     },
   },
+  */
 
-  // 3. Морковный Град Lv5 + «Энергетик» Lv5 -> ГАТЛИНГ-МОРКОВКА
+  // 3. Морковный Град Lv8 + «Энергетик» Lv5 -> ГАТЛИНГ-МОРКОВКА
   {
     id: EVOLUTION_IDS.GATLING_CARROT,
     name: 'Гатлинг-Морковка',
     comicTitle: 'GATLING CARROT',
     description: 'Лазерный шквал из сверхзвуковых бумерангов-пил со 100% шансом критического взрыва!',
     baseWeaponId: WEAPON_IDS.CARROT_BARRAGE,
-    baseWeaponName: 'Морковный Град (Lv.5)',
+    baseWeaponName: 'Морковный Град (Lv.8)',
     requiredTomeId: TOME_IDS.ATTACK_SPEED,
     requiredTomeName: 'Энергетик (Lv.5)',
     iconKey: 'icon_evo_gatling_carrot',
@@ -79,14 +82,15 @@ export const EVOLUTION_RECIPES: EvolutionRecipe[] = [
     apply: (gameState: GameState) => {
       const mod = gameState.playerModifiers;
       mod.isGatlingCarrotEvolved = true;
-      mod.carrotBarrageLevel = 6;
+      mod.carrotBarrageLevel = 9;
       gameState.activeUpgrades.delete(WEAPON_IDS.CARROT_BARRAGE);
       gameState.activeUpgrades.set(EVOLUTION_IDS.GATLING_CARROT, 1);
       gameState.triggerPowerWindow(10000);
     },
   },
 
-  // 4. Фиолетовый Шар Lv5 + «Слизь-Кола» Lv5 -> ПЛАНЕТАРНЫЙ КАТАКЛИЗМ
+  // 4. Фиолетовый Шар Lv5 + «Слизь-Кола» Lv5 -> ПЛАНЕТАРНЫЙ КАТАКЛИЗМ (скрыт)
+  /*
   {
     id: EVOLUTION_IDS.PLANETARY_ROLL,
     name: 'Планетарный Катаклизм',
@@ -109,6 +113,7 @@ export const EVOLUTION_RECIPES: EvolutionRecipe[] = [
       gameState.triggerPowerWindow(10000);
     },
   },
+  */
 ];
 
 export function getReadyEvolution(gameState: GameState): EvolutionRecipe | null {
@@ -118,7 +123,10 @@ export function getReadyEvolution(gameState: GameState): EvolutionRecipe | null 
     const weaponLvl = gameState.activeUpgrades.get(recipe.baseWeaponId) || 0;
     const tomeLvl = gameState.activeUpgrades.get(recipe.requiredTomeId) || 0;
 
-    if (weaponLvl >= 5 && tomeLvl >= 5) {
+    if (
+      weaponLvl >= BALANCE_CONFIG.evolutions.requiredWeaponLevel &&
+      tomeLvl >= BALANCE_CONFIG.evolutions.requiredTomeLevel
+    ) {
       return recipe;
     }
   }

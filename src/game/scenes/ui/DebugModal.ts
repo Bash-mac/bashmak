@@ -12,6 +12,7 @@ import type { CombatSystem } from '../../combat/CombatSystem';
 import type { HUD } from './HUD';
 import { AudioManager } from '../../audio/AudioManager';
 import { ARMORED_SLUG, MINI_BOSS_ELITE, BOSS_KURGAN, SPRINTER_BUG } from '../../data/enemies';
+import type { AutoplayBot } from '../../bot/AutoplayBot';
 
 export interface DebugContext {
   scene: Phaser.Scene;
@@ -24,6 +25,7 @@ export interface DebugContext {
   hud: HUD;
   resumeGame: () => void;
   pauseGame: () => void;
+  autoplayBot?: AutoplayBot;
 }
 
 export interface LiveBalanceConfig {
@@ -51,14 +53,14 @@ export class DebugModal {
   private wheelHandler?: (pointer: Phaser.Input.Pointer, deltaX: number, deltaY: number) => void;
 
   public liveBalance: LiveBalanceConfig = {
-    weaponDamageMult: 1.0,
-    weaponSpeedMult: 1.0,
+    weaponDamageMult: 0.8,
+    weaponSpeedMult: 0.9,
     extraProjectiles: 0,
     extraPierce: 0,
     knockbackMult: 1.0,
     mobHpMult: 1.0,
-    mobSpeedMult: 1.0,
-    spawnRateMult: 1.0,
+    mobSpeedMult: 0.8,
+    spawnRateMult: 0.8,
   };
 
   constructor(scene: Phaser.Scene) {
@@ -307,7 +309,7 @@ export class DebugModal {
           this.show(ctx);
         },
         reset: () => {
-          this.liveBalance.weaponDamageMult = 1.0;
+          this.liveBalance.weaponDamageMult = 0.8;
           this.applyLiveBalance(ctx);
           this.show(ctx);
         },
@@ -326,7 +328,7 @@ export class DebugModal {
           this.show(ctx);
         },
         reset: () => {
-          this.liveBalance.weaponSpeedMult = 1.0;
+          this.liveBalance.weaponSpeedMult = 0.9;
           this.applyLiveBalance(ctx);
           this.show(ctx);
         },
@@ -708,7 +710,36 @@ export class DebugModal {
     this.scrollContainer.add([nukeBtn.bg, nukeBtn.text]);
     rightY += btnH + gap;
 
-    return Math.max(leftY, rightY) - topY + 20;
+    // --- Col 1 & 2: Autoplay Bot & Diagnostics ---
+    const isBotActive = ctx.autoplayBot?.isEnabled ?? false;
+    const botBtn = this.createBigBtn(centerX - w / 4, leftY, colW, btnH, `АВТОБОТ (AI): ${isBotActive ? 'ON' : 'OFF'}`, isBotActive ? 0x16a34a : 0x475569, () => {
+      ctx.autoplayBot?.toggle();
+      this.show(ctx);
+    });
+    this.scrollContainer.add([botBtn.bg, botBtn.text]);
+    leftY += btnH + gap;
+
+    const reportBtn = this.createBigBtn(centerX + w / 4, rightY, colW, btnH, 'СКОПИРОВАТЬ ОТЧЕТ [БУФЕР]', 0x0284c7, () => {
+      ctx.autoplayBot?.copyReportToClipboard();
+      this.show(ctx);
+    });
+    this.scrollContainer.add([reportBtn.bg, reportBtn.text]);
+    rightY += btnH + gap;
+
+    const metrics = ctx.autoplayBot?.getMetrics();
+    const metricsY = Math.max(leftY, rightY);
+    const dpsText = `DPS: ${metrics?.currentDps ?? 0} (avg ${metrics?.averageDps ?? 0}) | Kills: ${metrics?.kills ?? 0} | Bugs: ${ctx.autoplayBot?.detectedBugs.length ?? 0}`;
+    const statsLabel = this.scene.add
+      .text(centerX, metricsY, dpsText, {
+        fontSize: '11px',
+        color: '#38bdf8',
+        fontFamily: 'monospace',
+      })
+      .setOrigin(0.5)
+      .setScrollFactor(0);
+    this.scrollContainer.add(statsLabel);
+
+    return metricsY - topY + 28;
   }
 
   private renderSpawnTab(
@@ -769,7 +800,7 @@ export class DebugModal {
           this.show(ctx);
         },
         reset: () => {
-          this.liveBalance.mobSpeedMult = 1.0;
+          this.liveBalance.mobSpeedMult = 0.8;
           this.applyLiveBalance(ctx);
           this.show(ctx);
         },
@@ -788,7 +819,7 @@ export class DebugModal {
           this.show(ctx);
         },
         reset: () => {
-          this.liveBalance.spawnRateMult = 1.0;
+          this.liveBalance.spawnRateMult = 0.8;
           this.applyLiveBalance(ctx);
           this.show(ctx);
         },

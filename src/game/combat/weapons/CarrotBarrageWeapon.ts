@@ -77,7 +77,7 @@ export class CarrotBarrageWeapon implements IWeapon {
 
     // Visual bat attack animation on player sprite
     const playerSprite = ctx.player.sprite;
-    if (playerSprite && playerSprite.active && !playerSprite.getData('isHurt')) {
+    if (playerSprite && playerSprite.active && !playerSprite.getData('isHurt') && ctx.gameState.currentHeroId === 'hero_markovka') {
       const animKey = 'markovka_anim_attack';
       if (ctx.scene.anims.exists(animKey)) {
         playerSprite.play(animKey, true);

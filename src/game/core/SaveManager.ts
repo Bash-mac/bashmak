@@ -1,4 +1,5 @@
 import { META_POWERUPS } from '../data/metaUpgrades';
+import { BALANCE_CONFIG } from '../data/balanceConfig';
 import type { StatsComponent } from '../entities/components/StatsComponent';
 import type { HealthComponent } from '../entities/components/HealthComponent';
 import type { PlayerModifiers } from '../data/definitions';
@@ -77,7 +78,7 @@ export class SaveManager {
     return {
       goo: 0,
       powerUps: {},
-      unlockedHeroIds: ['hero_vypolzok', 'hero_markovka', 'hero_baklazhan'],
+      unlockedHeroIds: ['hero_vypolzok', 'hero_markovka'],
       selectedHeroId: 'hero_vypolzok',
       stats: {
         totalRuns: 0,
@@ -96,14 +97,17 @@ export class SaveManager {
       if (raw) {
         const parsed = JSON.parse(raw);
         let selected = parsed.selectedHeroId || 'hero_vypolzok';
-        if (selected === 'hero_worm') selected = 'hero_vypolzok';
+        if (selected === 'hero_worm' || selected === 'hero_bashmak' || selected === 'hero_baklazhan') {
+          selected = 'hero_vypolzok';
+        }
 
-        let unlocked: string[] = parsed.unlockedHeroIds || ['hero_vypolzok', 'hero_markovka', 'hero_baklazhan'];
+        let unlocked: string[] = (parsed.unlockedHeroIds || ['hero_vypolzok', 'hero_markovka'])
+          .filter((id: string) => id !== 'hero_bashmak' && id !== 'hero_baklazhan');
         if (unlocked.includes('hero_worm') && !unlocked.includes('hero_vypolzok')) {
           unlocked = unlocked.map((id: string) => (id === 'hero_worm' ? 'hero_vypolzok' : id));
         }
+        if (!unlocked.includes('hero_vypolzok')) unlocked.unshift('hero_vypolzok');
         if (!unlocked.includes('hero_markovka')) unlocked.push('hero_markovka');
-        if (!unlocked.includes('hero_baklazhan')) unlocked.push('hero_baklazhan');
 
         return {
           ...this.getDefaultData(),
@@ -153,7 +157,8 @@ export class SaveManager {
 
   public getSelectedHeroId(): string {
     const id = this.data.selectedHeroId || 'hero_vypolzok';
-    return id === 'hero_worm' ? 'hero_vypolzok' : id;
+    if (id === 'hero_worm' || id === 'hero_bashmak' || id === 'hero_baklazhan') return 'hero_vypolzok';
+    return id;
   }
 
   public setSelectedHeroId(id: string): void {
@@ -197,11 +202,11 @@ export class SaveManager {
   }
 
   public getMaxWeaponSlots(): number {
-    return Math.min(5, 2 + this.getPowerUpLevel('power_weapon_slots'));
+    return Math.min(BALANCE_CONFIG.meta.maxWeaponSlots, BALANCE_CONFIG.meta.startWeaponSlots + this.getPowerUpLevel('power_weapon_slots'));
   }
 
   public getMaxTomeSlots(): number {
-    return Math.min(5, 2 + this.getPowerUpLevel('power_tome_slots'));
+    return Math.min(BALANCE_CONFIG.meta.maxTomeSlots, BALANCE_CONFIG.meta.startTomeSlots + this.getPowerUpLevel('power_tome_slots'));
   }
 
   public getMaxRerolls(): number {

@@ -136,12 +136,12 @@ export class ToiletLidWeapon implements IWeapon {
 
   private updateActiveLids(delta: number, ctx: WeaponContext): void {
     const mods = ctx.gameState.playerModifiers;
-    const bounds = ctx.scene.physics.world.bounds;
-    const pad = 16;
-    const minX = bounds.x + pad;
-    const maxX = bounds.right - pad;
-    const minY = bounds.y + pad;
-    const maxY = bounds.bottom - pad;
+    const cam = ctx.scene.cameras.main;
+    const pad = 20;
+    const minX = cam.worldView.x + pad;
+    const maxX = cam.worldView.right - pad;
+    const minY = cam.worldView.y + pad;
+    const maxY = cam.worldView.bottom - pad;
 
     for (let i = this.lids.length - 1; i >= 0; i--) {
       const lid = this.lids[i];

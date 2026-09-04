@@ -72,7 +72,7 @@ export class SlimeSpitWeapon implements IWeapon {
 
     // Visual spit animation on player sprite
     const playerSprite = ctx.player.sprite;
-    if (playerSprite && playerSprite.active && !playerSprite.getData('isHurt')) {
+    if (playerSprite && playerSprite.active && !playerSprite.getData('isHurt') && ctx.gameState.currentHeroId === 'hero_vypolzok') {
       if (ctx.scene.anims.exists('vypolzok_anim_spit')) {
         playerSprite.play('vypolzok_anim_spit', true);
       }

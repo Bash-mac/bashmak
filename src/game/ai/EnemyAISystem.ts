@@ -2,12 +2,29 @@ import Phaser from 'phaser';
 import type { Entity } from '../entities/Entity';
 import type { SpawnManager } from '../spawning/SpawnManager';
 
+export interface CombatBubbleConfig {
+  bubbleRadius: number;
+  tailCap: number;
+  tailSectorAngleRad: number;
+  separationRadius: number;
+  tankSeparationRadius: number;
+}
+
+export const COMBAT_BUBBLE_CONFIG: CombatBubbleConfig = {
+  bubbleRadius: 750,
+  tailCap: 3,
+  tailSectorAngleRad: (120 * Math.PI) / 180,
+  separationRadius: 32,
+  tankSeparationRadius: 64,
+};
+
 export interface EnemyAIContext {
   scene: Phaser.Scene;
   player: Entity;
   enemiesMap: Map<string, Entity>;
   spawnManager: SpawnManager;
   onExploderTrigger: (enemy: Entity) => void;
+  onEnemyDespawned?: (enemy: Entity) => void;
   flashSprite?: (sprite: Phaser.GameObjects.Sprite, color: number) => void;
 }
 
@@ -20,6 +37,10 @@ export class EnemyAISystem {
   private spatialGrid: Map<number, Entity[]> = new Map();
   private bucketPool: Entity[][] = [];
 
+  private despawnQueue: Entity[] = [];
+  private trailingSlots: { enemy: Entity | null; distSq: number }[] = Array.from({ length: 250 }, () => ({ enemy: null, distSq: 0 }));
+  private trailingCount = 0;
+
   public reset(): void {
     this.bossDashTimer = 0;
     this.isBossDashing = false;
@@ -27,6 +48,12 @@ export class EnemyAISystem {
     this.bossTelegraphGfx?.clear();
     this.bossTelegraphGfx?.destroy();
     this.bossTelegraphGfx = undefined;
+    this.despawnQueue.length = 0;
+    this.trailingCount = 0;
+    for (let i = 0; i < this.trailingSlots.length; i++) {
+      this.trailingSlots[i].enemy = null;
+      this.trailingSlots[i].distSq = 0;
+    }
     for (const bucket of this.spatialGrid.values()) {
       bucket.length = 0;
       this.bucketPool.push(bucket);
@@ -34,9 +61,36 @@ export class EnemyAISystem {
     this.spatialGrid.clear();
   }
 
+  private sortTrailingSlots(count: number): void {
+    for (let i = 1; i < count; i++) {
+      const curEnemy = this.trailingSlots[i].enemy;
+      const curDistSq = this.trailingSlots[i].distSq;
+      let j = i - 1;
+      while (j >= 0 && this.trailingSlots[j].distSq > curDistSq) {
+        this.trailingSlots[j + 1].enemy = this.trailingSlots[j].enemy;
+        this.trailingSlots[j + 1].distSq = this.trailingSlots[j].distSq;
+        j--;
+      }
+      this.trailingSlots[j + 1].enemy = curEnemy;
+      this.trailingSlots[j + 1].distSq = curDistSq;
+    }
+  }
+
   public update(delta: number, ctx: EnemyAIContext): void {
     const playerX = ctx.player.x;
     const playerY = ctx.player.y;
+    const { halfW, halfH } = ctx.spawnManager.getViewport();
+    this.despawnQueue.length = 0;
+    this.trailingCount = 0;
+
+    const playerBody = ctx.player.sprite?.body as Phaser.Physics.Arcade.Body | undefined;
+    const playerVx = playerBody?.velocity.x ?? 0;
+    const playerVy = playerBody?.velocity.y ?? 0;
+    const playerSpeed = Math.hypot(playerVx, playerVy);
+    const isPlayerMoving = playerSpeed > 30;
+    const playerHeading = isPlayerMoving ? Math.atan2(playerVy, playerVx) : 0;
+    const behindAngle = isPlayerMoving ? Phaser.Math.Angle.Wrap(playerHeading + Math.PI) : 0;
+    const halfSector = COMBAT_BUBBLE_CONFIG.tailSectorAngleRad / 2;
 
     // --- Spatial bucket grid for O(N) separation instead of O(N²) (Zero-Allocation) ---
     for (const bucket of this.spatialGrid.values()) {
@@ -45,7 +99,7 @@ export class EnemyAISystem {
     }
     this.spatialGrid.clear();
 
-    const CELL = 64; // px, slightly larger than separationRadius=58
+    const CELL = 76; // px, matches tankSeparationRadius
     const cellKey = (cx: number, cy: number) => cx * 100003 + cy;
 
     for (const e of ctx.enemiesMap.values()) {
@@ -72,13 +126,29 @@ export class EnemyAISystem {
 
       const def = enemy.definition;
       const distToPlayer = Phaser.Math.Distance.Between(enemy.x, enemy.y, playerX, playerY);
+      const isBoss = def?.archetype === 'boss' || def?.archetype === 'miniboss';
+      const isSpecial = isBoss || enemy.isChampion;
+      const isOffScreen = Math.abs(enemy.x - playerX) > halfW + 50 || Math.abs(enemy.y - playerY) > halfH + 50;
 
-      // Vampire Survivors Wrap-Around: If enemy is too far (> maxViewRadius), teleport ahead
-      const maxViewRadius = ctx.spawnManager.getViewport().maxRadius + 180;
-      if (distToPlayer > maxViewRadius && def?.archetype !== 'boss' && def?.archetype !== 'miniboss') {
-        const newPos = ctx.spawnManager.getRepositionPosition();
-        enemy.sprite.setPosition(newPos.x, newPos.y);
+      // 1. Combat Bubble Despawn: release non-special enemies outside active bubble AND strictly off-screen
+      // Must not despawn newly spawned enemies (grace period 1800ms so they can walk into view)
+      if (!isSpecial && isOffScreen && enemy.lifetimeMs > 1800 && distToPlayer > COMBAT_BUBBLE_CONFIG.bubbleRadius) {
+        this.despawnQueue.push(enemy);
         continue;
+      }
+
+      // 2. Tail Cap tracking: strictly for OFF-SCREEN ordinary enemies in the 120° cone behind moving player
+      // Any enemy visible on-screen is NEVER despawned or culled by Tail Cap!
+      if (!isSpecial && isOffScreen && isPlayerMoving && enemy.lifetimeMs > 1200) {
+        const angleFromPlayer = Math.atan2(enemy.y - playerY, enemy.x - playerX);
+        const angleDiff = Math.abs(Phaser.Math.Angle.Wrap(angleFromPlayer - behindAngle));
+        if (angleDiff <= halfSector) {
+          if (this.trailingCount < this.trailingSlots.length) {
+            const slot = this.trailingSlots[this.trailingCount++];
+            slot.enemy = enemy;
+            slot.distSq = distToPlayer * distToPlayer;
+          }
+        }
       }
 
       // Exploder fuse trigger at 45px
@@ -90,11 +160,13 @@ export class EnemyAISystem {
       const angleToPlayer = Phaser.Math.Angle.Between(enemy.x, enemy.y, playerX, playerY);
       const spd = enemy.effectiveSpeed;
 
-      // Flocking Separation Force — archetype-aware radius to give physical volume
+      // Flocking Separation Force — lighter force for swarmers to allow tight train clustering
       let sepX = 0;
       let sepY = 0;
       const isTank = def?.archetype === 'tank' || def?.archetype === 'miniboss';
-      const separationRadius = isTank ? 72 : 46;
+      const separationRadius = isTank
+        ? COMBAT_BUBBLE_CONFIG.tankSeparationRadius
+        : COMBAT_BUBBLE_CONFIG.separationRadius;
       const separationRadiusSq = separationRadius * separationRadius;
       const ecx = Math.floor(enemy.x / CELL);
       const ecy = Math.floor(enemy.y / CELL);
@@ -111,14 +183,15 @@ export class EnemyAISystem {
             if (distSq < separationRadiusSq && distSq > 0.01) {
               const d = Math.sqrt(distSq);
               const force = Math.pow((separationRadius - d) / separationRadius, 1.1);
-              sepX += (ox / d) * force * 110;
-              sepY += (oy / d) * force * 110;
+              const pushStrength = isTank ? 140 : 60;
+              sepX += (ox / d) * force * pushStrength;
+              sepY += (oy / d) * force * pushStrength;
             }
           }
         }
       }
 
-      const maxSep = spd * 1.25;
+      const maxSep = spd * 0.85;
       const sepLen = Math.sqrt(sepX * sepX + sepY * sepY);
       if (sepLen > maxSep && sepLen > 0) {
         sepX = (sepX / sepLen) * maxSep;
@@ -171,8 +244,13 @@ export class EnemyAISystem {
           if (enemy.x < bounds.x + pad || enemy.x > bounds.right - pad || enemy.y < bounds.y + pad || enemy.y > bounds.bottom - pad) {
             moveAngle = Phaser.Math.Angle.Between(enemy.x, enemy.y, bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
           }
-        } else if (distToPlayer > 75) {
-          const blend = Math.min(1.0, (distToPlayer - 75) / 220);
+        } else if (def?.archetype === 'sprinter' && isPlayerMoving && distToPlayer > 80) {
+          const leadTime = Math.min(0.55, distToPlayer / Math.max(1, spd));
+          const leadX = playerX + playerVx * leadTime;
+          const leadY = playerY + playerVy * leadTime;
+          moveAngle = Phaser.Math.Angle.Between(enemy.x, enemy.y, leadX, leadY);
+        } else if (isSpecial && distToPlayer > 60) {
+          const blend = Math.min(1.0, (distToPlayer - 60) / 160);
           moveAngle += (enemy.flankOffset ?? 0) * blend;
         }
 
@@ -182,6 +260,36 @@ export class EnemyAISystem {
         enemy.sprite.setVelocity(vx, vy);
         enemy.sprite.setFlipX(vx < 0);
         enemy.sprite.rotation = 0;
+      }
+    }
+
+    // 3. Tail Cap enforcement: retain closest tailCap enemies among off-screen tail, release excess distant ones
+    if (this.trailingCount > COMBAT_BUBBLE_CONFIG.tailCap) {
+      this.sortTrailingSlots(this.trailingCount);
+      for (let i = COMBAT_BUBBLE_CONFIG.tailCap; i < this.trailingCount; i++) {
+        const excess = this.trailingSlots[i].enemy;
+        if (excess && !this.despawnQueue.includes(excess)) {
+          const isOff = Math.abs(excess.x - playerX) > halfW + 40 || Math.abs(excess.y - playerY) > halfH + 40;
+          if (isOff) {
+            this.despawnQueue.push(excess);
+          }
+        }
+      }
+    }
+
+    // 4. Despawn execution: silently release culled enemies back to EnemyPool and recycle quota into front arc
+    if (this.despawnQueue.length > 0 && ctx.onEnemyDespawned) {
+      let culledCount = 0;
+      for (let i = 0; i < this.despawnQueue.length; i++) {
+        const victim = this.despawnQueue[i];
+        const isOff = Math.abs(victim.x - playerX) > halfW + 30 || Math.abs(victim.y - playerY) > halfH + 30;
+        if (isOff) {
+          ctx.onEnemyDespawned(victim);
+          culledCount++;
+        }
+      }
+      if (culledCount > 0) {
+        ctx.spawnManager.onEnemyCulled(culledCount);
       }
     }
   }

@@ -41,9 +41,10 @@ export class Entity {
   // Boss state
   public bossPhase = 1;
 
-  // Flanking angle offset (radians) for natural arc spreading
-  public flankOffset = (Math.random() - 0.5) * 0.7;
+  // Flanking angle offset (radians) for natural wide arc spreading (prevent single-stream sack)
+  public flankOffset = (Math.random() - 0.5) * 1.5;
   public isChampion = false;
+  public lifetimeMs = 0;
 
   constructor(config: EntityConfig) {
     this.id = config.id;
@@ -110,6 +111,8 @@ export class Entity {
   }
 
   updateStatusEffects(deltaMs: number, onPoisonDamage?: (dmg: number) => void): void {
+    this.lifetimeMs += deltaMs;
+
     // Knockback timer
     if (this.knockbackTimer > 0) {
       this.knockbackTimer -= deltaMs;

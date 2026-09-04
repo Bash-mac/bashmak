@@ -118,8 +118,8 @@ export class BootScene extends Phaser.Scene {
 
     // --- 90s Gross-Out HD UI System Assets ---
     this.load.image('hero_dossier_bg', '/assets/menu/hero_dossier_bg.webp');
-    ['dossier_book', 'note_stats_backdrop', 'polaroid_frame', 'btn_battle_red_plate', 'paper_note_small', 'header_crown_plate', 'metal_binder_clip', 'tape_green_1', 'tape_green_2', 'tape_green_3', 'tape_green_4', 'slime_drip_wide', 'slime_puddle_flat', 'graffiti_skull_cross', 'graffiti_skull_drip', 'graffiti_crown_mini', 'polaroid_vypolzok', 'polaroid_bashmak', 'polaroid_markovka', 'polaroid_baklazhan', 'char_vypolzok', 'char_markovka', 'char_bashmak', 'char_baklazhan', 'chains_pod'].forEach(k => this.load.image(k, `/assets/ui/hero_modal/${k}.webp`));
-    ['hero_card_worm', 'hero_card_bashmak', 'hero_card_markovka', 'hero_card_baklazhan'].forEach(k => this.load.image(k, `/assets/ui/posters/${k}.webp`));
+    ['dossier_book', 'note_stats_backdrop', 'polaroid_frame', 'btn_battle_red_plate', 'paper_note_small', 'header_crown_plate', 'metal_binder_clip', 'tape_green_1', 'tape_green_2', 'tape_green_3', 'tape_green_4', 'slime_drip_wide', 'slime_puddle_flat', 'graffiti_skull_cross', 'graffiti_skull_drip', 'graffiti_crown_mini', 'polaroid_vypolzok', 'polaroid_markovka', 'char_vypolzok', 'char_markovka', 'chains_pod'].forEach(k => this.load.image(k, `/assets/ui/hero_modal/${k}.webp`));
+    ['hero_card_worm', 'hero_card_markovka'].forEach(k => this.load.image(k, `/assets/ui/posters/${k}.webp`));
     ['card_frame_standard', 'card_frame_gold', 'card_frame_consumable'].forEach(k => this.load.image(k, `/assets/ui/frames/${k}.webp`));
     ['btn_frame_green', 'btn_frame_gold', 'btn_frame_red', 'btn_frame_dark'].forEach(k => this.load.image(k, `/assets/ui/buttons/${k}.webp`));
     ['hud_avatar_badge_frame', 'hud_bar_frame', 'hud_bar_fill_hp', 'hud_bar_fill_xp', 'hud_slot_frame'].forEach(k => this.load.image(k, `/assets/ui/hud/${k}.webp`));

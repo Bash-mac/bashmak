@@ -23,7 +23,7 @@ export class HeroFactory {
 
     const sprite = scene.physics.add.sprite(x, y, textureKey);
     sprite.setName('hero');
-    sprite.setScale(scale).setCollideWorldBounds(true).setDepth(10);
+    sprite.setScale(scale).setCollideWorldBounds(false).setDepth(10);
 
     const targetRadius = isMarkovka ? 14 : 18;
     if (sprite.body) {
@@ -48,7 +48,7 @@ export class HeroFactory {
       sprite,
     });
 
-    gameState.currentHeroId = heroId;
+    gameState.currentHeroId = currentHero.id;
     gameState.applyStartingWeapon(currentHero.startingWeaponId);
     currentHero.trait?.apply?.(gameState.playerModifiers, playerEntity.stats);
     saveManager.applyToPlayerStats(playerEntity.stats, playerEntity.health, gameState.playerModifiers);
